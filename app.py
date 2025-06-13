@@ -37,7 +37,7 @@ def get_category_icon(category):
 def interpret_dividend_yield(dy):
     if dy is None:
         return "N/A"
-    dy_percent = round(dy * 1, 2)
+    dy_percent = round(dy * 100, 2)
     if dy == 0:
         return f"{dy_percent}% 🔴 (No dividends)"
     elif dy < 1:
@@ -52,6 +52,22 @@ def format_in_trillions(value):
     if value is None:
         return "N/A"
     return f"₹{value / 1e12:.2f}T"
+
+# ROE interpretation
+def interpret_roe(roe):
+    if roe is None:
+        return "N/A"
+    roe_percent = round(roe * 100, 2)
+    if roe_percent > 20:
+        return f"{roe_percent}% ✅ (Excellent)"
+    elif roe_percent > 15:
+        return f"{roe_percent}% ✅ (Good)"
+    elif roe_percent > 10:
+        return f"{roe_percent}% 🟡 (Moderate)"
+    elif roe_percent > 5:
+        return f"{roe_percent}% 🟠 (Low)"
+    else:
+        return f"{roe_percent}% 🔴 (Poor)"
 
 # Main app logic
 if ticker_input:
@@ -84,7 +100,7 @@ if ticker_input:
             "Revenue (TTM)": revenue_trillion,
             "Net Income (TTM)": net_income_trillion,
             "Profit Margin": info.get("profitMargins"),
-            "Return on Equity (ROE)": info.get("returnOnEquity"),
+            "Return on Equity (ROE)": interpret_roe(info.get("returnOnEquity")),
             "Debt to Equity": info.get("debtToEquity"),
         }
 
@@ -94,4 +110,3 @@ if ticker_input:
     except Exception as e:
         st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
         st.exception(e)
-
