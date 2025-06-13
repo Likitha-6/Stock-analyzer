@@ -67,7 +67,7 @@ if ticker_input:
         }
 
         # Show dataframe
-        df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
+        df = pd.DataFrame(data.items(), columns=["Metric", "Details"])
         st.dataframe(df.set_index("Metric"))
 
     except Exception as e:
