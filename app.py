@@ -68,7 +68,7 @@ if ticker_input:
 
         # Show dataframe
         df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
-        st.dataframe(df)
+        st.dataframe(df.set_index("Metric"))
 
     except Exception as e:
         st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
