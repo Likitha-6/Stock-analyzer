@@ -94,6 +94,7 @@ if ticker_input:
         data = {
             "Company Name": info.get("longName"),
             "Sector": info.get("sector"),
+            "Current Price (₹)": info.get("currentPrice"),
             "Market Cap (Billion ₹)": market_cap_display,
             "P/E Ratio": info.get("trailingPE"),
             "EPS": info.get("trailingEps"),
