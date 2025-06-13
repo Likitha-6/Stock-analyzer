@@ -2,70 +2,84 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-st.title("📊 Stock Fundamental Analyzer")
+# Streamlit setup
+st.set_page_config(page_title="Indian Stock Analyzer", page_icon="📊")
+st.title("📈 Indian Stock Analyzer (Fundamentals)")
 
-ticker = st.text_input("Enter NSE stock symbol (e.g., INFY.NS)", "INFY.NS")
+st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
 
-def format_in_trillions(value):
-    if not value:
+ticker_input = st.text_input("Ticker Symbol", "RELIANCE")
+ticker = ticker_input.upper().strip() + ".NS"
+
+# Market cap interpretation
+def get_market_cap_category(market_cap_inr):
+    if market_cap_inr >= 2e12:
+        return "Mega Cap", "Strong, stable"
+    elif market_cap_inr >= 5e11:
+        return "Large Cap", "Strong, stable"
+    elif market_cap_inr >= 1e11:
+        return "Mid Cap", "Growing, moderate risk"
+    elif market_cap_inr >= 1e10:
+        return "Small Cap", "Emerging, higher risk"
+    else:
+        return "Micro Cap", "Very small, high risk"
+
+def get_category_icon(category):
+    return {
+        "Mega Cap": "✅",
+        "Large Cap": "✅",
+        "Mid Cap": "🟡",
+        "Small Cap": "🟠",
+        "Micro Cap": "🔴"
+    }.get(category, "")
+
+# Dividend Yield interpretation with color
+def interpret_dividend_yield(dy):
+    if dy is None:
         return "N/A"
-    return f"₹{value / 1_00_00_00_00_000:.2f}T"
+    dy_percent = round(dy * 100, 2)
+    if dy == 0:
+        return f"{dy_percent}% 🔴 (No dividends)"
+    elif dy < 1:
+        return f"{dy_percent}% 🟠 (Low)"
+    elif dy < 3:
+        return f"{dy_percent}% ✅ (Moderate)"
+    else:
+        return f"{dy_percent}% ✅ (High)"
 
-if ticker:
+# Main app logic
+if ticker_input:
     try:
         stock = yf.Ticker(ticker)
-        info = stock.info
+        info = stock.get_info()
 
-        name = info.get("longName", "N/A")
-        market_cap = info.get("marketCap", 0)
-        revenue = info.get("totalRevenue")
-        net_income = info.get("netIncome")
-        pe_ratio = info.get("trailingPE", "N/A")
-        dividend_yield = info.get("dividendYield", 0) or 0
-
-        # Interpretations
-        if market_cap >= 2_00_00_00_00_000:
-            cap_category = "Mega Cap (Strong) ✅"
-        elif market_cap >= 40_00_00_00_000:
-            cap_category = "Large Cap (Stable) ✅"
-        elif market_cap >= 8_00_00_00_000:
-            cap_category = "Mid Cap (Emerging) 🟡"
-        elif market_cap >= 1_00_00_00_000:
-            cap_category = "Small Cap (Volatile) 🟠"
+        # Market Cap
+        market_cap = info.get("marketCap")
+        if market_cap:
+            market_cap_billion = round(market_cap / 1e9, 2)
+            cap_category, cap_meaning = get_market_cap_category(market_cap)
+            cap_icon = get_category_icon(cap_category)
+            market_cap_display = f"{market_cap_billion} B ({cap_icon} {cap_category} – {cap_meaning})"
         else:
-            cap_category = "Micro Cap (Risky) 🔴"
+            market_cap_display = "N/A"
 
-        if dividend_yield > 0.03:
-            dividend_note = f"{dividend_yield*100:.2f}% ✅ Good"
-        elif dividend_yield > 0:
-            dividend_note = f"{dividend_yield*100:.2f}% 🟠 Low"
-        else:
-            dividend_note = f"{dividend_yield*100:.2f}% 🔴 None"
-
+        # Prepare data
         data = {
-            "Metric": [
-                "Company Name",
-                "Market Cap",
-                "Market Cap Category",
-                "Revenue",
-                "Net Income",
-                "P/E Ratio",
-                "Dividend Yield"
-            ],
-            "Value": [
-                name,
-                f"₹{market_cap / 1_00_00_00_00_000:.2f}T" if market_cap else "N/A",
-                cap_category,
-                format_in_trillions(revenue),
-                format_in_trillions(net_income),
-                f"{pe_ratio}" if pe_ratio else "N/A",
-                dividend_note
-            ]
+            "Company Name": info.get("longName"),
+            "Sector": info.get("sector"),
+            "Market Cap (Billion ₹)": market_cap_display,
+            "P/E Ratio": info.get("trailingPE"),
+            "EPS": info.get("trailingEps"),
+            "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
+            "Revenue (TTM)": info.get("totalRevenue"),
+            "Net Income (TTM)": info.get("netIncomeToCommon"),
+            "Profit Margin": info.get("profitMargins"),
+            "Return on Equity (ROE)": info.get("returnOnEquity"),
+            "Debt to Equity": info.get("debtToEquity"),
         }
 
-        df = pd.DataFrame(data)
-        st.table(df)
+        df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
+        st.dataframe(df.set_index("Metric"))
 
     except Exception as e:
-        st.error("❌ Error fetching data.")
-        st.exception(e)
+        st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
