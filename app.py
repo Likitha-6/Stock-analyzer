@@ -46,6 +46,11 @@ def interpret_dividend_yield(dy):
         return f"{dy_percent}% ✅ (Moderate)"
     else:
         return f"{dy_percent}% ✅ (High)"
+# Format INR value to Billions
+def format_in_billions(value):
+    if value is None:
+        return "N/A"
+    return f"₹{value / 1e9:.2f}B"
 
 
 
@@ -57,12 +62,6 @@ def interpret_roe(roe):
     if roe_percent > 20:
         return f"{roe_percent}% ✅ (Excellent)"
     elif roe_percent > 15:
-# Format INR value to Billions
-def format_in_billions(value):
-    if value is None:
-        return "N/A"
-    return f"₹{value / 1e9:.2f}B"
-
         return f"{roe_percent}% ✅ (Good)"
     elif roe_percent > 10:
         return f"{roe_percent}% 🟡 (Moderate)"
