@@ -33,11 +33,11 @@ if ticker:
         "Return on Equity (ROE)": info.get("returnOnEquity"),
         "Debt to Equity": info.get("debtToEquity"),
     }
-    if market_cap:
-        market_cap_billion = round(market_cap / 1e9, 2)
-        data["Market Cap (Billion ₹)"] = f"{market_cap_billion} B"
-    else:
-        data["Market Cap (Billion ₹)"] = "N/A"
+if market_cap:
+    market_cap_billion = round(market_cap / 1e9, 2)
+    data["Market Cap (Billion ₹)"] = f"{market_cap_billion} B"
+else:
+    data["Market Cap (Billion ₹)"] = "N/A"
 
     df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
     st.dataframe(df)
