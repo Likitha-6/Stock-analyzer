@@ -47,11 +47,7 @@ def interpret_dividend_yield(dy):
     else:
         return f"{dy_percent}% ✅ (High)"
 
-# Format INR value to Trillions
-def format_in_trillions(value):
-    if value is None:
-        return "N/A"
-    return f"₹{value / 1e12:.2f}T"
+
 
 # ROE interpretation
 def interpret_roe(roe):
@@ -61,6 +57,12 @@ def interpret_roe(roe):
     if roe_percent > 20:
         return f"{roe_percent}% ✅ (Excellent)"
     elif roe_percent > 15:
+# Format INR value to Billions
+def format_in_billions(value):
+    if value is None:
+        return "N/A"
+    return f"₹{value / 1e9:.2f}B"
+
         return f"{roe_percent}% ✅ (Good)"
     elif roe_percent > 10:
         return f"{roe_percent}% 🟡 (Moderate)"
@@ -86,8 +88,8 @@ if ticker_input:
             market_cap_display = "N/A"
 
         # Revenue and Net Income in Trillions
-        revenue_trillion = format_in_trillions(info.get("totalRevenue"))
-        net_income_trillion = format_in_trillions(info.get("netIncomeToCommon"))
+        revenue_billion = format_in_billions(info.get("totalRevenue"))
+        net_income_billion = format_in_billions(info.get("netIncomeToCommon"))
 
         # Prepare data
         data = {
@@ -97,8 +99,8 @@ if ticker_input:
             "P/E Ratio": info.get("trailingPE"),
             "EPS": info.get("trailingEps"),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
-            "Revenue (TTM)": revenue_trillion,
-            "Net Income (TTM)": net_income_trillion,
+            "Revenue (TTM)": revenue_billion,
+            "Net Income (TTM)": net_income_billion,
             "Profit Margin": info.get("profitMargins"),
             "Return on Equity (ROE)": interpret_roe(info.get("returnOnEquity")),
             "Debt to Equity": info.get("debtToEquity"),
