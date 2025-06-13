@@ -77,21 +77,6 @@ if ticker_input:
         revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
         net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
 
-        # Net income YoY growth
-        try:
-            history = stock.financials.transpose()
-            if "Net Income" in history.columns:
-                last_year = history["Net Income"].iloc[0]
-                prev_year = history["Net Income"].iloc[1]
-                if last_year and prev_year:
-                    growth = ((last_year - prev_year) / abs(prev_year)) * 100
-                    income_growth = f"{growth:.2f}%"
-                else:
-                    income_growth = "N/A"
-            else:
-                income_growth = "N/A"
-        except:
-            income_growth = "N/A"
 
         # Convert profit margin to % format
         profit_margin = info.get("profitMargins")
@@ -107,7 +92,6 @@ if ticker_input:
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Revenue (TTM)": revenue_billion,
             "Net Income (TTM)": net_income_billion,
-            "Net Income YoY Growth": income_growth,
             "Profit Margin": profit_margin_percent,
             "Return on Equity (ROE)": interpret_roe(info.get("returnOnEquity")),
             "Debt to Equity": info.get("debtToEquity"),
