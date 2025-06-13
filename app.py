@@ -46,6 +46,10 @@ def interpret_dividend_yield(dy):
         return f"{dy_percent}% ✅ (Moderate)"
     else:
         return f"{dy_percent}% ✅ (High)"
+def format_in_trillions(value):
+    if value is None or value == 0:
+        return "N/A"
+    return f"₹{value / 1_00_00_00_00_000:.2f}T"
 
 # Main app logic
 if ticker_input:
@@ -79,7 +83,10 @@ if ticker_input:
         }
 
         df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
+        
         st.dataframe(df.set_index("Metric"))
+        st.write(f"**Revenue:** {format_in_trillions(revenue)}")
+        st.write(f"**Net Income:** {format_in_trillions(net_income)}")
 
     except Exception as e:
         st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
