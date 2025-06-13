@@ -33,7 +33,6 @@ def get_category_icon(category):
         "Micro Cap": "🔴"
     }.get(category, "")
 
-# Dividend Yield interpretation with color
 def interpret_dividend_yield(dy):
     if dy is None:
         return "N/A"
@@ -46,29 +45,17 @@ def interpret_dividend_yield(dy):
         return f"{dy_percent}% ✅ (Moderate)"
     else:
         return f"{dy_percent}% ✅ (High)"
-# Format INR value to Billions
-def format_in_billions(value):
-    if value is None:
-        return "N/A"
-    return f"₹{value / 1e9:.2f}B"
 
-
-
-# ROE interpretation
 def interpret_roe(roe):
     if roe is None:
         return "N/A"
     roe_percent = round(roe * 100, 2)
-    if roe_percent > 20:
-        return f"{roe_percent}% ✅ (Excellent)"
-    elif roe_percent > 15:
-        return f"{roe_percent}% ✅ (Good)"
-    elif roe_percent > 10:
-        return f"{roe_percent}% 🟡 (Moderate)"
-    elif roe_percent > 5:
+    if roe_percent < 10:
         return f"{roe_percent}% 🟠 (Low)"
+    elif roe_percent < 20:
+        return f"{roe_percent}% 🟡 (Moderate)"
     else:
-        return f"{roe_percent}% 🔴 (Poor)"
+        return f"{roe_percent}% ✅ (High)"
 
 # Main app logic
 if ticker_input:
@@ -76,7 +63,6 @@ if ticker_input:
         stock = yf.Ticker(ticker)
         info = stock.get_info()
 
-        # Market Cap
         market_cap = info.get("marketCap")
         if market_cap:
             market_cap_billion = round(market_cap / 1e9, 2)
@@ -86,11 +72,31 @@ if ticker_input:
         else:
             market_cap_display = "N/A"
 
-        # Revenue and Net Income in Trillions
-        revenue_billion = format_in_billions(info.get("totalRevenue"))
-        net_income_billion = format_in_billions(info.get("netIncomeToCommon"))
+        revenue = info.get("totalRevenue")
+        net_income = info.get("netIncomeToCommon")
+        revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
+        net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
 
-        # Prepare data
+        # Net income YoY growth
+        try:
+            history = stock.financials.transpose()
+            if "Net Income" in history.columns:
+                last_year = history["Net Income"].iloc[0]
+                prev_year = history["Net Income"].iloc[1]
+                if last_year and prev_year:
+                    growth = ((last_year - prev_year) / abs(prev_year)) * 100
+                    income_growth = f"{growth:.2f}%"
+                else:
+                    income_growth = "N/A"
+            else:
+                income_growth = "N/A"
+        except:
+            income_growth = "N/A"
+
+        # Convert profit margin to % format
+        profit_margin = info.get("profitMargins")
+        profit_margin_percent = f"{round(profit_margin * 100, 2)}%" if profit_margin else "N/A"
+
         data = {
             "Company Name": info.get("longName"),
             "Sector": info.get("sector"),
@@ -101,7 +107,8 @@ if ticker_input:
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Revenue (TTM)": revenue_billion,
             "Net Income (TTM)": net_income_billion,
-            "Profit Margin": info.get("profitMargins"),
+            "Net Income YoY Growth": income_growth,
+            "Profit Margin": profit_margin_percent,
             "Return on Equity (ROE)": interpret_roe(info.get("returnOnEquity")),
             "Debt to Equity": info.get("debtToEquity"),
         }
@@ -109,6 +116,23 @@ if ticker_input:
         df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
         st.dataframe(df.set_index("Metric"))
 
+        # Historical Profit Margins
+        st.subheader("📉 Historical Profit Margins")
+
+        try:
+            financials = stock.financials
+            financials = financials.loc[["Total Revenue", "Net Income"]]
+            financials = financials.transpose()
+            financials.index = financials.index.year
+
+            financials["Profit Margin (%)"] = (financials["Net Income"] / financials["Total Revenue"]) * 100
+            pm_df = financials[["Profit Margin (%)"]].round(2)
+
+            st.dataframe(pm_df)
+            st.line_chart(pm_df)
+
+        except Exception as e:
+            st.warning("Could not retrieve historical profit margins.")
+
     except Exception as e:
         st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
-        st.exception(e)
