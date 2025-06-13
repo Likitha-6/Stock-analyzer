@@ -47,6 +47,12 @@ def interpret_dividend_yield(dy):
     else:
         return f"{dy_percent}% ✅ (High)"
 
+# Format INR value to Trillions
+def format_in_trillions(value):
+    if value is None:
+        return "N/A"
+    return f"₹{value / 1e12:.2f}T"
+
 # Main app logic
 if ticker_input:
     try:
@@ -63,6 +69,10 @@ if ticker_input:
         else:
             market_cap_display = "N/A"
 
+        # Revenue and Net Income in Trillions
+        revenue_trillion = format_in_trillions(info.get("totalRevenue"))
+        net_income_trillion = format_in_trillions(info.get("netIncomeToCommon"))
+
         # Prepare data
         data = {
             "Company Name": info.get("longName"),
@@ -71,8 +81,8 @@ if ticker_input:
             "P/E Ratio": info.get("trailingPE"),
             "EPS": info.get("trailingEps"),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
-            "Revenue (TTM)": info.get("totalRevenue"),
-            "Net Income (TTM)": info.get("netIncomeToCommon"),
+            "Revenue (TTM)": revenue_trillion,
+            "Net Income (TTM)": net_income_trillion,
             "Profit Margin": info.get("profitMargins"),
             "Return on Equity (ROE)": info.get("returnOnEquity"),
             "Debt to Equity": info.get("debtToEquity"),
@@ -83,3 +93,5 @@ if ticker_input:
 
     except Exception as e:
         st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
+        st.exception(e)
+
