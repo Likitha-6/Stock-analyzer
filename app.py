@@ -33,18 +33,7 @@ def get_category_icon(category):
         "Micro Cap": "🔴"
     }.get(category, "")
 
-# P/E Ratio interpretation
-def interpret_pe_ratio(pe):
-    if pe is None:
-        return "N/A"
-    elif pe < 10:
-        return f"{pe} (Low – possibly undervalued or risky)"
-    elif 10 <= pe <= 25:
-        return f"{pe} (Fair – reasonable valuation)"
-    elif pe > 25:
-        return f"{pe} (High – growth expectation)"
-    else:
-        return f"{pe} (Check earnings – may be negative)"
+
 
 # Main app logic
 if ticker_input:
