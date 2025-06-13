@@ -37,7 +37,7 @@ def get_category_icon(category):
 def interpret_dividend_yield(dy):
     if dy is None:
         return "N/A"
-    dy_percent = round(dy * 100, 2)
+    dy_percent = round(dy * 1, 2)
     if dy == 0:
         return f"{dy_percent}% 🔴 (No dividends)"
     elif dy < 1:
