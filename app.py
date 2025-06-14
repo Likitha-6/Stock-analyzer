@@ -125,8 +125,8 @@ if ticker_input:
             st.dataframe(pm_df)
             st.line_chart(pm_df)
 
-    except Exception as e:
-        st.warning("Could not retrieve historical profit margins.")
+        except Exception as e:
+            st.warning("Could not retrieve historical profit margins.")
 
         # Historical Revenue Chart
         # 📊 Revenue Over the Years
@@ -141,6 +141,8 @@ if ticker_input:
             st.dataframe(revenue_df[["Total Revenue (in ₹ Cr)"]])
             st.bar_chart(revenue_df["Total Revenue (in ₹ Cr)"])
         
+        except Exception as e:
+            st.warning("Could not retrieve historical revenue data.")
     except Exception as e:
-        st.warning("Could not retrieve historical revenue data.")
+        st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
         
