@@ -62,7 +62,7 @@ def interpret_pe_with_industry(pe, industry_pe):
     elif diff < -2:
         interpretation = "✅ Undervalued"
     else:
-        interpretation = "🟡 Fairly Priced"
+        interpretation = "✅ Fairly Priced"
 
     return f"{pe} vs {industry_pe} ({interpretation})"
 
