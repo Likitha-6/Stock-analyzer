@@ -118,7 +118,6 @@ if ticker_input:
             financials = financials.loc[["Total Revenue", "Net Income"]]
             financials = financials.transpose()
             financials.index = financials.index.year
-            printf(financials)
 
             financials["Profit Margin (%)"] = (financials["Net Income"] / financials["Total Revenue"]) * 100
             pm_df = financials[["Profit Margin (%)"]].round(2)
