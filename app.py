@@ -126,7 +126,7 @@ if ticker_input:
             hist_price = stock.history(period=period)
               # You can change to "1y", "max", etc.
             if not hist_price.empty:
-                st.line_chart(hist_price["Close"])
+                st.line_chart(hist_price["Close"].round(2))
             else:
                 st.warning("No historical stock data available.")
         except Exception as e:
