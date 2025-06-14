@@ -111,7 +111,7 @@ if ticker_input:
         net_income = info.get("netIncomeToCommon")
         revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
         net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
-        industry_pe = INDUSTRY_PE.get(sector)
+        #industry_pe = INDUSTRY_PE.get(sector)
 
 
         # Convert profit margin to % format
