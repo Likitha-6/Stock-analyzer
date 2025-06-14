@@ -125,7 +125,7 @@ if ticker_input:
             financials = stock.financials
             financials = financials.loc[["Net Income"]].transpose()
             financials.index = financials.index.year
-            financilas["PAT"] = (financilas["Net Income"] / 1e7)  # Convert to ₹ Cr
+            financials["PAT"] = (financilas["Net Income"] / 1e7)  # Convert to ₹ Cr
             pm_df=financials[["PAT"]].round(2)
             
             st.dataframe(pm_df)
