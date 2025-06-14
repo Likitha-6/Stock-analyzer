@@ -136,6 +136,7 @@ if ticker_input:
             revenue = stock.financials
             revenue_df = revenue.loc[["Total Revenue"]].transpose()
             revenue_df.index = revenue_df.index.year
+            print(revenue_df)
             revenue_df["Total Revenue (in ₹ Cr)"] = (revenue_df["Total Revenue"] / 1e7).round(2)  # Convert from ₹ to Crores
         
             st.dataframe(revenue_df[["Total Revenue (in ₹ Cr)"]])
