@@ -126,8 +126,9 @@ if ticker_input:
             pat_df = financials.loc[["Net Income"]].transpose()
             pat_df.index = pat_df.index.year
             pat_df["PAT"] = (pat_df["Net Income"] / 1e7).round(2)  # Convert to ₹ Cr
-            st.dataframe(pat_df[["PAT"]])
-            st.line_chart(pat_df[["PAT"]])
+            pm_df=pat_df[["PAT"]]
+            st.dataframe(pm_df)
+            st.line_chart(pm_df)
         except Exception as e:
             st.warning("Could not retrieve PAT (Net Income) data.")
 
