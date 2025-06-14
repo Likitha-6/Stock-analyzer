@@ -58,6 +58,7 @@ def interpret_roe(roe):
         return f"{roe_percent}% ✅ (High)"
 
 def interpret_de_ratio(de):
+    de=de/100
     if de is None:
         return "N/A"
     elif de < 0.5:
