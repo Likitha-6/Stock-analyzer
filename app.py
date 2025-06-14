@@ -118,23 +118,19 @@ if ticker_input:
         df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
         st.dataframe(df.set_index("Metric"))
 
-        # Historical Profit Margins
-        st.subheader("📉 Historical Profit Margins")
-
+        # 📊 Historical Profit After Tax (PAT)
+        st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
+        
         try:
             financials = stock.financials
-            financials = financials.loc[["Total Revenue", "Net Income"]]
-            financials = financials.transpose()
-            financials.index = financials.index.year
-
-            financials["Profit Margin (%)"] = (financials["Net Income"] / financials["Total Revenue"]) * 100
-            pm_df = financials[["Profit Margin (%)"]].round(2)
-
-            
-            st.line_chart(pm_df)
-
+            pat_df = financials.loc[["Net Income"]].transpose()
+            pat_df.index = pat_df.index.year
+            pat_df["PAT (₹ Cr)"] = (pat_df["Net Income"] / 1e7).round(2)  # Convert to ₹ Cr
+            st.dataframe(pat_df[["PAT (₹ Cr)"]])
+            st.line_chart(pat_df[["PAT (₹ Cr)"]])
         except Exception as e:
-            st.warning("Could not retrieve historical profit margins.")
+            st.warning("Could not retrieve PAT (Net Income) data.")
+
 
         # Historical Revenue Chart
         # 📊 Revenue Over the Years
