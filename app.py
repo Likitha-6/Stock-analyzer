@@ -129,18 +129,17 @@ if ticker_input:
             st.warning("Could not retrieve historical profit margins.")
 
         # Historical Revenue Chart
-        st.subheader("📊 Historical Revenue")
-
+        # 📊 Revenue Over the Years
+        st.subheader("📈 Historical Revenue (₹ in Crores)")
+        
         try:
-            revenue_series = stock.financials.loc["Total Revenue"]
-            revenue_df = revenue_series.to_frame(name="Revenue (₹)")
+            revenue_df = stock.financials.loc[["Total Revenue"]].transpose()
             revenue_df.index = revenue_df.index.year
-            revenue_df["Revenue (B ₹)"] = (revenue_df["Revenue (₹)"] / 1e9).round(2)
-
-            st.line_chart(revenue_df["Revenue (B ₹)"])
-
+            revenue_df["Total Revenue (in ₹ Cr)"] = (revenue_df["Total Revenue"] / 1e7).round(2)  # Convert from ₹ to Crores
+        
+            st.dataframe(revenue_df[["Total Revenue (in ₹ Cr)"]])
+            st.bar_chart(revenue_df["Total Revenue (in ₹ Cr)"])
+        
         except Exception as e:
             st.warning("Could not retrieve historical revenue data.")
-
-    except Exception as e:
-        st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
+        
