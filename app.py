@@ -56,7 +56,7 @@ def interpret_pe_with_industry(pe, industry_pe):
 
     diff = pe - industry_pe
     if diff > 10:
-        interpretation = "🔺 Significantly Overvalued"
+        interpretation = "🔺 Overvalued"
     elif diff > 2:
         interpretation = "🟠 Slightly Overvalued"
     elif diff < -2:
