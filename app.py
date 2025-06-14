@@ -13,7 +13,7 @@ ticker = ticker_input.upper().strip() + ".NS"
 
 
 INDUSTRY_PE = {
-    "Information Technology": 25.4,
+    "Technology": 25.4,
     "Energy": 13.1,
     "Financial Services": 15.2,
     "Consumer Defensive": 28.3,
