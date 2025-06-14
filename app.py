@@ -123,10 +123,11 @@ if ticker_input:
         
         try:
             financials = stock.financials
-            pat_df = financials.loc[["Net Income"]].transpose()
-            pat_df.index = pat_df.index.year
-            pat_df["PAT"] = (pat_df["Net Income"] / 1e7).round(2)  # Convert to ₹ Cr
-            pm_df=pat_df[["PAT"]]
+            financials = financials.loc[["Net Income"]].transpose()
+            financials.index = financials.index.year
+            financilas["PAT"] = (financilas["Net Income"] / 1e7)  # Convert to ₹ Cr
+            pm_df=financials[["PAT"]].round(2)
+            
             st.dataframe(pm_df)
             st.line_chart(pm_df)
         except Exception as e:
