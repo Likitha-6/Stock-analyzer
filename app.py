@@ -57,6 +57,16 @@ def interpret_roe(roe):
     else:
         return f"{roe_percent}% ✅ (High)"
 
+def interpret_de_ratio(de):
+    if de is None:
+        return "N/A"
+    elif de < 0.5:
+        return f"{de} ✅ (Low Debt)"
+    elif de < 1.5:
+        return f"{de} 🟡 (Moderate)"
+    else:
+        return f"{de} 🔴 (High Risk)"
+
 # Main app logic
 if ticker_input:
     try:
@@ -77,7 +87,6 @@ if ticker_input:
         revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
         net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
 
-
         # Convert profit margin to % format
         profit_margin = info.get("profitMargins")
         profit_margin_percent = f"{round(profit_margin * 100, 2)}%" if profit_margin else "N/A"
@@ -94,7 +103,7 @@ if ticker_input:
             "Net Income (TTM)": net_income_billion,
             "Profit Margin": profit_margin_percent,
             "Return on Equity (ROE)": interpret_roe(info.get("returnOnEquity")),
-            "Debt to Equity": info.get("debtToEquity"),
+            "Debt to Equity": interpret_de_ratio(info.get("debtToEquity")),
         }
 
         df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
@@ -120,3 +129,4 @@ if ticker_input:
 
     except Exception as e:
         st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
+
