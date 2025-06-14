@@ -122,7 +122,9 @@ if ticker_input:
         st.subheader("📉 Historical Stock Price Chart")
         
         try:
-            hist_price = stock.history(period="5y")  # You can change to "1y", "max", etc.
+            period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4)
+            hist_price = stock.history(period=period)
+              # You can change to "1y", "max", etc.
             if not hist_price.empty:
                 st.line_chart(hist_price["Close"])
             else:
