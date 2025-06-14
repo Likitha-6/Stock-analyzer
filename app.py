@@ -122,7 +122,7 @@ if ticker_input:
             financials["Profit Margin (%)"] = (financials["Net Income"] / financials["Total Revenue"]) * 100
             pm_df = financials[["Profit Margin (%)"]].round(2)
 
-            st.dataframe(pm_df)
+            
             st.line_chart(pm_df)
 
         except Exception as e:
@@ -139,7 +139,7 @@ if ticker_input:
             financials["Total Revenue"] = (financials["Total Revenue"] / 1e7)  # Convert from ₹ to Crores
             rm_df = financials[["Total Revenue"]].round(2)
         
-            st.dataframe(rm_df)
+            
             st.bar_chart(rm_df)
         
         except Exception as e:
