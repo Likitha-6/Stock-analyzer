@@ -94,9 +94,9 @@ def interpret_de_ratio(de):
     de = round(de / 100, 2) if de else 0
     if de is None:
         return "N/A"
-    elif de < 0.5:
+    elif de < 1:
         return f"{de} ✅ (Low Debt)"
-    elif de < 1.5:
+    elif de > 1 and de <2:
         return f"{de} 🟡 (Moderate)"
     else:
         return f"{de} 🔴 (High Risk)"
