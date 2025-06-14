@@ -82,6 +82,13 @@ if ticker_input:
             market_cap_display = f"{market_cap_billion} B ({cap_icon} {cap_category} – {cap_meaning})"
         else:
             market_cap_display = "N/A"
+        # Get All-Time High (ATH)
+        hist = stock.history(period="max")
+        if not hist.empty:
+            all_time_high = round(hist["High"].max(), 2)
+        else:
+            all_time_high = "N/A"
+
 
         revenue = info.get("totalRevenue")
         net_income = info.get("netIncomeToCommon")
@@ -96,6 +103,7 @@ if ticker_input:
             "Company Name": info.get("longName"),
             "Sector": info.get("sector"),
             "Current Price (₹)": info.get("currentPrice"),
+            "All-Time High (₹)": all_time_high,
             "Market Cap (Billion ₹)": market_cap_display,
             "P/E Ratio": info.get("trailingPE"),
             "EPS": info.get("trailingEps"),
