@@ -109,6 +109,8 @@ if ticker_input:
         sector = info.get("sector")
         industry_pe = INDUSTRY_PE.get(sector)
         stock_pe = info.get("trailingPE")
+        current_price = info.get("currentPrice")
+
 
         market_cap = info.get("marketCap")
         if market_cap:
@@ -124,6 +126,14 @@ if ticker_input:
             all_time_high = round(hist["High"].max(), 2)
         else:
             all_time_high = "N/A"
+        if all_time_high != "N/A" and current_price:
+            percent_from_ath = round(((current_price - all_time_high) / all_time_high) * 100, 2)
+            if percent_from_ath >= 0:
+                ath_change_display = f"{all_time_high} (+{percent_from_ath}%) 🟢"
+            else:
+                ath_change_display = f"{all_time_high} ({percent_from_ath}%) 🔻"
+        else:
+            ath_change_display = "N/A"
 
 
         revenue = info.get("totalRevenue")
@@ -141,7 +151,7 @@ if ticker_input:
             "Company Name": info.get("longName"),
             "Sector": info.get("sector"),
             "Current Price (₹)": info.get("currentPrice"),
-            "All-Time High (₹)": all_time_high,
+            "All-Time High (₹)": ath_change_display,
             "Market Cap (Billion ₹)": market_cap_display,
             "P/E Ratio": info.get("trailingPE"),
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
