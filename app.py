@@ -128,10 +128,10 @@ if ticker_input:
             financials["PAT"] = (financials["Net Income"] / 1e7)  # Convert to ₹ Cr
             pm_df=financials[["PAT"]].round(2)
             
-            st.dataframe(pm_df)
+            #st.dataframe(pm_df)
             st.line_chart(pm_df)
         except Exception as e:
-            st.warning("Could not retrieve PAT (Net Income) data.")
+            st.warning("Could not retrieve PAT (Profit) data.")
 
 
         # Historical Revenue Chart
