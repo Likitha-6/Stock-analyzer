@@ -118,6 +118,19 @@ if ticker_input:
         df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
         st.dataframe(df.set_index("Metric"))
 
+        # 📉 Stock Price Chart
+        st.subheader("📉 Historical Stock Price Chart")
+        
+        try:
+            hist_price = stock.history(period="5y")  # You can change to "1y", "max", etc.
+            if not hist_price.empty:
+                st.line_chart(hist_price["Close"])
+            else:
+                st.warning("No historical stock data available.")
+        except Exception as e:
+            st.warning(f"Could not load stock price chart. Error: {e}")
+
+
         # 📊 Historical Profit After Tax (PAT)
         st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
         
