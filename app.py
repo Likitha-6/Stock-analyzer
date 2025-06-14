@@ -11,7 +11,6 @@ st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
 ticker_input = st.text_input("Ticker Symbol", "RELIANCE")
 ticker = ticker_input.upper().strip() + ".NS"
 
-
 # Market cap interpretation
 def get_market_cap_category(market_cap_inr):
     if market_cap_inr >= 2e12:
@@ -59,7 +58,7 @@ def interpret_roe(roe):
         return f"{roe_percent}% ✅ (High)"
 
 def interpret_de_ratio(de):
-    de=round(de/100,2)
+    de = round(de / 100, 2) if de else 0
     if de is None:
         return "N/A"
     elif de < 0.5:
@@ -88,7 +87,6 @@ if ticker_input:
         net_income = info.get("netIncomeToCommon")
         revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
         net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
-    
 
         # Convert profit margin to % format
         profit_margin = info.get("profitMargins")
@@ -130,6 +128,19 @@ if ticker_input:
         except Exception as e:
             st.warning("Could not retrieve historical profit margins.")
 
+        # Historical Revenue Chart
+        st.subheader("📊 Historical Revenue")
+
+        try:
+            revenue_series = stock.financials.loc["Total Revenue"]
+            revenue_df = revenue_series.to_frame(name="Revenue (₹)")
+            revenue_df.index = revenue_df.index.year
+            revenue_df["Revenue (B ₹)"] = (revenue_df["Revenue (₹)"] / 1e9).round(2)
+
+            st.line_chart(revenue_df["Revenue (B ₹)"])
+
+        except Exception as e:
+            st.warning("Could not retrieve historical revenue data.")
+
     except Exception as e:
         st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
-
