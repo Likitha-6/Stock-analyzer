@@ -87,6 +87,7 @@ if ticker_input:
         net_income = info.get("netIncomeToCommon")
         revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
         net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
+        roce = get_roce_from_screener(ticker_input.upper())
 
         # Convert profit margin to % format
         profit_margin = info.get("profitMargins")
@@ -105,6 +106,7 @@ if ticker_input:
             "Profit Margin": profit_margin_percent,
             "Return on Equity (ROE)": interpret_roe(info.get("returnOnEquity")),
             "Debt to Equity": interpret_de_ratio(info.get("debtToEquity")),
+            "ROCE":roce,
         }
 
         df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
