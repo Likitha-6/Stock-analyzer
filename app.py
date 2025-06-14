@@ -11,6 +11,22 @@ st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
 ticker_input = st.text_input("Ticker Symbol", "RELIANCE")
 ticker = ticker_input.upper().strip() + ".NS"
 
+
+INDUSTRY_PE = {
+    "Information Technology": 25.4,
+    "Energy": 13.1,
+    "Financial Services": 15.2,
+    "Consumer Defensive": 28.3,
+    "Healthcare": 24.5,
+    "Utilities": 10.9,
+    "Industrials": 20.7,
+    "Consumer Cyclical": 22.1,
+    "Basic Materials": 14.6,
+    "Communication Services": 18.4,
+    "Real Estate": 16.0,
+    # Add more as needed
+}
+
 # Market cap interpretation
 def get_market_cap_category(market_cap_inr):
     if market_cap_inr >= 2e12:
@@ -23,6 +39,7 @@ def get_market_cap_category(market_cap_inr):
         return "Small Cap", "Emerging, higher risk"
     else:
         return "Micro Cap", "Very small, high risk"
+    
 
 def get_category_icon(category):
     return {
@@ -94,6 +111,8 @@ if ticker_input:
         net_income = info.get("netIncomeToCommon")
         revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
         net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
+        industry_pe = INDUSTRY_PE.get(sector)
+
 
         # Convert profit margin to % format
         profit_margin = info.get("profitMargins")
@@ -106,6 +125,7 @@ if ticker_input:
             "All-Time High (₹)": all_time_high,
             "Market Cap (Billion ₹)": market_cap_display,
             "P/E Ratio": info.get("trailingPE"),
+            "Industry_PE":industry_pe
             "EPS": info.get("trailingEps"),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Revenue (TTM)": revenue_billion,
