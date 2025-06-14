@@ -136,9 +136,8 @@ if ticker_input:
             financials = stock.financials
             financials = financials.loc[["Total Revenue"]].transpose()
             financials.index = financials.index.year
-            printf(financials)
-            financials["Total Revenue (in ₹ Cr)"] = (financials["Total Revenue"] / 1e7).round(2)  # Convert from ₹ to Crores
-            rm_df = financials[["Total Revenue "]]
+            financials["Total Revenue (in ₹ Cr)"] = (financials["Total Revenue"] / 1e7)  # Convert from ₹ to Crores
+            rm_df = financials[["Total Revenue "]].round(2)
         
             st.dataframe(rm_df)
             st.bar_chart(rm_df)
