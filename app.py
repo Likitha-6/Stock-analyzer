@@ -50,6 +50,22 @@ def get_category_icon(category):
         "Micro Cap": "🔴"
     }.get(category, "")
 
+def interpret_pe_with_industry(pe, industry_pe):
+    if pe is None or industry_pe is None:
+        return "N/A"
+
+    diff = pe - industry_pe
+    if diff > 10:
+        interpretation = "🔺 Significantly Overvalued"
+    elif diff > 2:
+        interpretation = "🟠 Slightly Overvalued"
+    elif diff < -2:
+        interpretation = "✅ Undervalued"
+    else:
+        interpretation = "🟡 Fairly Priced"
+
+    return f"{pe} vs {industry_pe} ({interpretation})"
+
 def interpret_dividend_yield(dy):
     if dy is None:
         return f"{0}% 🔴 (No dividends)"
@@ -90,6 +106,9 @@ if ticker_input:
     try:
         stock = yf.Ticker(ticker)
         info = stock.get_info()
+        sector = info.get("sector")
+        industry_pe = INDUSTRY_PE.get(sector)
+        stock_pe = info.get("trailingPE")
 
         market_cap = info.get("marketCap")
         if market_cap:
@@ -125,6 +144,7 @@ if ticker_input:
             "All-Time High (₹)": all_time_high,
             "Market Cap (Billion ₹)": market_cap_display,
             "P/E Ratio": info.get("trailingPE"),
+            "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
             #"Industry_PE":industry_pe,
             "EPS": info.get("trailingEps"),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
