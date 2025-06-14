@@ -125,7 +125,7 @@ if ticker_input:
             "All-Time High (₹)": all_time_high,
             "Market Cap (Billion ₹)": market_cap_display,
             "P/E Ratio": info.get("trailingPE"),
-            "Industry_PE":industry_pe,
+            #"Industry_PE":industry_pe,
             "EPS": info.get("trailingEps"),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Revenue (TTM)": revenue_billion,
