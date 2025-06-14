@@ -34,10 +34,10 @@ def get_category_icon(category):
     }.get(category, "")
 
 def interpret_dividend_yield(dy):
-    
-    
+    if dy is None:
+        return f"{0}% 🔴 (No dividends)"
     dy_percent = round(dy * 1, 2)
-    if dy == 0 or dy is None:
+    if dy == 0:
         return f"{dy_percent}% 🔴 (No dividends)"
     elif dy < 1:
         return f"{dy_percent}% 🟠 (Low)"
