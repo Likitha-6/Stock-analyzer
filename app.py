@@ -11,6 +11,28 @@ st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
 ticker_input = st.text_input("Ticker Symbol", "RELIANCE")
 ticker = ticker_input.upper().strip() + ".NS"
 
+import requests
+
+def get_roce_from_screener(ticker_name):
+    try:
+        url = f"https://www.screener.in/company/{ticker_name}/consolidated/"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            text = response.text
+            # Search for "ROCE" in the page and extract %
+            index = text.find("ROCE")
+            snippet = text[index:index+100]
+            import re
+            match = re.search(r"(\d+\.\d+)%", snippet)
+            if match:
+                roce_value = float(match.group(1))
+                return f"{roce_value}%"
+        return "N/A"
+    except:
+        return "N/A"
+
 # Market cap interpretation
 def get_market_cap_category(market_cap_inr):
     if market_cap_inr >= 2e12:
