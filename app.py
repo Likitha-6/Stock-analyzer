@@ -133,14 +133,15 @@ if ticker_input:
         st.subheader("📈 Historical Revenue (₹ in Crores)")
         
         try:
-            revenue = stock.financials
-            revenue_df = revenue.loc[["Total Revenue"]].transpose()
-            revenue_df.index = revenue_df.index.year
+            financials = stock.financials
+            financials = financials.loc[["Total Revenue"]].transpose()
+            financials.index = financials.index.year
             print(revenue_df)
-            revenue_df["Total Revenue (in ₹ Cr)"] = (revenue_df["Total Revenue"] / 1e7).round(2)  # Convert from ₹ to Crores
+            financials["Total Revenue (in ₹ Cr)"] = (financials["Total Revenue"] / 1e7).round(2)  # Convert from ₹ to Crores
+            rm_df = financials[["Total Revenue "]]
         
-            st.dataframe(revenue_df[["Total Revenue (in ₹ Cr)"]])
-            st.bar_chart(revenue_df["Total Revenue (in ₹ Cr)"])
+            st.dataframe(rm_df)
+            st.bar_chart(rm_df)
         
         except Exception as e:
             st.warning("Could not retrieve historical revenue data.")
