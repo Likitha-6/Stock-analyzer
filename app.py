@@ -133,7 +133,8 @@ if ticker_input:
         st.subheader("📈 Historical Revenue (₹ in Crores)")
         
         try:
-            revenue_df = stock.financials.loc[["Total Revenue"]].transpose()
+            revenue = stock.financials
+            revenue_df = revenue.loc[["Total Revenue"]].transpose()
             revenue_df.index = revenue_df.index.year
             revenue_df["Total Revenue (in ₹ Cr)"] = (revenue_df["Total Revenue"] / 1e7).round(2)  # Convert from ₹ to Crores
         
