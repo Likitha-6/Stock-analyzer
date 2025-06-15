@@ -10,8 +10,8 @@ st.markdown("---")
 compare_mode = st.checkbox("🔄 Compare with another stock")
 
 if compare_mode:
-    ticker_compare_input = st.text_input("Second Ticker Symbol (for comparison)", "TCS")
-    ticker_compare = ticker_compare_input.upper().strip() + ".NS"
+    #ticker_compare_input = st.text_input("Second Ticker Symbol (for comparison)", "TCS")
+    #ticker_compare = ticker_compare_input.upper().strip() + ".NS"
 
 st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
 
