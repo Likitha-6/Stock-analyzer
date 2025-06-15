@@ -145,7 +145,12 @@ if ticker_input:
 
         # Convert profit margin to % format
         profit_margin = info.get("profitMargins")
-        profit_margin_percent = f"{round(profit_margin * 100, 2)}%" if profit_margin else "N/A"
+        if profit_margin is None:
+            profit_margin_percent = "N/A"
+        elif profit_margin < 0:
+            profit_margin_percent = f"{round(profit_margin * 100, 2)}% ❌ (Loss-Making)"
+        else:
+            profit_margin_percent = f"{round(profit_margin * 100, 2)}%"
 
         data = {
             "Company Name": info.get("longName"),
@@ -158,8 +163,8 @@ if ticker_input:
             #"Industry_PE":industry_pe,
             "EPS": info.get("trailingEps"),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
-            "Revenue (TTM)": revenue_billion,
-            "Net Income (TTM)": net_income_billion,
+            #"Revenue (TTM)": revenue_billion,
+            #"Net Income (TTM)": net_income_billion,
             "Profit Margin": profit_margin_percent,
             "Return on Equity (ROE)": interpret_roe(info.get("returnOnEquity")),
             "Debt to Equity": interpret_de_ratio(info.get("debtToEquity")),
@@ -215,21 +220,7 @@ if ticker_input:
         
         except Exception as e:
             st.warning("Could not retrieve historical revenue data.")
-        # 📈 EPS Trend Over the Years
-        st.subheader("📈 EPS Trend (₹ per Share)")
         
-        try:
-            earnings = stock.earnings  # Annual EPS and earnings data
-            if not earnings.empty and "Earnings" in earnings.columns and "Revenue" in earnings.columns:
-                eps_series = earnings["Earnings"]
-                eps_series = eps_series.round(2)  # Convert to ₹ per share and Crores if needed
-                eps_df = pd.DataFrame(eps_series)
-                eps_df.columns = ["EPS"]
-                st.line_chart(eps_df)
-            else:
-                st.warning("EPS data not available.")
-        except Exception as e:
-            st.warning(f"Could not load EPS chart. Error: {e}")
 
     except Exception as e:
         st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
