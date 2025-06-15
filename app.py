@@ -50,6 +50,10 @@ def get_category_icon(category):
         "Micro Cap": "🔴"
     }.get(category, "")
 def interpret_eps(eps):
+    try:
+        eps = float(eps)
+    except (TypeError, ValueError):
+        return "N/A"
     if eps is None:
         return "N/A"
     elif eps < 0:
