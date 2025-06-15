@@ -173,28 +173,30 @@ def get_stock_summary(ticker_input):
 
 # Main app logic
 if ticker_input:
-    st.subheader("🆚 Compare With Another Stock (Optional)")
-    compare_input = st.text_input("Compare With Ticker Symbol (e.g., TCS, INFY)", "")
-
-    stock1_summary, error1 = get_stock_summary(ticker_input)
-    stock2_summary, error2 = (None, None)
-
-    if compare_input:
-        stock2_summary, error2 = get_stock_summary(compare_input)
-
-    if error1:
-        st.error(error1)
-    elif compare_input and error2:
-        st.error(error2)
-    else:
-        # Create a DataFrame for comparison
-        comparison_data = pd.DataFrame({
-            ticker_input.upper(): stock1_summary,
-            compare_input.upper() if stock2_summary else "": stock2_summary or {}
-        })
-
-        st.subheader("📊 Stock Comparison")
-        st.dataframe(comparison_data)
+    if compare_mode:
+        
+        st.subheader("🆚 Compare With Another Stock (Optional)")
+        compare_input = st.text_input("Compare With Ticker Symbol (e.g., TCS, INFY)", "")
+    
+        stock1_summary, error1 = get_stock_summary(ticker_input)
+        stock2_summary, error2 = (None, None)
+    
+        if compare_input:
+            stock2_summary, error2 = get_stock_summary(compare_input)
+    
+        if error1:
+            st.error(error1)
+        elif compare_input and error2:
+            st.error(error2)
+        else:
+            # Create a DataFrame for comparison
+            comparison_data = pd.DataFrame({
+                ticker_input.upper(): stock1_summary,
+                compare_input.upper() if stock2_summary else "": stock2_summary or {}
+            })
+    
+            st.subheader("📊 Stock Comparison")
+            st.dataframe(comparison_data)
     try:
         stock = yf.Ticker(ticker)
         info = stock.get_info()
