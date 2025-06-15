@@ -221,8 +221,8 @@ if ticker_input:
         try:
             earnings = stock.earnings  # Annual EPS and earnings data
             if not earnings.empty and "Earnings" in earnings.columns and "Revenue" in earnings.columns:
-                eps_series = earnings["Earnings"] / info.get("sharesOutstanding", 1)
-                eps_series = (eps_series / 1e1).round(2)  # Convert to ₹ per share and Crores if needed
+                eps_series = earnings["Earnings"]
+                eps_series = eps_series.round(2)  # Convert to ₹ per share and Crores if needed
                 eps_df = pd.DataFrame(eps_series)
                 eps_df.columns = ["EPS"]
                 st.line_chart(eps_df)
