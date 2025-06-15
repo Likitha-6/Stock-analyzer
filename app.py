@@ -49,6 +49,16 @@ def get_category_icon(category):
         "Small Cap": "🟠",
         "Micro Cap": "🔴"
     }.get(category, "")
+def interpret_eps(eps):
+    if eps is None:
+        return "N/A"
+    elif eps < 0:
+        return f"{round(eps, 2)} 🔴 (Negative)"
+    elif eps < 10:
+        return f"{round(eps, 2)} 🟠 (Low)"
+    else:
+        return f"{round(eps, 2)} ✅"
+
 
 def interpret_pe_with_industry(pe, industry_pe):
     if pe is None or industry_pe is None:
@@ -161,7 +171,8 @@ if ticker_input:
             "P/E Ratio": info.get("trailingPE"),
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
             #"Industry_PE":industry_pe,
-            "EPS": info.get("trailingEps"),
+            "EPS": interpret_eps(info.get("trailingEps")),
+
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             #"Revenue (TTM)": revenue_billion,
             #"Net Income (TTM)": net_income_billion,
