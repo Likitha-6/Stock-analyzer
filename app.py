@@ -144,6 +144,20 @@ def get_stock_summary(ticker_input):
         net_income = info.get("netIncomeToCommon")
         revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
         net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
+        # Get All-Time High (ATH)
+        hist = stock.history(period="max")
+        if not hist.empty:
+            all_time_high = round(hist["High"].max(), 2)
+        else:
+            all_time_high = "N/A"
+        if all_time_high != "N/A" and current_price:
+            percent_from_ath = round(((current_price - all_time_high) / all_time_high) * 100, 2)
+            if percent_from_ath >= 0:
+                ath_change_display = f"{all_time_high} (+{percent_from_ath}%) 🟢"
+            else:
+                ath_change_display = f"{all_time_high} ({percent_from_ath}%) 🔻"
+        else:
+            ath_change_display = "N/A"
 
         profit_margin = info.get("profitMargins")
         profit_margin_percent = (
@@ -156,15 +170,16 @@ def get_stock_summary(ticker_input):
             "Company Name": info.get("longName"),
             "Sector": sector,
             "Current Price (₹)": current_price,
+            "All-Time High (₹)": ath_change_display,
+            "Market Cap": market_cap_display,
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
             "EPS": interpret_eps(info.get("trailingEps")),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
             "ROE": interpret_roe(info.get("returnOnEquity")),
             "Debt/Equity": interpret_de_ratio(info.get("debtToEquity")),
-            "Market Cap": market_cap_display,
-            "Revenue": revenue_billion,
-            "Net Income": net_income_billion,
+            #"Revenue": revenue_billion,
+            #"Net Income": net_income_billion,
         }
         return summary, None
     except Exception as e:
