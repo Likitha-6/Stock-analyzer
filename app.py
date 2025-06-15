@@ -215,6 +215,22 @@ if ticker_input:
         
         except Exception as e:
             st.warning("Could not retrieve historical revenue data.")
+        # 📈 EPS Trend Over the Years
+        st.subheader("📈 EPS Trend (₹ per Share)")
+        
+        try:
+            earnings = stock.earnings  # Annual EPS and earnings data
+            if not earnings.empty and "Earnings" in earnings.columns and "Revenue" in earnings.columns:
+                eps_series = earnings["Earnings"] / info.get("sharesOutstanding", 1)
+                eps_series = (eps_series / 1e1).round(2)  # Convert to ₹ per share and Crores if needed
+                eps_df = pd.DataFrame(eps_series)
+                eps_df.columns = ["EPS"]
+                st.line_chart(eps_df)
+            else:
+                st.warning("EPS data not available.")
+        except Exception as e:
+            st.warning(f"Could not load EPS chart. Error: {e}")
+
     except Exception as e:
         st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
         
