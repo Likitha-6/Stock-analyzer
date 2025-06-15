@@ -9,11 +9,9 @@ st.title("📈 Indian Stock Analyzer (Fundamentals)")
 
 st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
 
-ticker_input = st.text_input("Ticker Symbol", "RELIANCE")
-ticker = ticker_input.upper().strip() + ".NS"
-NEWS_API_KEY = "9802d49649194f36b4577221a7bd499c"  # Replace with your actual API key
+compare_mode = st.checkbox("🔁 Compare Two Stocks (Optional)", value=False)
 
-
+NEWS_API_KEY = "9802d49649194f36b4577221a7bd499c"
 
 INDUSTRY_PE = {
     "Technology": 25.4,
@@ -27,10 +25,8 @@ INDUSTRY_PE = {
     "Basic Materials": 14.6,
     "Communication Services": 18.4,
     "Real Estate": 16.0,
-    # Add more as needed
 }
 
-# Market cap interpretation
 def get_market_cap_category(market_cap_inr):
     if market_cap_inr >= 2e12:
         return "Mega Cap", "Strong, stable"
@@ -42,7 +38,6 @@ def get_market_cap_category(market_cap_inr):
         return "Small Cap", "Emerging, higher risk"
     else:
         return "Micro Cap", "Very small, high risk"
-    
 
 def get_category_icon(category):
     return {
@@ -52,6 +47,7 @@ def get_category_icon(category):
         "Small Cap": "🟠",
         "Micro Cap": "🔴"
     }.get(category, "")
+
 def interpret_eps(eps):
     try:
         eps = float(eps)
@@ -66,11 +62,9 @@ def interpret_eps(eps):
     else:
         return f"{round(eps, 2)} ✅"
 
-
 def interpret_pe_with_industry(pe, industry_pe):
     if pe is None or industry_pe is None:
         return "N/A"
-
     diff = pe - industry_pe
     if diff > 10:
         interpretation = "🔺 Overvalued"
@@ -80,7 +74,6 @@ def interpret_pe_with_industry(pe, industry_pe):
         interpretation = "✅ Undervalued"
     else:
         interpretation = "✅ Fairly Priced"
-
     return f"{pe} vs {industry_pe} ({interpretation})"
 
 def interpret_dividend_yield(dy):
@@ -113,160 +106,59 @@ def interpret_de_ratio(de):
         return "N/A"
     elif de < 1:
         return f"{de} ✅ (Low Debt)"
-    elif de > 1 and de <2:
+    elif de > 1 and de < 2:
         return f"{de} 🟡 (Moderate)"
     else:
         return f"{de} 🔴 (High Risk)"
 
-# Main app logic
-if ticker_input:
+# Use single or comparison mode
+if compare_mode:
+    symbol1 = st.text_input("Enter First Stock Symbol", "RELIANCE").upper().strip()
+    symbol2 = st.text_input("Enter Second Stock Symbol", "INFY").upper().strip()
+
+    ticker1 = yf.Ticker(symbol1 + ".NS")
+    ticker2 = yf.Ticker(symbol2 + ".NS")
+
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.get_info()
-        sector = info.get("sector")
-        industry_pe = INDUSTRY_PE.get(sector)
-        stock_pe = info.get("trailingPE")
-        current_price = info.get("currentPrice")
+        info1 = ticker1.get_info()
+        info2 = ticker2.get_info()
 
-
-        market_cap = info.get("marketCap")
-        if market_cap:
-            market_cap_billion = round(market_cap / 1e9, 2)
-            cap_category, cap_meaning = get_market_cap_category(market_cap)
-            cap_icon = get_category_icon(cap_category)
-            market_cap_display = f"{market_cap_billion} B ({cap_icon} {cap_category} – {cap_meaning})"
-        else:
-            market_cap_display = "N/A"
-        # Get All-Time High (ATH)
-        hist = stock.history(period="max")
-        if not hist.empty:
-            all_time_high = round(hist["High"].max(), 2)
-        else:
-            all_time_high = "N/A"
-        if all_time_high != "N/A" and current_price:
-            percent_from_ath = round(((current_price - all_time_high) / all_time_high) * 100, 2)
-            if percent_from_ath >= 0:
-                ath_change_display = f"{all_time_high} (+{percent_from_ath}%) 🟢"
-            else:
-                ath_change_display = f"{all_time_high} ({percent_from_ath}%) 🔻"
-        else:
-            ath_change_display = "N/A"
-
-
-        revenue = info.get("totalRevenue")
-        net_income = info.get("netIncomeToCommon")
-        revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
-        net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
-        #industry_pe = INDUSTRY_PE.get(sector)
-
-
-        # Convert profit margin to % format
-        profit_margin = info.get("profitMargins")
-        if profit_margin is None:
-            profit_margin_percent = "N/A"
-        elif profit_margin < 0:
-            profit_margin_percent = f"{round(profit_margin * 100, 2)}% ❌ (Loss-Making)"
-        else:
-            profit_margin_percent = f"{round(profit_margin * 100, 2)}%"
-
-        data = {
-            "Company Name": info.get("longName"),
-            "Sector": info.get("sector"),
-            "Current Price (₹)": info.get("currentPrice"),
-            "All-Time High (₹)": ath_change_display,
-            "Market Cap (Billion ₹)": market_cap_display,
-            "P/E Ratio": info.get("trailingPE"),
-            "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-            #"Industry_PE":industry_pe,
-            "EPS": interpret_eps(info.get("trailingEps")),
-
-            "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
-            #"Revenue (TTM)": revenue_billion,
-            #"Net Income (TTM)": net_income_billion,
-            "Profit Margin": profit_margin_percent,
-            "Return on Equity (ROE)": interpret_roe(info.get("returnOnEquity")),
-            "Debt to Equity": interpret_de_ratio(info.get("debtToEquity")),
-        }
-
-        df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
-        col1, col2 = st.columns([2, 1])
-
-        # LEFT: Metrics Table
+        col1, col2 = st.columns(2)
         with col1:
-            st.dataframe(df.set_index("Metric"))
-        
-        # RIGHT: News Section
+            st.subheader(f"📊 {info1.get('longName')} ({symbol1})")
+            st.write("**Price:**", info1.get("currentPrice"))
+            st.write("**P/E Ratio:**", info1.get("trailingPE"))
+            st.write("**EPS:**", interpret_eps(info1.get("trailingEps")))
+            st.write("**ROE:**", interpret_roe(info1.get("returnOnEquity")))
+            st.write("**Dividend Yield:**", interpret_dividend_yield(info1.get("dividendYield")))
+
         with col2:
-            st.subheader("📰 Latest News")
-        
-            query = info.get("longName", ticker_input)
-            news_url = f"https://newsapi.org/v2/everything?q={query}&language=en&sortBy=publishedAt&pageSize=5&apiKey={NEWS_API_KEY}"
-            
-            try:
-                response = requests.get(news_url)
-                if response.status_code == 200:
-                    articles = response.json().get("articles", [])
-                    if not articles:
-                        st.write("No news found.")
-                    for article in articles:
-                        st.markdown(f"**[{article['title']}]({article['url']})**")
-                        st.caption(f"{article['source']['name']} • {article['publishedAt'][:10]}")
-                else:
-                    st.warning("News API limit reached or failed to fetch news.")
-            except Exception as e:
-                st.warning("Could not load news articles.")
+            st.subheader(f"📊 {info2.get('longName')} ({symbol2})")
+            st.write("**Price:**", info2.get("currentPrice"))
+            st.write("**P/E Ratio:**", info2.get("trailingPE"))
+            st.write("**EPS:**", interpret_eps(info2.get("trailingEps")))
+            st.write("**ROE:**", interpret_roe(info2.get("returnOnEquity")))
+            st.write("**Dividend Yield:**", interpret_dividend_yield(info2.get("dividendYield")))
 
-        #st.dataframe(df.set_index("Metric"))
+        st.subheader("📈 Price Comparison")
+        period = st.selectbox("Select period for comparison", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=3)
 
-        # 📉 Stock Price Chart
-        st.subheader("📉 Historical Stock Price Chart")
-        
-        try:
-            period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4)
-            hist_price = stock.history(period=period)
-              # You can change to "1y", "max", etc.
-            if not hist_price.empty:
-                st.line_chart(hist_price["Close"].round(2))
-            else:
-                st.warning("No historical stock data available.")
-        except Exception as e:
-            st.warning(f"Could not load stock price chart. Error: {e}")
+        hist1 = ticker1.history(period=period)
+        hist2 = ticker2.history(period=period)
 
-
-        # 📊 Historical Profit After Tax (PAT)
-        st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
-        
-        try:
-            financials = stock.financials
-            financials = financials.loc[["Net Income"]].transpose()
-            financials.index = financials.index.year
-            financials["PAT"] = (financials["Net Income"] / 1e7)  # Convert to ₹ Cr
-            pm_df=financials[["PAT"]].round(2)
-            
-            #st.dataframe(pm_df)
-            st.line_chart(pm_df)
-        except Exception as e:
-            st.warning("Could not retrieve PAT (Profit) data.")
-
-
-        # Historical Revenue Chart
-        # 📊 Revenue Over the Years
-        st.subheader("📈 Historical Revenue (₹ in Crores)")
-        
-        try:
-            financials = stock.financials
-            financials = financials.loc[["Total Revenue"]].transpose()
-            financials.index = financials.index.year
-            financials["Total Revenue"] = (financials["Total Revenue"] / 1e7)  # Convert from ₹ to Crores
-            rm_df = financials[["Total Revenue"]].round(2)
-        
-            
-            st.bar_chart(rm_df)
-        
-        except Exception as e:
-            st.warning("Could not retrieve historical revenue data.")
-        
+        if not hist1.empty and not hist2.empty:
+            price_df = pd.DataFrame({
+                symbol1: hist1["Close"],
+                symbol2: hist2["Close"]
+            })
+            st.line_chart(price_df)
+        else:
+            st.warning("Could not load historical data for one or both tickers.")
 
     except Exception as e:
-        st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
-        
+        st.error("⚠️ Error comparing stocks. Please check the symbols and try again.")
+
+else:
+    ticker_input = st.text_input("Ticker Symbol", "RELIANCE")
+    ticker = ticker_input.upper().strip() + ".NS"
+    # ... [Insert original single stock analysis logic here from your current app] ...
