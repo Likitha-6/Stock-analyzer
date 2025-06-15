@@ -6,6 +6,12 @@ import requests
 # Streamlit setup
 st.set_page_config(page_title="Indian Stock Analyzer", page_icon="📊")
 st.title("📈 Indian Stock Analyzer (Fundamentals)")
+st.markdown("---")
+compare_mode = st.checkbox("🔄 Compare with another stock")
+
+if compare_mode:
+    ticker_compare_input = st.text_input("Second Ticker Symbol (for comparison)", "TCS")
+    ticker_compare = ticker_compare_input.upper().strip() + ".NS"
 
 st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
 
@@ -117,9 +123,81 @@ def interpret_de_ratio(de):
         return f"{de} 🟡 (Moderate)"
     else:
         return f"{de} 🔴 (High Risk)"
+def get_stock_summary(ticker_input):
+    ticker = ticker_input.upper().strip() + ".NS"
+    stock = yf.Ticker(ticker)
+    info = stock.get_info()
+
+    if not info or "longName" not in info:
+        return None, f"⚠️ Could not fetch data for {ticker_input.upper()}. Please check the symbol."
+
+    sector = info.get("sector")
+    industry_pe = INDUSTRY_PE.get(sector)
+    stock_pe = info.get("trailingPE")
+    current_price = info.get("currentPrice")
+
+    try:
+        market_cap = info.get("marketCap")
+        market_cap_display = (
+            f"{round(market_cap / 1e9, 2)} B ({get_category_icon(get_market_cap_category(market_cap)[0])} {get_market_cap_category(market_cap)[0]})"
+            if market_cap else "N/A"
+        )
+
+        revenue = info.get("totalRevenue")
+        net_income = info.get("netIncomeToCommon")
+        revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
+        net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
+
+        profit_margin = info.get("profitMargins")
+        profit_margin_percent = (
+            "N/A" if profit_margin is None else
+            f"{round(profit_margin * 100, 2)}% ❌ (Loss-Making)" if profit_margin < 0 else
+            f"{round(profit_margin * 100, 2)}%"
+        )
+
+        summary = {
+            "Company Name": info.get("longName"),
+            "Sector": sector,
+            "Current Price (₹)": current_price,
+            "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
+            "EPS": interpret_eps(info.get("trailingEps")),
+            "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
+            "Profit Margin": profit_margin_percent,
+            "ROE": interpret_roe(info.get("returnOnEquity")),
+            "Debt/Equity": interpret_de_ratio(info.get("debtToEquity")),
+            "Market Cap": market_cap_display,
+            "Revenue": revenue_billion,
+            "Net Income": net_income_billion,
+        }
+        return summary, None
+    except Exception as e:
+        return None, f"Error processing stock: {ticker_input.upper()} - {e}"
+
 
 # Main app logic
 if ticker_input:
+    st.subheader("🆚 Compare With Another Stock (Optional)")
+    compare_input = st.text_input("Compare With Ticker Symbol (e.g., TCS, INFY)", "")
+
+    stock1_summary, error1 = get_stock_summary(ticker_input)
+    stock2_summary, error2 = (None, None)
+
+    if compare_input:
+        stock2_summary, error2 = get_stock_summary(compare_input)
+
+    if error1:
+        st.error(error1)
+    elif compare_input and error2:
+        st.error(error2)
+    else:
+        # Create a DataFrame for comparison
+        comparison_data = pd.DataFrame({
+            ticker_input.upper(): stock1_summary,
+            compare_input.upper() if stock2_summary else "": stock2_summary or {}
+        })
+
+        st.subheader("📊 Stock Comparison")
+        st.dataframe(comparison_data)
     try:
         stock = yf.Ticker(ticker)
         info = stock.get_info()
