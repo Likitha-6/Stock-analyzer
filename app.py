@@ -7,7 +7,7 @@ import requests
 st.set_page_config(page_title="Indian Stock Analyzer", page_icon="📊")
 st.title("📈 Indian Stock Analyzer (Fundamentals)")
 st.markdown("---")
-compare_mode = st.checkbox("🔄 Compare with another stock")
+compare_mode = st.checkbox("🔄 Compare stocks")
 
 
 st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
