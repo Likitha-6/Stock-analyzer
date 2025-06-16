@@ -412,7 +412,9 @@ def get_stock_summary(ticker_input):
                 except Exception as e:
                     st.warning("Could not retrieve historical revenue data.")
             
-    except Exception as e:
-        st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
+        except Exception as e:
+            st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
+     except Exception as e:
+            st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
         
 
