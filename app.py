@@ -185,7 +185,7 @@ def interpret_de_ratio(de):
     if de is None:
         return "N/A"
     
-    de_ratio = round(de/100, 2) 
+    de_ratio = round((de/100), 2) 
     
     if de_ratio < 1:
         return f"{de_ratio} ✅ (Low Debt)"
