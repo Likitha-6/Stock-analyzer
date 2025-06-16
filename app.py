@@ -9,6 +9,7 @@ st.set_page_config(page_title="Indian Stock Analyzer", page_icon="📊")
 st.title("📈 Indian Stock Analyzer (Fundamentals)")
 st.markdown("---")
 compare_mode = st.checkbox("🔄 Compare stocks")
+
 # Load dynamic search CSV
 try:
     nse_df = pd.read_csv("nse stocks.csv")  # Ensure this file is present in the app directory
@@ -120,16 +121,9 @@ def get_eps_cagr_based_peg(ticker):
     # Get earnings history
     try:
         earnings = stock.earnings  # Returns a DataFrame: 'Revenue' and 'Earnings'
-        if earnings.shape[0] < 5:
-            return None, "Not enough EPS data for 5-year CAGR"
+        if earnings.empty:
+            return None, "No EPS data available for PEG calculation"
 
-        # Assume EPS = Earnings / Shares Outstanding (proxy: net income)
-        # It's better to use 'basicEPS' if available in stock.info or calculate from financial statements
-        # For simplicity, if earnings are directly fetched, you might need to adjust.
-        # Yahoo Finance 'earnings' usually gives Net Income.
-        # To get EPS, you'd need shares outstanding which is often in 'info' as 'sharesOutstanding'.
-        # For now, let's just use 'Earnings' as a proxy for growth, assuming 'Earnings' here refers to Net Income.
-        
         # Taking last 5 years for CAGR if available
         if earnings.shape[0] >=5:
             eps_data = earnings['Earnings'].tail(5) # Get last 5 years of earnings
@@ -139,8 +133,6 @@ def get_eps_cagr_based_peg(ticker):
             cagr = calculate_cagr(eps_old, eps_new, periods)
 
             if cagr and pe_ratio:
-                # PEG Ratio = PE Ratio / (Annual EPS Growth Rate * 100)
-                # If CAGR is negative or zero, PEG calculation is not meaningful
                 if cagr <= 0:
                     return None, "EPS CAGR is non-positive, PEG not meaningful"
                 peg = pe_ratio / (cagr * 100)  # Convert CAGR to %
@@ -181,8 +173,6 @@ def interpret_roe(roe):
 def interpret_de_ratio(de):
     if de is None:
         return "N/A"
-    # Ensure de is treated as a ratio if it comes as a percentage (e.g., 100 for 1:1)
-    # Yahoo Finance's debtToEquity is usually in percentage, e.g., 50 for 0.5
     de_ratio = round(de / 100, 2)
     if de_ratio < 1:
         return f"{de_ratio} ✅ (Low Debt)"
@@ -192,7 +182,9 @@ def interpret_de_ratio(de):
         return f"{de_ratio} 🔴 (High Risk)"
 
 def get_stock_summary(ticker_symbol):
-    stock = yf.Ticker(ticker_symbol + ".NS")
+    # Appending ".NS" within this function, so it's only done once
+    full_ticker = ticker_symbol + ".NS" 
+    stock = yf.Ticker(full_ticker)
     
     try:
         info = stock.get_info()
@@ -203,8 +195,7 @@ def get_stock_summary(ticker_symbol):
         sector = info.get("sector")
         industry_pe = INDUSTRY_PE.get(sector)
         stock_pe = info.get("trailingPE")
-        #eps_growth = info.get("earningsQuarterlyGrowth") # This might be None or not what's needed for PEG
-        peg, peg_msg = get_eps_cagr_based_peg(ticker_symbol + ".NS") # Pass full ticker for yfinance
+        peg, peg_msg = get_eps_cagr_based_peg(full_ticker)
         
         current_price = info.get("currentPrice")
         
@@ -216,8 +207,6 @@ def get_stock_summary(ticker_symbol):
         
         revenue = info.get("totalRevenue")
         net_income = info.get("netIncomeToCommon")
-        revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
-        net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
         
         # Get All-Time High (ATH)
         hist = stock.history(period="max")
@@ -248,14 +237,12 @@ def get_stock_summary(ticker_symbol):
             "All-Time High (₹)": ath_change_display,
             "Market Cap": market_cap_display,
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-            "PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else peg, # Uncommented this based on original intention
+            "PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else peg,
             "EPS": interpret_eps(info.get("trailingEps")),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
             "ROE": interpret_roe(info.get("returnOnEquity")),
             "Debt/Equity": interpret_de_ratio(info.get("debtToEquity")),
-            #"Revenue": revenue_billion, # These were commented out in original code, keeping them that way.
-            #"Net Income": net_income_billion,
         }
         return summary, None
     except Exception as e:
@@ -265,10 +252,124 @@ def get_stock_summary(ticker_symbol):
 # Main app logic
 if ticker_input:
     if compare_mode:
-        
         st.subheader("🆚 Compare With Another Stock (Optional)")
         compare_company = st.selectbox("Compare With", company_names, index=0)
         compare_input = nse_df[nse_df["Company Name"] == compare_company]["Symbol"].values[0]
         
+        stock1_summary, error1 = get_stock_summary(ticker_input)
+        stock2_summary, error2 = (None, None)
         
-        stock
+        if compare_input:
+            stock2_summary, error2 = get_stock_summary(compare_input)
+        
+        if error1:
+            st.error(error1)
+        elif compare_input and error2:
+            st.error(error2)
+        else:
+            if stock1_summary and stock2_summary:
+                # Align keys for DataFrame creation
+                common_keys = list(set(stock1_summary.keys()) & set(stock2_summary.keys()))
+                
+                # Create dictionaries with only common keys for DataFrame
+                dict1_aligned = {k: stock1_summary[k] for k in common_keys}
+                dict2_aligned = {k: stock2_summary[k] for k in common_keys}
+
+                comparison_data = pd.DataFrame({
+                    stock1_summary.get("Company Name", ticker_input.upper()): pd.Series(dict1_aligned),
+                    stock2_summary.get("Company Name", compare_input.upper()): pd.Series(dict2_aligned)
+                })
+                
+                st.subheader("📊 Stock Comparison")
+                st.dataframe(comparison_data)
+            elif stock1_summary:
+                st.warning("Only the first stock's data is available for comparison.")
+                st.subheader(f"📋 Fundamentals Summary for {stock1_summary.get('Company Name', ticker_input.upper())}")
+                df = pd.DataFrame(stock1_summary.items(), columns=["Metric", "Value"])
+                st.dataframe(df.set_index("Metric"))
+            else:
+                st.warning("No stock data available for comparison.")
+
+    else:
+        # Single stock view
+        stock_summary, error = get_stock_summary(ticker_input)
+
+        if error:
+            st.error(error)
+        elif stock_summary:
+            # Reconstruct the display data from the summary
+            # We fetch trailingPE separately here if it's not part of the summary you want to display directly
+            # If "P/E Ratio" is not directly in summary and you want to show it, fetch it here
+            stock_pe_for_display = yf.Ticker(ticker_input + ".NS").info.get("trailingPE")
+            
+            data = {
+                "Company Name": stock_summary.get("Company Name"),
+                "Sector": stock_summary.get("Sector"),
+                "Current Price (₹)": stock_summary.get("Current Price (₹)"),
+                "All-Time High (₹)": stock_summary.get("All-Time High (₹)"),
+                "Market Cap (Billion ₹)": stock_summary.get("Market Cap"),
+                "P/E Ratio": stock_pe_for_display, # Use the directly fetched PE
+                "P/E vs Industry": stock_summary.get("P/E vs Industry"),
+                "PEG Ratio": stock_summary.get("PEG Ratio"),
+                "EPS": stock_summary.get("EPS"),
+                "Dividend Yield": stock_summary.get("Dividend Yield"),
+                "Profit Margin": stock_summary.get("Profit Margin"),
+                "Return on Equity (ROE)": stock_summary.get("ROE"),
+                "Debt to Equity": stock_summary.get("Debt/Equity"),
+            }
+            
+            df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
+            
+            st.subheader("📋 Stock Fundamentals Summary")
+            st.dataframe(df.set_index("Metric"))
+            
+            # ---
+            # 📉 Stock Price Chart
+            st.subheader("📉 Historical Stock Price Chart")
+            
+            try:
+                stock_yf = yf.Ticker(ticker_input + ".NS")
+                period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4)
+                hist_price = stock_yf.history(period=period)
+                if not hist_price.empty:
+                    st.line_chart(hist_price["Close"].round(2))
+                else:
+                    st.warning("No historical stock data available for the selected period.")
+            except Exception as e:
+                st.warning(f"Could not load stock price chart. Error: {e}")
+            
+            # ---
+            # 📊 Historical Profit After Tax (PAT)
+            st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
+            
+            try:
+                stock_yf = yf.Ticker(ticker_input + ".NS")
+                financials = stock_yf.financials
+                if not financials.empty and "Net Income" in financials.index:
+                    pat_df = financials.loc[["Net Income"]].transpose()
+                    pat_df.index = pat_df.index.year
+                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7)  # Convert to ₹ Cr
+                    st.line_chart(pat_df[["PAT"]].round(2))
+                else:
+                    st.warning("Net Income data not available in financials to calculate PAT.")
+            except Exception as e:
+                st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
+            
+            # ---
+            # 📈 Historical Revenue (₹ in Crores)
+            st.subheader("📈 Historical Revenue (₹ in Crores)")
+            
+            try:
+                stock_yf = yf.Ticker(ticker_input + ".NS")
+                financials = stock_yf.financials
+                if not financials.empty and "Total Revenue" in financials.index:
+                    revenue_df = financials.loc[["Total Revenue"]].transpose()
+                    revenue_df.index = revenue_df.index.year
+                    revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7)  # Convert from ₹ to Crores
+                    st.bar_chart(revenue_df[["Total Revenue"]].round(2))
+                else:
+                    st.warning("Total Revenue data not available in financials.")
+            except Exception as e:
+                st.warning(f"Could not retrieve historical revenue data. Error: {e}")
+        elif not user_input:
+            st.info("Please enter a company name in the search box above to get started.")
