@@ -149,7 +149,7 @@ def get_eps_cagr_based_peg(ticker):
 def interpret_dividend_yield(dy):
     if dy is None:
         return f"{0}% 🔴 (No dividends)"
-    dy_percent = round(dy * 100, 2) # Convert to percentage
+    dy_percent = round(dy * 1, 2) # Convert to percentage
     if dy == 0:
         return f"{dy_percent}% 🔴 (No dividends)"
     elif dy < 1:
