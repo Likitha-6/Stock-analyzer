@@ -187,10 +187,9 @@ def interpret_de_ratio(de):
     # and it's an Indian stock (where yfinance often gives percentages),
     # assume it's a percentage and convert it to a ratio.
     # A D/E of 200% (2.0) is already quite high. If it's 50 or 100, it's likely a percentage.
-    if de > 10 and de > 2.0: # Check if it's likely a percentage (e.g., 50, 100, 200)
-        de_ratio = round(de / 100, 2)
-    else:
-        de_ratio = round(de/100, 2)
+     # Check if it's likely a percentage (e.g., 50, 100, 200)
+    de_ratio = round(de / 100, 2)
+    
     
     if de_ratio < 1:
         return f"{de_ratio} ✅ (Low Debt)"
