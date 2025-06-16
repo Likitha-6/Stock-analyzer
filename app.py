@@ -15,7 +15,8 @@ try:
     # Load the NSE stock list CSV (make sure it has 'Symbol' and 'Company Name' columns)
     @st.cache_data
     def load_stock_data():
-        return pd.read_csv("nse stocks.csv") # Ensure this file is present in your app directory
+        # ENSURE THIS FILENAME MATCHES YOUR ACTUAL CSV FILE NAME (e.g., "nse_stocks.csv" or "nse stocks.csv")
+        return pd.read_csv("nse_stocks.csv") 
     
     nse_df = load_stock_data()
     
@@ -90,7 +91,7 @@ def interpret_eps(eps):
         eps = float(eps)
     except (TypeError, ValueError):
         return "N/A"
-    if eps is None:
+    if eps is None: # This check might be redundant if the try-except handles it, but safe to keep
         return "N/A"
     elif eps < 0:
         return f"{round(eps, 2)} 🔴 (Negative)"
@@ -117,7 +118,7 @@ def interpret_pe_with_industry(pe, industry_pe):
     return f"{round(pe,2)} (Industry Avg: {industry_pe}) {interpretation}"
 
 def calculate_cagr(start_value, end_value, periods):
-    if start_value <= 0 or end_value <= 0 or periods == 0: # Added periods == 0 check
+    if start_value <= 0 or end_value <= 0 or periods == 0:
         return None  # Avoid division by zero or log of negative
     return (end_value / start_value) ** (1 / periods) - 1
 
@@ -125,21 +126,18 @@ def get_eps_cagr_based_peg(ticker):
     stock = yf.Ticker(ticker)
     pe_ratio = stock.info.get("trailingPE")
 
-    # Get earnings history
     try:
-        earnings = stock.earnings  # Returns a DataFrame: 'Revenue' and 'Earnings'
+        earnings = stock.earnings
         if earnings.empty:
             return None, "No EPS data available for PEG calculation"
 
-        # Taking last 5 years for CAGR if available
         if earnings.shape[0] >= 5:
-            # Ensure earnings are sorted by year, oldest first for CAGR calculation
             eps_data = earnings['Earnings'].sort_index().tail(5) 
             eps_old = eps_data.iloc[0]
             eps_new = eps_data.iloc[-1]
-            periods = len(eps_data) - 1 # Number of periods for CAGR calculation
+            periods = len(eps_data) - 1
 
-            if periods <= 0: # Ensure at least one period for CAGR
+            if periods <= 0:
                 return None, "Not enough data points for CAGR calculation"
             
             cagr = calculate_cagr(eps_old, eps_new, periods)
@@ -147,7 +145,7 @@ def get_eps_cagr_based_peg(ticker):
             if cagr is not None and pe_ratio is not None:
                 if cagr <= 0:
                     return None, "EPS CAGR is non-positive, PEG not meaningful"
-                peg = pe_ratio / (cagr * 100)  # Convert CAGR to %
+                peg = pe_ratio / (cagr * 100)
                 return round(peg, 2), None
             else:
                 return None, "CAGR or PE unavailable"
@@ -161,12 +159,12 @@ def get_eps_cagr_based_peg(ticker):
 def interpret_dividend_yield(dy):
     if dy is None:
         return f"{0}% 🔴 (No dividends)"
-    dy_percent = round(dy * 1, 2) # Corrected to multiply by 100 for percentage
+    dy_percent = round(dy * 100, 2) # Changed from * 1 to * 100 for percentage
     if dy == 0:
         return f"{dy_percent}% 🔴 (No dividends)"
-    elif dy < 1:
+    elif dy < 0.01: # Smallest non-zero dividend yield
         return f"{dy_percent}% 🟠 (Low)"
-    elif dy < 3:
+    elif dy < 0.03: # Between 1% and 3%
         return f"{dy_percent}% ✅ (Moderate)"
     else:
         return f"{dy_percent}% ✅ (High)"
@@ -183,20 +181,22 @@ def interpret_roe(roe):
         return f"{roe_percent}% ✅ (High)"
 
 def interpret_de_ratio(de):
-    de = round(de / 100, 2) if de else 0
+    # This is the corrected version of the function
     if de is None:
         return "N/A"
-    elif de < 1:
-        return f"{de} ✅ (Low Debt)"
-    elif de > 1 and de <2:
-        return f"{de} 🟡 (Moderate)"
+    
+    de_ratio = round(de, 2) 
+    
+    if de_ratio < 1:
+        return f"{de_ratio} ✅ (Low Debt)"
+    elif 1 <= de_ratio < 2:
+        return f"{de_ratio} 🟡 (Moderate)"
     else:
-        return f"{de} 🔴 (High Risk)"
+        return f"{de_ratio} 🔴 (High Risk)"
 
 
 @st.cache_data(ttl="1h") # Cache the stock summary for 1 hour
 def get_stock_summary(ticker_symbol):
-    # Appending ".NS" within this function, so it's only done once
     full_ticker = ticker_symbol + ".NS" 
     stock = yf.Ticker(full_ticker)
     
@@ -219,7 +219,6 @@ def get_stock_summary(ticker_symbol):
             if market_cap else "N/A"
         )
         
-        # Get All-Time High (ATH)
         hist = stock.history(period="max")
         all_time_high = "N/A"
         percent_from_ath = "N/A"
@@ -227,7 +226,7 @@ def get_stock_summary(ticker_symbol):
         
         if not hist.empty:
             all_time_high = round(hist["High"].max(), 2)
-            if current_price and all_time_high != 0: # Avoid division by zero
+            if current_price and all_time_high != 0:
                 percent_from_ath = round(((current_price - all_time_high) / all_time_high) * 100, 2)
                 if percent_from_ath >= 0:
                     ath_change_display = f"{all_time_high} (+{percent_from_ath}%) 🟢"
@@ -247,15 +246,14 @@ def get_stock_summary(ticker_symbol):
             "Current Price (₹)": current_price,
             "All-Time High (₹)": ath_change_display,
             "Market Cap": market_cap_display,
-            "P/E Ratio": stock_pe, # Display raw PE here
+            "P/E Ratio": stock_pe,
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-            #"PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else (peg if peg is not None else "N/A"), # Display PEG and message
+            "PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else (peg if peg is not None else "N/A"),
             "EPS": interpret_eps(info.get("trailingEps")),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
             "ROE": interpret_roe(info.get("returnOnEquity")),
             "Debt to Equity": interpret_de_ratio(info.get("debtToEquity")),
-
         }
         return summary, None
     except Exception as e:
@@ -263,16 +261,14 @@ def get_stock_summary(ticker_symbol):
     
 
 # Main app logic
-# Changed from `if ticker_input:` to `if selected_symbol:`
 if selected_symbol: 
     if compare_mode:
         st.subheader("🆚 Compare With Another Stock (Optional)")
         
-        # Ensure the compare selectbox uses the 'Searchable' column and allows no initial selection
         compare_selected = st.selectbox(
             "Compare With", 
-            [""] + nse_df["Searchable"].tolist(), # Add an empty string for "Choose an option"
-            index=0, # Index 0 means the empty string is selected by default
+            [""] + nse_df["Searchable"].tolist(),
+            index=0,
             key="compare_stock_select",
             placeholder="Select a company to compare"
         )
@@ -281,22 +277,19 @@ if selected_symbol:
         stock1_summary, error1 = get_stock_summary(selected_symbol)
         stock2_summary, error2 = (None, None)
         
+        if error1:
+            st.error(error1)
+        
         if compare_symbol:
             st.success(f"✅ Comparing with: **{compare_symbol}.NS**")
             stock2_summary, error2 = get_stock_summary(compare_symbol)
-        
-        if error1:
-            st.error(error1)
-        # Only show error for second stock if a second stock was explicitly selected AND an error occurred
-        elif compare_symbol and error2: 
-            st.error(error2)
-        else:
-            # Display comparison only if both summaries are successfully retrieved
-            if stock1_summary and stock2_summary:
-                # Align keys for DataFrame creation
+            if error2: # Check for error on second stock fetch
+                st.error(error2)
+
+        if stock1_summary and (not compare_symbol or stock2_summary):
+            if compare_symbol and stock2_summary: # Both stocks available for comparison
                 common_keys = list(set(stock1_summary.keys()) & set(stock2_summary.keys()))
                 
-                # Create dictionaries with only common keys for DataFrame
                 dict1_aligned = {k: stock1_summary[k] for k in common_keys}
                 dict2_aligned = {k: stock2_summary[k] for k in common_keys}
 
@@ -307,30 +300,25 @@ if selected_symbol:
                 
                 st.subheader("📊 Stock Comparison")
                 st.dataframe(comparison_data)
-            # If only the first stock summary is available, show its data
-            elif stock1_summary:
+            elif stock1_summary: # Only primary stock available
                 st.warning("Please select a second stock to compare for full comparison view.")
                 st.subheader(f"📋 Fundamentals Summary for {stock1_summary.get('Company Name', selected_symbol.upper())}")
                 df = pd.DataFrame(stock1_summary.items(), columns=["Metric", "Value"])
                 st.dataframe(df.set_index("Metric"))
-            else:
+            else: # Fallback if no stock data
                 st.warning("No stock data available for comparison. Please select a primary stock.")
 
     else: # Not in compare mode (single stock view)
-        # Single stock view
         stock_summary, error = get_stock_summary(selected_symbol)
 
         if error:
             st.error(error)
         elif stock_summary:
-            # Display all relevant metrics directly from the summary dictionary
             df = pd.DataFrame(stock_summary.items(), columns=["Metric", "Value"])
             
             st.subheader(f"📋 Stock Fundamentals Summary for {stock_summary.get('Company Name', selected_symbol.upper())}")
             st.dataframe(df.set_index("Metric"))
             
-            # ---
-            # 📉 Stock Price Chart
             st.subheader("📉 Historical Stock Price Chart")
             
             try:
@@ -344,8 +332,6 @@ if selected_symbol:
             except Exception as e:
                 st.warning(f"Could not load stock price chart. Error: {e}")
             
-            # ---
-            # 📊 Historical Profit After Tax (PAT)
             st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
             
             try:
@@ -354,15 +340,13 @@ if selected_symbol:
                 if not financials.empty and "Net Income" in financials.index:
                     pat_df = financials.loc[["Net Income"]].transpose()
                     pat_df.index = pat_df.index.year
-                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7)  # Convert to ₹ Cr
+                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7)
                     st.line_chart(pat_df[["PAT"]].round(2))
                 else:
                     st.warning("Net Income data not available in financials to calculate PAT.")
             except Exception as e:
                 st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
             
-            # ---
-            # 📈 Historical Revenue (₹ in Crores)
             st.subheader("📈 Historical Revenue (₹ in Crores)")
             
             try:
@@ -371,11 +355,9 @@ if selected_symbol:
                 if not financials.empty and "Total Revenue" in financials.index:
                     revenue_df = financials.loc[["Total Revenue"]].transpose()
                     revenue_df.index = revenue_df.index.year
-                    revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7)  # Convert from ₹ to Crores
+                    revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7)
                     st.bar_chart(revenue_df[["Total Revenue"]].round(2))
                 else:
                     st.warning("Total Revenue data not available in financials.")
             except Exception as e:
                 st.warning(f"Could not retrieve historical revenue data. Error: {e}")
-# Removed the redundant `elif not user_input:` at the very end
-# The `st.info("Please enter a company name or symbol to search.")` covers this initial state
