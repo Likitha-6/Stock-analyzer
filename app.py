@@ -11,7 +11,7 @@ st.markdown("---")
 compare_mode = st.checkbox("🔄 Compare stocks")
 
 # Load dynamic search CSV
-@st.cache_data
+
 def load_stock_data():
     try:
         # Changed filename from "nse stocks.csv" to "nse_stocks.csv" for better practice
@@ -182,7 +182,7 @@ def interpret_de_ratio(de):
     else: # de_ratio is 2 or higher
         return f"{de_ratio} 🔴 (High Risk)"
 
-@st.cache_data(ttl=3600) # Cache for 1 hour (3600 seconds)
+ # Cache for 1 hour (3600 seconds)
 def get_stock_summary(ticker_symbol):
     full_ticker = ticker_symbol + ".NS"
     stock = yf.Ticker(full_ticker)
