@@ -180,6 +180,8 @@ def interpret_de_ratio(de):
     # Attempt to convert to float, as yfinance can sometimes return non-numeric if data is messy
     try:
         de = float(de)
+        
+        de_ratio=de/100
     except (ValueError, TypeError):
         return "N/A" # Return N/A if it's not a valid number
 
@@ -188,7 +190,7 @@ def interpret_de_ratio(de):
     # assume it's a percentage and convert it to a ratio.
     # A D/E of 200% (2.0) is already quite high. If it's 50 or 100, it's likely a percentage.
      # Check if it's likely a percentage (e.g., 50, 100, 200)
-    de_ratio = de/100
+    
     
     
     if de_ratio < 1:
