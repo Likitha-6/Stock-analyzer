@@ -15,7 +15,7 @@ compare_mode = st.checkbox("🔄 Compare stocks")
 def load_stock_data():
     try:
         # Changed filename from "nse stocks.csv" to "nse_stocks.csv" for better practice
-        df = pd.read_csv("nse_stocks.csv") # Ensure this file is present in your app directory
+        df = pd.read_csv("nse stocks.csv") # Ensure this file is present in your app directory
         df["Searchable"] = df["Symbol"] + " - " + df["Company Name"]
         return df
     except FileNotFoundError:
