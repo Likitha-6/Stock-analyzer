@@ -159,7 +159,7 @@ def get_eps_cagr_based_peg(ticker):
 def interpret_dividend_yield(dy):
     if dy is None:
         return f"{0}% 🔴 (No dividends)"
-    dy_percent = round(dy * 100, 2) # Changed from * 1 to * 100 for percentage
+    dy_percent = round(dy * 1, 2) # Changed from * 1 to * 100 for percentage
     if dy == 0:
         return f"{dy_percent}% 🔴 (No dividends)"
     elif dy < 0.01: # Smallest non-zero dividend yield
@@ -185,7 +185,7 @@ def interpret_de_ratio(de):
     if de is None:
         return "N/A"
     
-    de_ratio = round(de, 2) 
+    de_ratio = round(de/100, 2) 
     
     if de_ratio < 1:
         return f"{de_ratio} ✅ (Low Debt)"
