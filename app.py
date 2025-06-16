@@ -250,7 +250,7 @@ def get_stock_summary(ticker_symbol):
             "Market Cap": market_cap_display,
             "P/E Ratio": stock_pe, # Display raw PE here
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-            "PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else (peg if peg is not None else "N/A"), # Display PEG and message
+            #"PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else (peg if peg is not None else "N/A"), # Display PEG and message
             "EPS": interpret_eps(info.get("trailingEps")),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
