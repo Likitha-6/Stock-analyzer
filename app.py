@@ -267,6 +267,7 @@ if ticker_input:
             industry_pe = INDUSTRY_PE.get(sector)
             stock_pe = info.get("trailingPE")
             current_price = info.get("currentPrice")
+            peg, msg = get_eps_cagr_based_peg(stock_symbol)
     
     
             market_cap = info.get("marketCap")
@@ -317,7 +318,7 @@ if ticker_input:
                 "Market Cap (Billion ₹)": market_cap_display,
                 "P/E Ratio": info.get("trailingPE"),
                 "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-                "PEG Ratio": interpret_peg(stock_pe, info.get("earningsQuarterlyGrowth")),
+                "PEG Ratio":peg,
 
                 #"Industry_PE":industry_pe,
                 "EPS": interpret_eps(info.get("trailingEps")),
@@ -331,12 +332,7 @@ if ticker_input:
             }
     
             df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
-            peg, msg = get_eps_cagr_based_peg(stock_symbol)
 
-            if peg:
-                st.metric("PEG (5-Year CAGR-based)", peg)
-            else:
-                st.warning(f"PEG not available: {msg}")
             st.subheader("📋 Stock Fundamentals Summary")
             st.dataframe(df.set_index("Metric"))
     
