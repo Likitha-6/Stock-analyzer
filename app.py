@@ -12,35 +12,34 @@ compare_mode = st.checkbox("🔄 Compare stocks")
 
 # Load dynamic search CSV
 try:
-    import streamlit as st
-import pandas as pd
-
-# Load the NSE stock list CSV (make sure it has 'Symbol' and 'Company Name' columns)
-@st.cache_data
-def load_stock_data():
-    return pd.read_csv("nse_stocks.csv")
-
-nse_df = load_stock_data()
-
-# Combine symbol and company name for search
-nse_df["Searchable"] = nse_df["Symbol"] + " - " + nse_df["Company Name"]
-
-# User input
-user_input = st.text_input("🔍 Search by symbol or company name:")
-
-# Filter matches
-if user_input:
-    matches = nse_df[nse_df["Searchable"].str.contains(user_input, case=False, na=False)]
-
-    if not matches.empty:
-        # Let user select from filtered list
-        selected = st.selectbox("Select a company:", matches["Searchable"].tolist())
-        selected_symbol = selected.split(" - ")[0]
-        st.success(f"✅ Selected: {selected_symbol}")
+    
+    
+    # Load the NSE stock list CSV (make sure it has 'Symbol' and 'Company Name' columns)
+    @st.cache_data
+    def load_stock_data():
+        return pd.read_csv("nse_stocks.csv")
+    
+    nse_df = load_stock_data()
+    
+    # Combine symbol and company name for search
+    nse_df["Searchable"] = nse_df["Symbol"] + " - " + nse_df["Company Name"]
+    
+    # User input
+    user_input = st.text_input("🔍 Search by symbol or company name:")
+    
+    # Filter matches
+    if user_input:
+        matches = nse_df[nse_df["Searchable"].str.contains(user_input, case=False, na=False)]
+    
+        if not matches.empty:
+            # Let user select from filtered list
+            selected = st.selectbox("Select a company:", matches["Searchable"].tolist())
+            selected_symbol = selected.split(" - ")[0]
+            st.success(f"✅ Selected: {selected_symbol}")
+        else:
+            st.warning("❌ No match found. Try typing a different keyword.")
     else:
-        st.warning("❌ No match found. Try typing a different keyword.")
-else:
-    selected_symbol = None
+        selected_symbol = None
 
 
 INDUSTRY_PE = {
