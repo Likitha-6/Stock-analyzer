@@ -255,7 +255,8 @@ def get_stock_summary(ticker_symbol):
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
             "ROE": interpret_roe(info.get("returnOnEquity")),
-            "Debt/Equity": interpret_de_ratio(info.get("debtToEquity")),
+            "Debt to Equity": interpret_de_ratio(info.get("debtToEquity")),
+
         }
         return summary, None
     except Exception as e:
