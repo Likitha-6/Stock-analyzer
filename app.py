@@ -15,6 +15,7 @@ company_names = nse_df["Company Name"].tolist()
 selected_company = st.selectbox("Search for a company", company_names)
 ticker_input = nse_df[nse_df["Company Name"] == selected_company]["Symbol"].values[0]
 ticker = ticker_input.upper().strip() + ".NS"
+st.caption(f"Selected Ticker: `{ticker}`")
 
 
 st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
