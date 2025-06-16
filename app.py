@@ -94,22 +94,36 @@ def interpret_pe_with_industry(pe, industry_pe):
         interpretation = "✅ Fairly Priced"
 
     return f"{pe} vs {industry_pe} ({interpretation})"
-def interpret_peg(pe, eps_growth):
-    if pe is None or eps_growth is None or eps_growth == 0:
-        return "N/A"
 
-    peg = round(pe / (eps_growth * 100), 2)
+def calculate_cagr(start_value, end_value, periods):
+    if start_value <= 0 or end_value <= 0:
+        return None  # Avoid division by zero or log of negative
+    return (end_value / start_value) ** (1 / periods) - 1
 
-    if peg < 0:
-        interpretation = "🔴 Negative PEG"
-    elif peg < 1:
-        interpretation = "✅ Undervalued"
-    elif peg < 2:
-        interpretation = "🟡 Fairly Valued"
-    else:
-        interpretation = "🔺 Overvalued"
+def get_eps_cagr_based_peg(ticker):
+    stock = yf.Ticker(ticker)
+    pe_ratio = stock.info.get("trailingPE")
 
-    return f"{peg} ({interpretation})"
+    # Get earnings history
+    try:
+        earnings = stock.earnings  # Returns a DataFrame: 'Revenue' and 'Earnings'
+        if earnings.shape[0] < 5:
+            return None, "Not enough EPS data for 5-year CAGR"
+
+        # Assume EPS = Earnings / Shares Outstanding (proxy: net income)
+        eps_list = (earnings["Earnings"] / 1e9).tolist()  # Convert to billions for easier scale
+        eps_old = eps_list[0]
+        eps_new = eps_list[-1]
+        cagr = calculate_cagr(eps_old, eps_new, len(eps_list) - 1)
+
+        if cagr and pe_ratio:
+            peg = pe_ratio / (cagr * 100)  # Convert CAGR to %
+            return round(peg, 2), None
+        else:
+            return None, "CAGR or PE unavailable"
+
+    except Exception as e:
+        return None, f"Error: {e}"
 
 
 def interpret_dividend_yield(dy):
@@ -159,7 +173,7 @@ def get_stock_summary(ticker_input):
     industry_pe = INDUSTRY_PE.get(sector)
     stock_pe = info.get("trailingPE")
     eps_growth = info.get("earningsQuarterlyGrowth")  # or use another suitable key
-    peg_interpretation = interpret_peg(stock_pe, eps_growth)
+
     current_price = info.get("currentPrice")
 
     try:
@@ -317,6 +331,12 @@ if ticker_input:
             }
     
             df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
+            peg, msg = get_eps_cagr_based_peg(stock_symbol)
+
+            if peg:
+                st.metric("PEG (5-Year CAGR-based)", peg)
+            else:
+                st.warning(f"PEG not available: {msg}")
             st.subheader("📋 Stock Fundamentals Summary")
             st.dataframe(df.set_index("Metric"))
     
