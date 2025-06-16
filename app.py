@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import requests
+import difflib
 
 # Streamlit setup
 st.set_page_config(page_title="Indian Stock Analyzer", page_icon="📊")
