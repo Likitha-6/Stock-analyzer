@@ -183,17 +183,16 @@ def interpret_roe(roe):
         return f"{roe_percent}% ✅ (High)"
 
 def interpret_de_ratio(de):
+    de = round(de / 100, 2) if de else 0
     if de is None:
         return "N/A"
-    # D/E ratio is often given as a direct number, not a percentage to be divided by 100
-    # Assuming `de` is already in the correct ratio format (e.g., 0.5, 1.2)
-    de_ratio = round(de, 2) 
-    if de_ratio < 1:
-        return f"{de_ratio} ✅ (Low Debt)"
-    elif de_ratio >= 1 and de_ratio < 2:
-        return f"{de_ratio} 🟡 (Moderate)"
+    elif de < 1:
+        return f"{de} ✅ (Low Debt)"
+    elif de > 1 and de <2:
+        return f"{de} 🟡 (Moderate)"
     else:
-        return f"{de_ratio} 🔴 (High Risk)"
+        return f"{de} 🔴 (High Risk)"
+
 
 @st.cache_data(ttl="1h") # Cache the stock summary for 1 hour
 def get_stock_summary(ticker_symbol):
