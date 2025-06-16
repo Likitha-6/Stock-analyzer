@@ -302,6 +302,8 @@ if ticker_input:
                 "Market Cap (Billion ₹)": market_cap_display,
                 "P/E Ratio": info.get("trailingPE"),
                 "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
+                "PEG Ratio": interpret_peg(stock_pe, info.get("earningsQuarterlyGrowth")),
+
                 #"Industry_PE":industry_pe,
                 "EPS": interpret_eps(info.get("trailingEps")),
     
@@ -314,6 +316,8 @@ if ticker_input:
             }
     
             df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
+            st.subheader("📋 Stock Fundamentals Summary")
+            st.dataframe(df.set_index("Metric"))
     
     
            
