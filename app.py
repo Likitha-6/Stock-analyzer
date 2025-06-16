@@ -12,33 +12,36 @@ compare_mode = st.checkbox("🔄 Compare stocks")
 
 # Load dynamic search CSV
 try:
-    nse_df = pd.read_csv("nse stocks.csv")  # Ensure this file is present in the app directory
-    nse_df.dropna(subset=["Company Name", "Symbol"], inplace=True)
-    company_names = sorted(nse_df["Company Name"].tolist())
-except FileNotFoundError:
-    st.error("Error: 'nse stocks.csv' not found. Please make sure the file is in the same directory as the app.")
-    st.stop() # Stop the app if the CSV is not found
+    import streamlit as st
+import pandas as pd
 
+# Load the NSE stock list CSV (make sure it has 'Symbol' and 'Company Name' columns)
+@st.cache_data
+def load_stock_data():
+    return pd.read_csv("nse_stocks.csv")
 
-user_input = st.text_input("Search by Company Name (e.g., Infosys, Reliance, TCS):")
-ticker_input = None
+nse_df = load_stock_data()
 
-# Only proceed if user has typed something
+# Combine symbol and company name for search
+nse_df["Searchable"] = nse_df["Symbol"] + " - " + nse_df["Company Name"]
+
+# User input
+user_input = st.text_input("🔍 Search by symbol or company name:")
+
+# Filter matches
 if user_input:
-    # Find close matches
-    matches = difflib.get_close_matches(user_input.strip().lower(),
-                                        nse_df["Company Name"].str.lower().tolist(),
-                                        n=5, cutoff=0.3)
-    
-    if matches:
-        matched_names = [nse_df[nse_df["Company Name"].str.lower() == name]["Company Name"].values[0]
-                         for name in matches]
-        
-        selected_name = st.selectbox("Select matching company:", matched_names)
-        ticker_input = nse_df[nse_df["Company Name"] == selected_name]["Symbol"].values[0]
-        st.caption(f"Selected Ticker: `{ticker_input}.NS`")
+    matches = nse_df[nse_df["Searchable"].str.contains(user_input, case=False, na=False)]
+
+    if not matches.empty:
+        # Let user select from filtered list
+        selected = st.selectbox("Select a company:", matches["Searchable"].tolist())
+        selected_symbol = selected.split(" - ")[0]
+        st.success(f"✅ Selected: {selected_symbol}")
     else:
-        st.warning("No matching company found. Please try again.")
+        st.warning("❌ No match found. Try typing a different keyword.")
+else:
+    selected_symbol = None
+
 
 INDUSTRY_PE = {
     "Technology": 25.4,
