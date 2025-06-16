@@ -181,7 +181,7 @@ def interpret_de_ratio(de):
     try:
         de = float(de)
         
-        de_ratio= float(de/100)
+        de_ratio= float(de/10000)
     except (ValueError, TypeError):
         return "N/A" # Return N/A if it's not a valid number
 
