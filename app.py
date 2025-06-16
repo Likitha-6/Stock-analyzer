@@ -12,7 +12,6 @@ compare_mode = st.checkbox("🔄 Compare stocks")
 
 # Load dynamic search CSV
 try:
-    @st.cache_data
     def load_stock_data():
         return pd.read_csv("nse stocks.csv") # Ensure this file is present in your app directory
     
@@ -199,7 +198,7 @@ def interpret_de_ratio(de):
         return f"{de_ratio} 🔴 (High Risk)"
 
 
-@st.cache_data(ttl="1h")
+
 def get_stock_summary(ticker_symbol):
     full_ticker = ticker_symbol + ".NS" 
     stock = yf.Ticker(full_ticker)
