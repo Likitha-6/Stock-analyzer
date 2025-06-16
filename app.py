@@ -190,7 +190,7 @@ def interpret_de_ratio(de):
     # A D/E of 200% (2.0) is already quite high. If it's 50 or 100, it's likely a percentage.
      # Check if it's likely a percentage (e.g., 50, 100, 200)
     
-    
+    de_ratio=de/100
     if de_ratio < 1:
         return f"{de_ratio} ✅ (Low Debt)"
     elif 1 <= de_ratio < 2:
