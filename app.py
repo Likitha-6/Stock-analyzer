@@ -268,7 +268,7 @@ if ticker_input:
             industry_pe = INDUSTRY_PE.get(sector)
             stock_pe = info.get("trailingPE")
             current_price = info.get("currentPrice")
-            peg, msg = get_eps_cagr_based_peg(stock_symbol)
+            peg,peg_msg = get_eps_cagr_based_peg(stock_symbol)
     
     
             market_cap = info.get("marketCap")
@@ -319,7 +319,8 @@ if ticker_input:
                 "Market Cap (Billion ₹)": market_cap_display,
                 "P/E Ratio": info.get("trailingPE"),
                 "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-                "PEG Ratio":peg,
+                "PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else peg,
+
 
                 #"Industry_PE":industry_pe,
                 "EPS": interpret_eps(info.get("trailingEps")),
