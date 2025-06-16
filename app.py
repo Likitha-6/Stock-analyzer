@@ -10,10 +10,15 @@ st.title("📈 Indian Stock Analyzer (Fundamentals)")
 st.markdown("---")
 compare_mode = st.checkbox("🔄 Compare stocks")
 # Load dynamic search CSV
-nse_df = pd.read_csv("nse stocks.csv")  # Ensure this file is present in the app directory
-nse_df.dropna(subset=["Company Name", "Symbol"], inplace=True)
-company_names = nse_df["Company Name"].tolist()
-company_names = sorted(nse_df["Company Name"].tolist())
+try:
+    nse_df = pd.read_csv("nse stocks.csv")  # Ensure this file is present in the app directory
+    nse_df.dropna(subset=["Company Name", "Symbol"], inplace=True)
+    company_names = sorted(nse_df["Company Name"].tolist())
+except FileNotFoundError:
+    st.error("Error: 'nse stocks.csv' not found. Please make sure the file is in the same directory as the app.")
+    st.stop() # Stop the app if the CSV is not found
+
+
 user_input = st.text_input("Search by Company Name (e.g., Infosys, Reliance, TCS):")
 ticker_input = None
 
@@ -33,16 +38,6 @@ if user_input:
         st.caption(f"Selected Ticker: `{ticker_input}.NS`")
     else:
         st.warning("No matching company found. Please try again.")
-
-
-
-#st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
-
-#ticker_input = st.text_input("Ticker Symbol", "RELIANCE")
-#ticker = ticker_input.upper().strip() + ".NS"
-#NEWS_API_KEY = "9802d49649194f36b4577221a7bd499c"  # Replace with your actual API key
-
-
 
 INDUSTRY_PE = {
     "Technology": 25.4,
@@ -81,6 +76,7 @@ def get_category_icon(category):
         "Small Cap": "🟠",
         "Micro Cap": "🔴"
     }.get(category, "")
+
 def interpret_eps(eps):
     try:
         eps = float(eps)
@@ -110,7 +106,7 @@ def interpret_pe_with_industry(pe, industry_pe):
     else:
         interpretation = "✅ Fairly Priced"
 
-    return f"{pe} vs {industry_pe} ({interpretation})"
+    return f"{round(pe,2)} (Industry Avg: {industry_pe}) {interpretation}"
 
 def calculate_cagr(start_value, end_value, periods):
     if start_value <= 0 or end_value <= 0:
@@ -128,25 +124,40 @@ def get_eps_cagr_based_peg(ticker):
             return None, "Not enough EPS data for 5-year CAGR"
 
         # Assume EPS = Earnings / Shares Outstanding (proxy: net income)
-        eps_list = (earnings["Earnings"] / 1e9).tolist()  # Convert to billions for easier scale
-        eps_old = eps_list[0]
-        eps_new = eps_list[-1]
-        cagr = calculate_cagr(eps_old, eps_new, len(eps_list) - 1)
+        # It's better to use 'basicEPS' if available in stock.info or calculate from financial statements
+        # For simplicity, if earnings are directly fetched, you might need to adjust.
+        # Yahoo Finance 'earnings' usually gives Net Income.
+        # To get EPS, you'd need shares outstanding which is often in 'info' as 'sharesOutstanding'.
+        # For now, let's just use 'Earnings' as a proxy for growth, assuming 'Earnings' here refers to Net Income.
+        
+        # Taking last 5 years for CAGR if available
+        if earnings.shape[0] >=5:
+            eps_data = earnings['Earnings'].tail(5) # Get last 5 years of earnings
+            eps_old = eps_data.iloc[0]
+            eps_new = eps_data.iloc[-1]
+            periods = len(eps_data) - 1 # Number of periods for CAGR calculation
+            cagr = calculate_cagr(eps_old, eps_new, periods)
 
-        if cagr and pe_ratio:
-            peg = pe_ratio / (cagr * 100)  # Convert CAGR to %
-            return round(peg, 2), None
+            if cagr and pe_ratio:
+                # PEG Ratio = PE Ratio / (Annual EPS Growth Rate * 100)
+                # If CAGR is negative or zero, PEG calculation is not meaningful
+                if cagr <= 0:
+                    return None, "EPS CAGR is non-positive, PEG not meaningful"
+                peg = pe_ratio / (cagr * 100)  # Convert CAGR to %
+                return round(peg, 2), None
+            else:
+                return None, "CAGR or PE unavailable"
         else:
-            return None, "CAGR or PE unavailable"
+            return None, "Not enough EPS data for 5-year CAGR"
 
     except Exception as e:
-        return None, f"Error: {e}"
+        return None, f"Error calculating PEG: {e}"
 
 
 def interpret_dividend_yield(dy):
     if dy is None:
         return f"{0}% 🔴 (No dividends)"
-    dy_percent = round(dy * 1, 2)
+    dy_percent = round(dy * 100, 2) # Convert to percentage
     if dy == 0:
         return f"{dy_percent}% 🔴 (No dividends)"
     elif dy < 1:
@@ -168,45 +179,46 @@ def interpret_roe(roe):
         return f"{roe_percent}% ✅ (High)"
 
 def interpret_de_ratio(de):
-    de = round(de / 100, 2) if de else 0
     if de is None:
         return "N/A"
-    elif de < 1:
-        return f"{de} ✅ (Low Debt)"
-    elif de > 1 and de <2:
-        return f"{de} 🟡 (Moderate)"
+    # Ensure de is treated as a ratio if it comes as a percentage (e.g., 100 for 1:1)
+    # Yahoo Finance's debtToEquity is usually in percentage, e.g., 50 for 0.5
+    de_ratio = round(de / 100, 2)
+    if de_ratio < 1:
+        return f"{de_ratio} ✅ (Low Debt)"
+    elif de_ratio >= 1 and de_ratio < 2:
+        return f"{de_ratio} 🟡 (Moderate)"
     else:
-        return f"{de} 🔴 (High Risk)"
-def get_stock_summary(ticker_input):
-    ticker = ticker_input.upper().strip() + ".NS"
-    stock = yf.Ticker(ticker)
-    
+        return f"{de_ratio} 🔴 (High Risk)"
+
+def get_stock_summary(ticker_symbol):
+    stock = yf.Ticker(ticker_symbol + ".NS")
     
     try:
         info = stock.get_info()
         
-    
         if not info or "longName" not in info:
-            return None, f"⚠️ Could not fetch data for {ticker_input.upper()}. Please check the symbol."
+            return None, f"⚠️ Could not fetch data for {ticker_symbol.upper()}. Please check the symbol."
         
         sector = info.get("sector")
         industry_pe = INDUSTRY_PE.get(sector)
         stock_pe = info.get("trailingPE")
-        eps_growth = info.get("earningsQuarterlyGrowth")  # or use another suitable key
-        peg, peg_msg = get_eps_cagr_based_peg(ticker_input)
+        #eps_growth = info.get("earningsQuarterlyGrowth") # This might be None or not what's needed for PEG
+        peg, peg_msg = get_eps_cagr_based_peg(ticker_symbol + ".NS") # Pass full ticker for yfinance
         
         current_price = info.get("currentPrice")
-    
+        
         market_cap = info.get("marketCap")
         market_cap_display = (
             f"{round(market_cap / 1e9, 2)} B ({get_category_icon(get_market_cap_category(market_cap)[0])} {get_market_cap_category(market_cap)[0]})"
             if market_cap else "N/A"
         )
-    
+        
         revenue = info.get("totalRevenue")
         net_income = info.get("netIncomeToCommon")
         revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
         net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
+        
         # Get All-Time High (ATH)
         hist = stock.history(period="max")
         if not hist.empty:
@@ -221,14 +233,14 @@ def get_stock_summary(ticker_input):
                 ath_change_display = f"{all_time_high} ({percent_from_ath}%) 🔻"
         else:
             ath_change_display = "N/A"
-    
+        
         profit_margin = info.get("profitMargins")
         profit_margin_percent = (
             "N/A" if profit_margin is None else
             f"{round(profit_margin * 100, 2)}% ❌ (Loss-Making)" if profit_margin < 0 else
             f"{round(profit_margin * 100, 2)}%"
         )
-    
+        
         summary = {
             "Company Name": info.get("longName"),
             "Sector": sector,
@@ -236,185 +248,27 @@ def get_stock_summary(ticker_input):
             "All-Time High (₹)": ath_change_display,
             "Market Cap": market_cap_display,
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-            #"PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else peg,
+            "PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else peg, # Uncommented this based on original intention
             "EPS": interpret_eps(info.get("trailingEps")),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
             "ROE": interpret_roe(info.get("returnOnEquity")),
             "Debt/Equity": interpret_de_ratio(info.get("debtToEquity")),
-            #"Revenue": revenue_billion,
+            #"Revenue": revenue_billion, # These were commented out in original code, keeping them that way.
             #"Net Income": net_income_billion,
         }
         return summary, None
     except Exception as e:
-        return None, f"Error processing stock: {ticker_input.upper()} - {e}"
+        return None, f"Error processing stock: {ticker_symbol.upper()} - {e}"
     
-    
-    # Main app logic
-    if ticker_input:
-        if compare_mode:
-        
-            st.subheader("🆚 Compare With Another Stock (Optional)")
-            compare_company = st.selectbox("Compare With", company_names, index=0)
-            compare_input = nse_df[nse_df["Company Name"] == compare_company]["Symbol"].values[0]
-        
-        
-            stock1_summary, error1 = get_stock_summary(ticker_input)
-            stock2_summary, error2 = (None, None)
-        
-            if compare_input:
-                stock2_summary, error2 = get_stock_summary(compare_input)
-        
-            if error1:
-                st.error(error1)
-            elif compare_input and error2:
-                st.error(error2)
-            else:
-                # Create a DataFrame for comparison
-                comparison_data = pd.DataFrame({
-                    ticker_input.upper(): stock1_summary,
-                    compare_input.upper() if stock2_summary else "": stock2_summary or {}
-                })
-        
-                st.subheader("📊 Stock Comparison")
-                st.dataframe(comparison_data)
-        else:
-                
-            try:
-                stock = yf.Ticker(ticker)
-                info = stock.get_info()
-                sector = info.get("sector")
-                industry_pe = INDUSTRY_PE.get(sector)
-                stock_pe = info.get("trailingPE")
-                current_price = info.get("currentPrice")
-                peg,peg_msg = get_eps_cagr_based_peg(ticker)
-        
-        
-                market_cap = info.get("marketCap")
-                if market_cap:
-                    market_cap_billion = round(market_cap / 1e9, 2)
-                    cap_category, cap_meaning = get_market_cap_category(market_cap)
-                    cap_icon = get_category_icon(cap_category)
-                    market_cap_display = f"{market_cap_billion} B ({cap_icon} {cap_category} – {cap_meaning})"
-                else:
-                    market_cap_display = "N/A"
-                # Get All-Time High (ATH)
-                hist = stock.history(period="max")
-                if not hist.empty:
-                    all_time_high = round(hist["High"].max(), 2)
-                else:
-                    all_time_high = "N/A"
-                if all_time_high != "N/A" and current_price:
-                    percent_from_ath = round(((current_price - all_time_high) / all_time_high) * 100, 2)
-                    if percent_from_ath >= 0:
-                        ath_change_display = f"{all_time_high} (+{percent_from_ath}%) 🟢"
-                    else:
-                        ath_change_display = f"{all_time_high} ({percent_from_ath}%) 🔻"
-                else:
-                    ath_change_display = "N/A"
-        
-        
-                revenue = info.get("totalRevenue")
-                net_income = info.get("netIncomeToCommon")
-                revenue_billion = f"{round(revenue / 1e9, 2)} B" if revenue else "N/A"
-                net_income_billion = f"{round(net_income / 1e9, 2)} B" if net_income else "N/A"
-                #industry_pe = INDUSTRY_PE.get(sector)
-        
-        
-                # Convert profit margin to % format
-                profit_margin = info.get("profitMargins")
-                if profit_margin is None:
-                    profit_margin_percent = "N/A"
-                elif profit_margin < 0:
-                    profit_margin_percent = f"{round(profit_margin * 100, 2)}% ❌ (Loss-Making)"
-                else:
-                    profit_margin_percent = f"{round(profit_margin * 100, 2)}%"
-        
-                data = {
-                    "Company Name": info.get("longName"),
-                    "Sector": info.get("sector"),
-                    "Current Price (₹)": info.get("currentPrice"),
-                    "All-Time High (₹)": ath_change_display,
-                    "Market Cap (Billion ₹)": market_cap_display,
-                    "P/E Ratio": info.get("trailingPE"),
-                    "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-                    #"PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else peg,
-        
-        
-                    #"Industry_PE":industry_pe,
-                    "EPS": interpret_eps(info.get("trailingEps")),
-        
-                    "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
-                    #"Revenue (TTM)": revenue_billion,
-                    #"Net Income (TTM)": net_income_billion,
-                    "Profit Margin": profit_margin_percent,
-                    "Return on Equity (ROE)": interpret_roe(info.get("returnOnEquity")),
-                    "Debt to Equity": interpret_de_ratio(info.get("debtToEquity")),
-                }
-        
-                df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
-        
-                st.subheader("📋 Stock Fundamentals Summary")
-                st.dataframe(df.set_index("Metric"))
-        
-        
-               
-                
-                # RIGHT: News Section
-                #
-                #st.dataframe(df.set_index("Metric"))
-        
-                # 📉 Stock Price Chart
-                st.subheader("📉 Historical Stock Price Chart")
-                
-                try:
-                    period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4)
-                    hist_price = stock.history(period=period)
-                      # You can change to "1y", "max", etc.
-                    if not hist_price.empty:
-                        st.line_chart(hist_price["Close"].round(2))
-                    else:
-                        st.warning("No historical stock data available.")
-                except Exception as e:
-                    st.warning(f"Could not load stock price chart. Error: {e}")
-        
-        
-                # 📊 Historical Profit After Tax (PAT)
-                st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
-                
-                try:
-                    financials = stock.financials
-                    financials = financials.loc[["Net Income"]].transpose()
-                    financials.index = financials.index.year
-                    financials["PAT"] = (financials["Net Income"] / 1e7)  # Convert to ₹ Cr
-                    pm_df=financials[["PAT"]].round(2)
-                    
-                    #st.dataframe(pm_df)
-                    st.line_chart(pm_df)
-                except Exception as e:
-                    st.warning("Could not retrieve PAT (Profit) data.")
-        
-        
-                # Historical Revenue Chart
-                # 📊 Revenue Over the Years
-                st.subheader("📈 Historical Revenue (₹ in Crores)")
-                
-                try:
-                    financials = stock.financials
-                    financials = financials.loc[["Total Revenue"]].transpose()
-                    financials.index = financials.index.year
-                    financials["Total Revenue"] = (financials["Total Revenue"] / 1e7)  # Convert from ₹ to Crores
-                    rm_df = financials[["Total Revenue"]].round(2)
-                
-                    
-                    st.bar_chart(rm_df)
-                
-                except Exception as e:
-                    st.warning("Could not retrieve historical revenue data.")
-            
-        except Exception as e:
-            st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
-     except Exception as e:
-            st.error("⚠️ Could not fetch data. Please check the stock ticker symbol.")
-        
 
+# Main app logic
+if ticker_input:
+    if compare_mode:
+        
+        st.subheader("🆚 Compare With Another Stock (Optional)")
+        compare_company = st.selectbox("Compare With", company_names, index=0)
+        compare_input = nse_df[nse_df["Company Name"] == compare_company]["Symbol"].values[0]
+        
+        
+        stock
