@@ -173,6 +173,7 @@ def get_stock_summary(ticker_input):
     industry_pe = INDUSTRY_PE.get(sector)
     stock_pe = info.get("trailingPE")
     eps_growth = info.get("earningsQuarterlyGrowth")  # or use another suitable key
+    peg, peg_msg = get_eps_cagr_based_peg(ticker_input)
 
     current_price = info.get("currentPrice")
 
@@ -216,7 +217,7 @@ def get_stock_summary(ticker_input):
             "All-Time High (₹)": ath_change_display,
             "Market Cap": market_cap_display,
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-            "PEG Ratio": peg_interpretation,
+            "PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else peg,
             "EPS": interpret_eps(info.get("trailingEps")),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
