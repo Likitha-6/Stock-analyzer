@@ -16,7 +16,7 @@ try:
     @st.cache_data
     def load_stock_data():
         # ENSURE THIS FILENAME MATCHES YOUR ACTUAL CSV FILE NAME (e.g., "nse_stocks.csv" or "nse stocks.csv")
-        return pd.read_csv("nse_stocks.csv") 
+        return pd.read_csv("nse stocks.csv") 
     
     nse_df = load_stock_data()
     
