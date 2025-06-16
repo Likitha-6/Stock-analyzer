@@ -267,7 +267,7 @@ def get_stock_summary(ticker_symbol):
         free_cash_flow = 'N/A'
         try:
             # Get annual cash flow statements
-            cash_flow_statement = stock_yf.cashflow
+            cash_flow_statement = stock.cashflow
             
             # yfinance's cashflow DataFrame has 'Free Cash Flow' directly, which is convenient
             # The most recent data is usually the first column (index 0 or highest date)
