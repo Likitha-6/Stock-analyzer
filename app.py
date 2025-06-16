@@ -23,7 +23,7 @@ st.caption(f"Selected Ticker: `{ticker}`")
 
 #ticker_input = st.text_input("Ticker Symbol", "RELIANCE")
 #ticker = ticker_input.upper().strip() + ".NS"
-NEWS_API_KEY = "9802d49649194f36b4577221a7bd499c"  # Replace with your actual API key
+#NEWS_API_KEY = "9802d49649194f36b4577221a7bd499c"  # Replace with your actual API key
 
 
 
@@ -314,33 +314,12 @@ if ticker_input:
             }
     
             df = pd.DataFrame(data.items(), columns=["Metric", "Value"])
-            col1, col2 = st.columns([2, 1])
     
-            # LEFT: Metrics Table
-            with col1:
-                st.dataframe(df.set_index("Metric"))
+    
+           
             
             # RIGHT: News Section
-            with col2:
-                st.subheader("📰 Latest News")
-            
-                query = info.get("longName", ticker_input)
-                news_url = f"https://newsapi.org/v2/everything?q={query}&language=en&sortBy=publishedAt&pageSize=5&apiKey={NEWS_API_KEY}"
-                
-                try:
-                    response = requests.get(news_url)
-                    if response.status_code == 200:
-                        articles = response.json().get("articles", [])
-                        if not articles:
-                            st.write("No news found.")
-                        for article in articles:
-                            st.markdown(f"**[{article['title']}]({article['url']})**")
-                            st.caption(f"{article['source']['name']} • {article['publishedAt'][:10]}")
-                    else:
-                        st.warning("News API limit reached or failed to fetch news.")
-                except Exception as e:
-                    st.warning("Could not load news articles.")
-    
+            #
             #st.dataframe(df.set_index("Metric"))
     
             # 📉 Stock Price Chart
