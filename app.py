@@ -11,9 +11,7 @@ st.markdown("---")
 compare_mode = st.checkbox("🔄 Compare stocks")
 
 # Load dynamic search CSV
-try:
-    
-    
+try: 
     # Load the NSE stock list CSV (make sure it has 'Symbol' and 'Company Name' columns)
     @st.cache_data
     def load_stock_data():
@@ -373,5 +371,5 @@ if ticker_input:
                     st.warning("Total Revenue data not available in financials.")
             except Exception as e:
                 st.warning(f"Could not retrieve historical revenue data. Error: {e}")
-        elif not user_input:
-            st.info("Please enter a company name in the search box above to get started.")
+    elif not user_input:
+        st.info("Please enter a company name in the search box above to get started.")
