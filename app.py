@@ -190,7 +190,7 @@ def interpret_de_ratio(de):
     if de > 10 and de > 2.0: # Check if it's likely a percentage (e.g., 50, 100, 200)
         de_ratio = round(de / 100, 2)
     else:
-        de_ratio = round(de, 2)
+        de_ratio = round(de/100, 2)
     
     if de_ratio < 1:
         return f"{de_ratio} ✅ (Low Debt)"
