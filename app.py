@@ -268,7 +268,7 @@ if ticker_input:
             industry_pe = INDUSTRY_PE.get(sector)
             stock_pe = info.get("trailingPE")
             current_price = info.get("currentPrice")
-            peg,peg_msg = get_eps_cagr_based_peg(stock_symbol)
+            peg,peg_msg = get_eps_cagr_based_peg(ticker)
     
     
             market_cap = info.get("marketCap")
