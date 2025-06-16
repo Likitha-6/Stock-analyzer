@@ -26,19 +26,48 @@ try:
     selected_symbol = None
     
     if user_input:
+        # 1. Try to find a match in the CSV first
         matches = nse_df[nse_df["Searchable"].str.contains(user_input, case=False, na=False)]
         
         if not matches.empty:
             selected = st.selectbox("Select a company (Primary):", matches["Searchable"].tolist(), key="main_stock_select")
             selected_symbol = selected.split(" - ")[0]
-            st.success(f"✅ Primary Stock Selected: **{selected_symbol}.NS**")
+            st.success(f"✅ Primary Stock Selected: **{selected_symbol}.NS** (from CSV)")
         else:
-            st.warning("❌ No match found for primary stock. Try typing a different keyword.")
+            # 2. If no match in CSV, try to use user_input directly as a symbol
+            #    We'll assume it's an Indian stock symbol and append ".NS"
+            #    We can also add a check to see if it looks like a valid symbol (e.g., all caps, no spaces)
+            
+            # Simple heuristic: if user_input is mostly uppercase and has no spaces, try it as a symbol
+            if user_input.isupper() and ' ' not in user_input:
+                potential_symbol = user_input.strip().upper()
+                
+                # Check if this potential_symbol is already in the CSV, just missed by earlier search
+                # This helps avoid re-fetching if it's there but maybe user typoed
+                if potential_symbol in nse_df["Symbol"].values:
+                    st.warning(f"❗ '{user_input}' found in CSV but might have been a partial match. Using **{potential_symbol}.NS**.")
+                    selected_symbol = potential_symbol
+                else:
+                    # Attempt to get info to confirm it's a valid symbol before setting
+                    st.info(f"Trying to fetch data directly for **{potential_symbol}.NS**...")
+                    # Temporarily fetch basic info to validate the ticker
+                    try:
+                        temp_ticker = yf.Ticker(potential_symbol + ".NS")
+                        temp_info = temp_ticker.info
+                        if temp_info and "longName" in temp_info:
+                            selected_symbol = potential_symbol
+                            st.success(f"✅ Primary Stock Selected: **{temp_info['longName']} ({selected_symbol}.NS)** (Direct Search)")
+                        else:
+                            st.warning("❌ No match found in CSV or as a direct symbol. Try typing a different keyword.")
+                    except Exception:
+                        st.warning("❌ No match found in CSV or as a direct symbol. Try typing a different keyword.")
+            else:
+                st.warning("❌ No match found in CSV. For direct symbol search, please enter an exact, all-caps symbol (e.g., 'RELIANCE').")
     else:
         st.info("Please enter a company name or symbol to search for the primary stock.")
 
 except FileNotFoundError:
-    st.error("Error: 'nse_stocks.csv' not found. Please make sure the file is in the same directory as the app.")
+    st.error("Error: 'nse stocks.csv' not found. Please make sure the file is in the same directory as the app.")
     st.stop()
 
 INDUSTRY_PE = {
