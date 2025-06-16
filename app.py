@@ -13,10 +13,21 @@ nse_df = pd.read_csv("nse stocks.csv")  # Ensure this file is present in the app
 nse_df.dropna(subset=["Company Name", "Symbol"], inplace=True)
 company_names = nse_df["Company Name"].tolist()
 company_names = sorted(nse_df["Company Name"].tolist())
-selected_company = st.selectbox("Search for a company", company_names)
-ticker_input = nse_df[nse_df["Company Name"] == selected_company]["Symbol"].values[0]
-ticker = ticker_input.upper().strip() + ".NS"
-st.caption(f"Selected Ticker: `{ticker}`")
+user_input = st.text_input("Search by Company Name (e.g., Infosys, Reliance, TCS):")
+# Match similar names
+matches = difflib.get_close_matches(user_input.strip().lower(), 
+                                    nse_df["Company Name"].str.lower().tolist(), 
+                                    n=5, cutoff=0.3)
+
+if matches:
+    matched_names = [nse_df[nse_df["Company Name"].str.lower() == name]["Company Name"].values[0] for name in matches]
+    selected_name = st.selectbox("Select matching company:", matched_names)
+    ticker_input = nse_df[nse_df["Company Name"] == selected_name]["Symbol"].values[0]
+    st.caption(f"Selected Ticker: `{ticker_input}.NS`")
+else:
+    ticker_input = None
+    st.warning("No matching company found. Please try again.")
+
 
 
 #st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
