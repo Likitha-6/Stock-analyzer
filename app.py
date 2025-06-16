@@ -15,7 +15,7 @@ try:
     # Load the NSE stock list CSV (make sure it has 'Symbol' and 'Company Name' columns)
     @st.cache_data
     def load_stock_data():
-        return pd.read_csv("nse_stocks.csv") # Ensure this file is present in your app directory
+        return pd.read_csv("nse stocks.csv") # Ensure this file is present in your app directory
     
     nse_df = load_stock_data()
     
