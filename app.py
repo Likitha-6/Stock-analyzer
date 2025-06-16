@@ -8,12 +8,19 @@ st.set_page_config(page_title="Indian Stock Analyzer", page_icon="📊")
 st.title("📈 Indian Stock Analyzer (Fundamentals)")
 st.markdown("---")
 compare_mode = st.checkbox("🔄 Compare stocks")
+# Load dynamic search CSV
+nse_df = pd.read_csv("nse stocks.csv")  # Ensure this file is present in the app directory
+nse_df.dropna(subset=["Company Name", "Symbol"], inplace=True)
+company_names = nse_df["Company Name"].tolist()
+selected_company = st.selectbox("Search for a company", company_names)
+ticker_input = nse_df[nse_df["Company Name"] == selected_company]["Symbol"].values[0]
+ticker = ticker_input.upper().strip() + ".NS"
 
 
 st.markdown("Enter an NSE stock ticker (e.g., RELIANCE, TCS, SBIN, INFY):")
 
-ticker_input = st.text_input("Ticker Symbol", "RELIANCE")
-ticker = ticker_input.upper().strip() + ".NS"
+#ticker_input = st.text_input("Ticker Symbol", "RELIANCE")
+#ticker = ticker_input.upper().strip() + ".NS"
 NEWS_API_KEY = "9802d49649194f36b4577221a7bd499c"  # Replace with your actual API key
 
 
