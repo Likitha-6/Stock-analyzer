@@ -94,6 +94,22 @@ def interpret_pe_with_industry(pe, industry_pe):
         interpretation = "✅ Fairly Priced"
 
     return f"{pe} vs {industry_pe} ({interpretation})"
+def interpret_peg(pe, eps_growth):
+    if pe is None or eps_growth is None or eps_growth == 0:
+        return "N/A"
+
+    peg = round(pe / eps_growth, 2)
+    
+    if peg < 0:
+        interpretation = "🔴 Negative PEG"
+    elif peg < 1:
+        interpretation = "✅ Undervalued"
+    elif peg < 2:
+        interpretation = "🟡 Fairly Valued"
+    else:
+        interpretation = "🔺 Overvalued"
+
+    return f"{peg} ({interpretation})"
 
 def interpret_dividend_yield(dy):
     if dy is None:
@@ -133,6 +149,7 @@ def get_stock_summary(ticker_input):
     ticker = ticker_input.upper().strip() + ".NS"
     stock = yf.Ticker(ticker)
     info = stock.get_info()
+    
 
     if not info or "longName" not in info:
         return None, f"⚠️ Could not fetch data for {ticker_input.upper()}. Please check the symbol."
@@ -140,6 +157,8 @@ def get_stock_summary(ticker_input):
     sector = info.get("sector")
     industry_pe = INDUSTRY_PE.get(sector)
     stock_pe = info.get("trailingPE")
+    eps_growth = info.get("earningsQuarterlyGrowth")  # or use another suitable key
+    peg_interpretation = interpret_peg(stock_pe, eps_growth)
     current_price = info.get("currentPrice")
 
     try:
@@ -182,6 +201,7 @@ def get_stock_summary(ticker_input):
             "All-Time High (₹)": ath_change_display,
             "Market Cap": market_cap_display,
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
+            "PEG Ratio": peg_interpretation,
             "EPS": interpret_eps(info.get("trailingEps")),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
