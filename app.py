@@ -177,13 +177,26 @@ def interpret_de_ratio(de):
     if de is None:
         return "N/A"
     
-    de_ratio = round((de), 2) 
+    # Attempt to convert to float, as yfinance can sometimes return non-numeric if data is messy
+    try:
+        de = float(de)
+    except (ValueError, TypeError):
+        return "N/A" # Return N/A if it's not a valid number
+
+    # Heuristic: If the debtToEquity value is significantly greater than 2,
+    # and it's an Indian stock (where yfinance often gives percentages),
+    # assume it's a percentage and convert it to a ratio.
+    # A D/E of 200% (2.0) is already quite high. If it's 50 or 100, it's likely a percentage.
+    if de > 10 and de > 2.0: # Check if it's likely a percentage (e.g., 50, 100, 200)
+        de_ratio = round(de / 100, 2)
+    else:
+        de_ratio = round(de, 2)
     
     if de_ratio < 1:
         return f"{de_ratio} ✅ (Low Debt)"
     elif 1 <= de_ratio < 2:
         return f"{de_ratio} 🟡 (Moderate)"
-    else:
+    else: # de_ratio is 2 or higher
         return f"{de_ratio} 🔴 (High Risk)"
 
 
