@@ -198,7 +198,9 @@ if ticker_input:
     if compare_mode:
         
         st.subheader("🆚 Compare With Another Stock (Optional)")
-        compare_input = st.text_input("Compare With Ticker Symbol (e.g., TCS, INFY)", "")
+        compare_company = st.selectbox("Compare With", company_names, index=0)
+        compare_input = nse_df[nse_df["Company Name"] == compare_company]["Symbol"].values[0]
+
     
         stock1_summary, error1 = get_stock_summary(ticker_input)
         stock2_summary, error2 = (None, None)
