@@ -264,6 +264,31 @@ def get_stock_summary(ticker_symbol):
                     ath_change_display = f"{all_time_high} (+{percent_from_ath}%) 🟢"
                 else:
                     ath_change_display = f"{all_time_high} ({percent_from_ath}%) 🔻"
+        free_cash_flow = 'N/A'
+        try:
+            # Get annual cash flow statements
+            cash_flow_statement = stock_yf.cashflow
+            
+            # yfinance's cashflow DataFrame has 'Free Cash Flow' directly, which is convenient
+            # The most recent data is usually the first column (index 0 or highest date)
+            if not cash_flow_statement.empty and 'Free Cash Flow' in cash_flow_statement.index:
+                # Get the most recent Free Cash Flow value
+                fcf_value = cash_flow_statement.loc['Free Cash Flow'].iloc[0] # .iloc[0] gets the most recent value
+                free_cash_flow = fcf_value / 1e7 # Convert from base units (e.g., USD) to Crores, assuming data is in millions/billions. Adjust this conversion factor based on yfinance's actual units for Indian stocks. Often, it's in the base currency, so 1e7 for Crores if it's in Rupees.
+
+                # Alternatively, if 'Free Cash Flow' isn't directly available, calculate it:
+                # operating_cash_flow = cash_flow_statement.loc['Total Cash From Operating Activities'].iloc[0] if 'Total Cash From Operating Activities' in cash_flow_statement.index else None
+                # capital_expenditures = cash_flow_statement.loc['Capital Expenditures'].iloc[0] if 'Capital Expenditures' in cash_flow_statement.index else None
+                #
+                # if operating_cash_flow is not None and capital_expenditures is not None:
+                #     free_cash_flow_calc = (operating_cash_flow - abs(capital_expenditures)) / 1e7 # Capital expenditures are often negative (cash outflow)
+                #     free_cash_flow = free_cash_flow_calc
+                # else:
+                #     free_cash_flow = 'N/A - Data incomplete for calculation'
+            else:
+                free_cash_flow = 'N/A - Free Cash Flow data not directly found or cash flow statement empty.'
+        except Exception as e:
+            free_cash_flow = f'N/A - Error fetching FCF: {e}'
         
         profit_margin = info.get("profitMargins")
         profit_margin_percent = (
@@ -284,6 +309,7 @@ def get_stock_summary(ticker_symbol):
             "EPS": interpret_eps(info.get("trailingEps")),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
+            "FREE_CASH_FLOW":free_cash_flow,
             "ROE": interpret_roe(info.get("returnOnEquity")),
             "Debt to Equity": interpret_de_ratio(info.get("debtToEquity")),
         }
