@@ -15,7 +15,7 @@ try:
     @st.cache_data
     def load_stock_data():
         # Ensure 'Symbol' and 'Company Name' columns exist
-        df = pd.read_csv("nse_stocks.csv")
+        df = pd.read_csv("nse stocks.csv")
         df.dropna(subset=["Company Name", "Symbol"], inplace=True)
         return df
     
