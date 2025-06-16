@@ -282,4 +282,100 @@ if selected_symbol:
         stock2_summary, error2 = (None, None)
         
         if compare_symbol:
-            st.success(f
+            st.success(f"✅ Comparing with: **{compare_symbol}.NS**")
+            stock2_summary, error2 = get_stock_summary(compare_symbol)
+        
+        if error1:
+            st.error(error1)
+        # Only show error for second stock if a second stock was explicitly selected AND an error occurred
+        elif compare_symbol and error2: 
+            st.error(error2)
+        else:
+            # Display comparison only if both summaries are successfully retrieved
+            if stock1_summary and stock2_summary:
+                # Align keys for DataFrame creation
+                common_keys = list(set(stock1_summary.keys()) & set(stock2_summary.keys()))
+                
+                # Create dictionaries with only common keys for DataFrame
+                dict1_aligned = {k: stock1_summary[k] for k in common_keys}
+                dict2_aligned = {k: stock2_summary[k] for k in common_keys}
+
+                comparison_data = pd.DataFrame({
+                    stock1_summary.get("Company Name", selected_symbol.upper()): pd.Series(dict1_aligned),
+                    stock2_summary.get("Company Name", compare_symbol.upper()): pd.Series(dict2_aligned)
+                })
+                
+                st.subheader("📊 Stock Comparison")
+                st.dataframe(comparison_data)
+            # If only the first stock summary is available, show its data
+            elif stock1_summary:
+                st.warning("Please select a second stock to compare for full comparison view.")
+                st.subheader(f"📋 Fundamentals Summary for {stock1_summary.get('Company Name', selected_symbol.upper())}")
+                df = pd.DataFrame(stock1_summary.items(), columns=["Metric", "Value"])
+                st.dataframe(df.set_index("Metric"))
+            else:
+                st.warning("No stock data available for comparison. Please select a primary stock.")
+
+    else: # Not in compare mode (single stock view)
+        # Single stock view
+        stock_summary, error = get_stock_summary(selected_symbol)
+
+        if error:
+            st.error(error)
+        elif stock_summary:
+            # Display all relevant metrics directly from the summary dictionary
+            df = pd.DataFrame(stock_summary.items(), columns=["Metric", "Value"])
+            
+            st.subheader(f"📋 Stock Fundamentals Summary for {stock_summary.get('Company Name', selected_symbol.upper())}")
+            st.dataframe(df.set_index("Metric"))
+            
+            # ---
+            # 📉 Stock Price Chart
+            st.subheader("📉 Historical Stock Price Chart")
+            
+            try:
+                stock_yf = yf.Ticker(selected_symbol + ".NS")
+                period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4, key="price_period")
+                hist_price = stock_yf.history(period=period)
+                if not hist_price.empty:
+                    st.line_chart(hist_price["Close"].round(2))
+                else:
+                    st.warning("No historical stock data available for the selected period.")
+            except Exception as e:
+                st.warning(f"Could not load stock price chart. Error: {e}")
+            
+            # ---
+            # 📊 Historical Profit After Tax (PAT)
+            st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
+            
+            try:
+                stock_yf = yf.Ticker(selected_symbol + ".NS")
+                financials = stock_yf.financials
+                if not financials.empty and "Net Income" in financials.index:
+                    pat_df = financials.loc[["Net Income"]].transpose()
+                    pat_df.index = pat_df.index.year
+                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7)  # Convert to ₹ Cr
+                    st.line_chart(pat_df[["PAT"]].round(2))
+                else:
+                    st.warning("Net Income data not available in financials to calculate PAT.")
+            except Exception as e:
+                st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
+            
+            # ---
+            # 📈 Historical Revenue (₹ in Crores)
+            st.subheader("📈 Historical Revenue (₹ in Crores)")
+            
+            try:
+                stock_yf = yf.Ticker(selected_symbol + ".NS")
+                financials = stock_yf.financials
+                if not financials.empty and "Total Revenue" in financials.index:
+                    revenue_df = financials.loc[["Total Revenue"]].transpose()
+                    revenue_df.index = revenue_df.index.year
+                    revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7)  # Convert from ₹ to Crores
+                    st.bar_chart(revenue_df[["Total Revenue"]].round(2))
+                else:
+                    st.warning("Total Revenue data not available in financials.")
+            except Exception as e:
+                st.warning(f"Could not retrieve historical revenue data. Error: {e}")
+# Removed the redundant `elif not user_input:` at the very end
+# The `st.info("Please enter a company name or symbol to search.")` covers this initial state
