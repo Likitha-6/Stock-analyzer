@@ -418,6 +418,29 @@ if selected_symbol:
                     st.warning("Net Income data not available in financials to calculate PAT.")
             except Exception as e:
                 st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
+            st.subheader("💰 Historical Free Cash Flow (₹ in Crores)")
+
+            try:
+                stock_yf = yf.Ticker(selected_symbol + ".NS")
+                cash_flow_statement = stock_yf.cashflow
+
+                if not cash_flow_statement.empty and 'Free Cash Flow' in cash_flow_statement.index:
+                    # Select 'Free Cash Flow' row, transpose, and convert index to year
+                    fcf_df = cash_flow_statement.loc[['Free Cash Flow']].transpose()
+                    fcf_df.index = fcf_df.index.year # Convert datetime index to year
+
+                    # Rename column for plotting clarity
+                    fcf_df.rename(columns={'Free Cash Flow': 'Free Cash Flow (₹ Cr)'}, inplace=True)
+
+                    # Convert to Crores (adjust 1e7 based on your unit verification)
+                    fcf_df['Free Cash Flow (₹ Cr)'] = fcf_df['Free Cash Flow (₹ Cr)'] / 1e7
+
+                    # Plotting a bar chart for FCF is often better for yearly values
+                    st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']].round(2))
+                else:
+                    st.warning("Free Cash Flow data not available in cash flow statements.")
+            except Exception as e:
+                st.warning(f"Could not retrieve historical Free Cash Flow data. Error: {e}")
             
             st.subheader("📈 Historical Revenue (₹ in Crores)")
             
