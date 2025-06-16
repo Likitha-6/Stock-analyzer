@@ -12,11 +12,9 @@ compare_mode = st.checkbox("🔄 Compare stocks")
 
 # Load dynamic search CSV
 try:
-    # Load the NSE stock list CSV (make sure it has 'Symbol' and 'Company Name' columns)
     @st.cache_data
     def load_stock_data():
-        # ENSURE THIS FILENAME MATCHES YOUR ACTUAL CSV FILE NAME (e.g., "nse_stocks.csv" or "nse stocks.csv")
-        return pd.read_csv("nse stocks.csv") 
+        return pd.read_csv("nse stocks.csv") # Ensure this file is present in your app directory
     
     nse_df = load_stock_data()
     
@@ -26,27 +24,23 @@ try:
     # User input for primary stock search
     user_input = st.text_input("🔍 Search by symbol or company name for the primary stock:")
     
-    # Initialize selected_symbol to None outside the if block
     selected_symbol = None
     
-    # Filter matches and assign selected_symbol
     if user_input:
         matches = nse_df[nse_df["Searchable"].str.contains(user_input, case=False, na=False)]
         
         if not matches.empty:
-            # Let user select from filtered list
-            selected = st.selectbox("Select a company:", matches["Searchable"].tolist(), key="main_stock_select")
-            selected_symbol = selected.split(" - ")[0] # Assign the ticker symbol here
-            st.success(f"✅ Selected: **{selected_symbol}.NS**")
+            selected = st.selectbox("Select a company (Primary):", matches["Searchable"].tolist(), key="main_stock_select")
+            selected_symbol = selected.split(" - ")[0]
+            st.success(f"✅ Primary Stock Selected: **{selected_symbol}.NS**")
         else:
-            st.warning("❌ No match found. Try typing a different keyword.")
-            # selected_symbol remains None if no match
+            st.warning("❌ No match found for primary stock. Try typing a different keyword.")
     else:
-        st.info("Please enter a company name or symbol to search.")
+        st.info("Please enter a company name or symbol to search for the primary stock.")
 
 except FileNotFoundError:
     st.error("Error: 'nse_stocks.csv' not found. Please make sure the file is in the same directory as the app.")
-    st.stop() # Stop the app if the CSV is not found
+    st.stop()
 
 INDUSTRY_PE = {
     "Technology": 25.4,
@@ -63,7 +57,6 @@ INDUSTRY_PE = {
     # Add more as needed
 }
 
-# Market cap interpretation
 def get_market_cap_category(market_cap_inr):
     if market_cap_inr >= 2e12:
         return "Mega Cap", "Strong, stable"
@@ -91,7 +84,7 @@ def interpret_eps(eps):
         eps = float(eps)
     except (TypeError, ValueError):
         return "N/A"
-    if eps is None: # This check might be redundant if the try-except handles it, but safe to keep
+    if eps is None:
         return "N/A"
     elif eps < 0:
         return f"{round(eps, 2)} 🔴 (Negative)"
@@ -119,7 +112,7 @@ def interpret_pe_with_industry(pe, industry_pe):
 
 def calculate_cagr(start_value, end_value, periods):
     if start_value <= 0 or end_value <= 0 or periods == 0:
-        return None  # Avoid division by zero or log of negative
+        return None
     return (end_value / start_value) ** (1 / periods) - 1
 
 def get_eps_cagr_based_peg(ticker):
@@ -159,12 +152,12 @@ def get_eps_cagr_based_peg(ticker):
 def interpret_dividend_yield(dy):
     if dy is None:
         return f"{0}% 🔴 (No dividends)"
-    dy_percent = round(dy * 1, 2) # Changed from * 1 to * 100 for percentage
+    dy_percent = round(dy * 1, 2)
     if dy == 0:
         return f"{dy_percent}% 🔴 (No dividends)"
-    elif dy < 0.01: # Smallest non-zero dividend yield
+    elif dy < 1:
         return f"{dy_percent}% 🟠 (Low)"
-    elif dy < 0.03: # Between 1% and 3%
+    elif dy < 3:
         return f"{dy_percent}% ✅ (Moderate)"
     else:
         return f"{dy_percent}% ✅ (High)"
@@ -181,7 +174,6 @@ def interpret_roe(roe):
         return f"{roe_percent}% ✅ (High)"
 
 def interpret_de_ratio(de):
-    # This is the corrected version of the function
     if de is None:
         return "N/A"
     
@@ -195,7 +187,7 @@ def interpret_de_ratio(de):
         return f"{de_ratio} 🔴 (High Risk)"
 
 
-@st.cache_data(ttl="1h") # Cache the stock summary for 1 hour
+@st.cache_data(ttl="1h")
 def get_stock_summary(ticker_symbol):
     full_ticker = ticker_symbol + ".NS" 
     stock = yf.Ticker(full_ticker)
@@ -246,9 +238,9 @@ def get_stock_summary(ticker_symbol):
             "Current Price (₹)": current_price,
             "All-Time High (₹)": ath_change_display,
             "Market Cap": market_cap_display,
-            #"P/E Ratio": stock_pe,
+            "P/E Ratio": stock_pe,
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-            #"PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else (peg if peg is not None else "N/A"),
+            "PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else (peg if peg is not None else "N/A"),
             "EPS": interpret_eps(info.get("trailingEps")),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
@@ -263,50 +255,64 @@ def get_stock_summary(ticker_symbol):
 # Main app logic
 if selected_symbol: 
     if compare_mode:
-        st.subheader("🆚 Compare With Another Stock (Optional)")
+        st.subheader("🆚 Compare With Another Stock")
         
-        compare_selected = st.selectbox(
-            "Compare With", 
-            [""] + nse_df["Searchable"].tolist(),
-            index=0,
-            key="compare_stock_select",
-            placeholder="Select a company to compare"
-        )
-        compare_symbol = compare_selected.split(" - ")[0] if compare_selected else None
+        # --- NEW SEARCH BAR FOR SECOND STOCK ---
+        compare_user_input = st.text_input("🔍 Search by symbol or company name for the second stock:")
+        compare_symbol = None # Initialize compare_symbol
         
+        if compare_user_input:
+            compare_matches = nse_df[nse_df["Searchable"].str.contains(compare_user_input, case=False, na=False)]
+            
+            if not compare_matches.empty:
+                compare_selected_full = st.selectbox(
+                    "Select a company (Second Stock):", 
+                    compare_matches["Searchable"].tolist(), 
+                    key="compare_stock_select"
+                )
+                compare_symbol = compare_selected_full.split(" - ")[0]
+                st.success(f"✅ Second Stock Selected: **{compare_symbol}.NS**")
+            else:
+                st.warning("❌ No match found for second stock. Try typing a different keyword.")
+        else:
+            st.info("Please enter a company name or symbol to search for the second stock.")
+        # --- END NEW SEARCH BAR ---
+
         stock1_summary, error1 = get_stock_summary(selected_symbol)
         stock2_summary, error2 = (None, None)
         
         if error1:
             st.error(error1)
         
-        if compare_symbol:
-            st.success(f"✅ Comparing with: **{compare_symbol}.NS**")
+        if compare_symbol: # Only try to fetch if a symbol for comparison is actually selected
             stock2_summary, error2 = get_stock_summary(compare_symbol)
-            if error2: # Check for error on second stock fetch
+            if error2:
                 st.error(error2)
 
-        if stock1_summary and (not compare_symbol or stock2_summary):
-            if compare_symbol and stock2_summary: # Both stocks available for comparison
-                common_keys = list(set(stock1_summary.keys()) & set(stock2_summary.keys()))
-                
-                dict1_aligned = {k: stock1_summary[k] for k in common_keys}
-                dict2_aligned = {k: stock2_summary[k] for k in common_keys}
+        # Display comparison only if both summaries are successfully retrieved
+        if stock1_summary and stock2_summary:
+            common_keys = list(set(stock1_summary.keys()) & set(stock2_summary.keys()))
+            
+            dict1_aligned = {k: stock1_summary[k] for k in common_keys}
+            dict2_aligned = {k: stock2_summary[k] for k in common_keys}
 
-                comparison_data = pd.DataFrame({
-                    stock1_summary.get("Company Name", selected_symbol.upper()): pd.Series(dict1_aligned),
-                    stock2_summary.get("Company Name", compare_symbol.upper()): pd.Series(dict2_aligned)
-                })
-                
-                st.subheader("📊 Stock Comparison")
-                st.dataframe(comparison_data)
-            elif stock1_summary: # Only primary stock available
-                st.warning("Please select a second stock to compare for full comparison view.")
-                st.subheader(f"📋 Fundamentals Summary for {stock1_summary.get('Company Name', selected_symbol.upper())}")
-                df = pd.DataFrame(stock1_summary.items(), columns=["Metric", "Value"])
-                st.dataframe(df.set_index("Metric"))
-            else: # Fallback if no stock data
-                st.warning("No stock data available for comparison. Please select a primary stock.")
+            comparison_data = pd.DataFrame({
+                stock1_summary.get("Company Name", selected_symbol.upper()): pd.Series(dict1_aligned),
+                stock2_summary.get("Company Name", compare_symbol.upper()): pd.Series(dict2_aligned)
+            })
+            
+            st.subheader("📊 Stock Comparison")
+            st.dataframe(comparison_data)
+        elif stock1_summary: # Only primary stock available
+            if compare_user_input and not compare_symbol: # User typed something but no valid selection
+                 st.warning("Please select a valid second stock from the dropdown.")
+            else:
+                st.warning("Please search and select a second stock to compare for full comparison view.")
+            st.subheader(f"📋 Fundamentals Summary for {stock1_summary.get('Company Name', selected_symbol.upper())}")
+            df = pd.DataFrame(stock1_summary.items(), columns=["Metric", "Value"])
+            st.dataframe(df.set_index("Metric"))
+        else:
+            st.warning("No primary stock selected. Please select a primary stock to begin comparison or single view.")
 
     else: # Not in compare mode (single stock view)
         stock_summary, error = get_stock_summary(selected_symbol)
