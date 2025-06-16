@@ -237,7 +237,7 @@ def get_stock_summary(ticker_symbol):
             "All-Time High (₹)": ath_change_display,
             "Market Cap": market_cap_display,
             "P/E vs Industry": interpret_pe_with_industry(stock_pe, industry_pe),
-            "PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else peg,
+            #"PEG Ratio": f"{peg} ({peg_msg})" if peg_msg else peg,
             "EPS": interpret_eps(info.get("trailingEps")),
             "Dividend Yield": interpret_dividend_yield(info.get("dividendYield")),
             "Profit Margin": profit_margin_percent,
@@ -310,7 +310,7 @@ if ticker_input:
                 "Market Cap (Billion ₹)": stock_summary.get("Market Cap"),
                 "P/E Ratio": stock_pe_for_display, # Use the directly fetched PE
                 "P/E vs Industry": stock_summary.get("P/E vs Industry"),
-                "PEG Ratio": stock_summary.get("PEG Ratio"),
+                #"PEG Ratio": stock_summary.get("PEG Ratio"),
                 "EPS": stock_summary.get("EPS"),
                 "Dividend Yield": stock_summary.get("Dividend Yield"),
                 "Profit Margin": stock_summary.get("Profit Margin"),
