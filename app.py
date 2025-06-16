@@ -39,8 +39,8 @@ try:
             #    We can also add a check to see if it looks like a valid symbol (e.g., all caps, no spaces)
             
             # Simple heuristic: if user_input is mostly uppercase and has no spaces, try it as a symbol
-            if user_input.isupper() and ' ' not in user_input:
-                potential_symbol = user_input.strip().upper()
+            if user_input and ' ' not in user_input:
+                potential_symbol = user_input.strip()
                 
                 # Check if this potential_symbol is already in the CSV, just missed by earlier search
                 # This helps avoid re-fetching if it's there but maybe user typoed
