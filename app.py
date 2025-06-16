@@ -98,8 +98,8 @@ def interpret_peg(pe, eps_growth):
     if pe is None or eps_growth is None or eps_growth == 0:
         return "N/A"
 
-    peg = round((pe / eps_growth)/100, 2)
-    
+    peg = round(pe / (eps_growth * 100), 2)
+
     if peg < 0:
         interpretation = "🔴 Negative PEG"
     elif peg < 1:
@@ -110,6 +110,7 @@ def interpret_peg(pe, eps_growth):
         interpretation = "🔺 Overvalued"
 
     return f"{peg} ({interpretation})"
+
 
 def interpret_dividend_yield(dy):
     if dy is None:
