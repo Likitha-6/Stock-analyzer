@@ -656,19 +656,19 @@ if selected_symbol:
 
             with col2_rev:
                 try:
-                    stock2_yf = yf.Ticker(compare_symbol + ".NS")
-                    financials2 = stock2_yf.financials
-                    annual_financials2 = financials2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials2.index.names else financials2.sort_index()
+                    stock2_yf = yf.Ticker(compare_symbol + ".NS")
+                    financials2 = stock2_yf.financials
+                    annual_financials2 = financials2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials2.index.names else financials2.sort_index()
 
-                    if not annual_financials2.empty and "Total Revenue" in annual_financials2.columns:
-                        revenue_df2 = annual_financials2[["Total Revenue"]].copy()
-                        revenue_df2.index = revenue_df2.index.year
-                        revenue_df2["Total Revenue"] = (revenue_df2["Total Revenue"] / 1e7).round(2)
-                        st.bar_chart(revenue_df2[["Total Revenue"]].rename(columns={'Total Revenue': stock2_raw_summary.get('Company Name', compare_symbol.upper()) + ' Revenue'}))
-                    else:
-                        st.warning(f"No Revenue data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}")
-                except Exception as e:
-                    st.warning(f"Could not retrieve revenue data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
+                    if not annual_financials2.empty and "Total Revenue" in annual_financials2.columns:
+                        revenue_df2 = annual_financials2[["Total Revenue"]].copy()
+                        revenue_df2.index = revenue_df2.index.year
+                        revenue_df2["Total Revenue"] = (revenue_df2["Total Revenue"] / 1e7).round(2)
+                        st.bar_chart(revenue_df2[["Total Revenue"]].rename(columns={'Total Revenue': stock2_raw_summary.get('Company Name', compare_symbol.upper()) + ' Revenue'})) # <-- This line was missing
+                    else:
+                        st.warning(f"No Revenue data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}")
+                except Exception as e:
+                    st.warning(f"Could not retrieve revenue data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
             # --- Historical Free Cash Flow (FCF) Chart Comparison ---
             st.markdown("##### 💰 Historical Free Cash Flow (₹ in Crores)")
@@ -775,28 +775,18 @@ if selected_symbol:
             df = pd.DataFrame(display_summary_for_single_mode.items(), columns=["Metric", "Value"])
             st.dataframe(df.set_index("Metric"))
 
-            st.markdown("##### 📉 Historical Price Chart")
+            st.subheader("📉 Historical Stock Price Chart")
+
             try:
-                stock1_yf = yf.Ticker(selected_symbol + ".NS")
-                hist_price1 = stock1_yf.history(period=compare_chart_period)["Close"].round(2)
-                hist_price1 = hist_price1.rename(stock1_raw_summary.get('Company Name', selected_symbol.upper()))
-            
-                stock2_yf = yf.Ticker(compare_symbol + ".NS")
-                hist_price2 = stock2_yf.history(period=compare_chart_period)["Close"].round(2)
-                hist_price2 = hist_price2.rename(stock2_raw_summary.get('Company Name', compare_symbol.upper()))
-            
-                # Combine the close prices into a single DataFrame
-                combined_price_df = pd.DataFrame({
-                    stock1_raw_summary.get('Company Name', selected_symbol.upper()): hist_price1,
-                    stock2_raw_summary.get('Company Name', compare_symbol.upper()): hist_price2
-                }).dropna() # Drop rows where either stock has no data for that date
-            
-                if not combined_price_df.empty:
-                    st.line_chart(combined_price_df)
+                stock_yf = yf.Ticker(selected_symbol + ".NS")
+                period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4, key="price_period")
+                hist_price = stock_yf.history(period=period)
+                if not hist_price.empty:
+                    st.line_chart(hist_price["Close"].round(2))
                 else:
-                    st.warning("No common historical price data available for comparison.")
+                    st.warning("No historical stock data available for the selected period.")
             except Exception as e:
-                st.warning(f"Could not load historical price chart comparison. Error: {e}")
+                st.warning(f"Could not load stock price chart. Error: {e}")
 
 
 
