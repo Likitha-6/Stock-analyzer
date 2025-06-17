@@ -96,10 +96,10 @@ def interpret_pe_with_industry(pe_ratio, sector):
     if pe_ratio < industry_avg_pe * 0.8:
         return f"{round(pe_ratio, 2)}vs {industry_avg_pe} ✅ Undervalued"
     elif pe_ratio > industry_avg_pe * 1.2:
-        return f"{round(pe_ratio, 2)} 🔺 Overvalued"
+        return f"{round(pe_ratio, 2)} vs {industry_avg_pe}🔺 Overvalued"
     elif pe_ratio > industry_avg_pe:
-        return f"{round(pe_ratio, 2)} 🟠 Slightly Overvalued"
-    return f"{round(pe_ratio, 2)} ✅ Fairly Priced"
+        return f"{round(pe_ratio, 2)}vs {industry_avg_pe} 🟠 Slightly Overvalued"
+    return f"{round(pe_ratio, 2)}vs {industry_avg_pe} ✅ Fairly Priced"
 
 def calculate_cagr(start_value, end_value, years):
     """Calculates Compound Annual Growth Rate."""
