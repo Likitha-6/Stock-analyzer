@@ -789,7 +789,8 @@ if selected_symbol:
                     st.warning("No historical stock data available for the selected period.")
             except Exception as e:
                 st.warning(f"Could not load stock price chart. Error: {e}")
-             st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
+                
+            st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
 
             try:
                 stock_yf = yf.Ticker(selected_symbol + ".NS")
