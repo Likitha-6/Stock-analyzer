@@ -827,14 +827,22 @@ if selected_symbol:
             try:
                 stock_yf = yf.Ticker(selected_symbol + ".NS")
                 cash_flow_statement = stock_yf.cashflow
-                annual_cash_flow = cash_flow_statement.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in cash_flow_statement.index.names else cash_flow_statement.sort_index()
 
-                if not annual_cash_flow.empty and 'Free Cash Flow' in annual_cash_flow.columns:
-                    fcf_df = annual_cash_flow[['Free Cash Flow']].copy()
-                    fcf_df.index = fcf_df.index.year
-                    fcf_df['Free Cash Flow (₹ Cr)'] = (fcf_df['Free Cash Flow'] / 1e7).round(2)
-                    st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']])
+                if not cash_flow_statement.empty and 'Free Cash Flow' in cash_flow_statement.index:
+                    # Select 'Free Cash Flow' row, transpose, and convert index to year
+                    fcf_df = cash_flow_statement.loc[['Free Cash Flow']].transpose()
+                    fcf_df.index = fcf_df.index.year # Convert datetime index to year
+
+                    # Rename column for plotting clarity
+                    fcf_df.rename(columns={'Free Cash Flow': 'Free Cash Flow (₹ Cr)'}, inplace=True)
+
+                    # Convert to Crores (adjust 1e7 based on your unit verification)
+                    fcf_df['Free Cash Flow (₹ Cr)'] = fcf_df['Free Cash Flow (₹ Cr)'] / 1e7
+
+                    # Plotting a bar chart for FCF is often better for yearly values
+                    st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']].round(2))
                 else:
                     st.warning("Free Cash Flow data not available in cash flow statements.")
             except Exception as e:
                 st.warning(f"Could not retrieve historical Free Cash Flow data. Error: {e}")
+
