@@ -275,7 +275,7 @@ if user_input:
         if not matches.empty:
             selected = st.selectbox("Select a company (Primary):", matches["Searchable"].tolist(), key="main_stock_select")
             selected_symbol = selected.split(" - ")[0]
-            st.success(f"✅ Primary Stock Selected: **{selected_symbol}.NS** (from CSV)")
+            st.success(f"✅ Primary Stock Selected: **{selected_symbol}.NS** ")
         else:
             # 2. If no match in CSV, try to use user_input directly as a symbol
             #    We'll assume it's an Indian stock symbol and append ".NS"
@@ -319,7 +319,7 @@ if selected_symbol:
                         key="compare_stock_select"
                     )
                     compare_symbol = compare_selected_full.split(" - ")[0]
-                    st.success(f"✅ Second Stock Selected: **{compare_symbol}.NS** (from CSV)")
+                    st.success(f"✅ Second Stock Selected: **{compare_symbol}.NS** ")
                 else:
                     # Direct symbol lookup for comparison stock
                     potential_compare_symbol = compare_user_input.strip().upper()
