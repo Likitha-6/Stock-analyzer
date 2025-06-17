@@ -31,7 +31,7 @@ INDUSTRY_PE = {
 }
 
 # --- Data Loading (from CSV) ---
-@st.cache_data
+
 def load_stock_data():
     """Loads NSE stock list from a CSV file."""
     try:
@@ -94,7 +94,7 @@ def interpret_pe_with_industry(pe_ratio, sector):
         return f"{round(pe_ratio, 2)} ❓ (Industry Avg N/A)"
     
     if pe_ratio < industry_avg_pe * 0.8:
-        return f"{round(pe_ratio, 2)} ✅ Undervalued"
+        return f"{round(pe_ratio, 2)}vs {industry_avg_pe} ✅ Undervalued"
     elif pe_ratio > industry_avg_pe * 1.2:
         return f"{round(pe_ratio, 2)} 🔺 Overvalued"
     elif pe_ratio > industry_avg_pe:
@@ -126,7 +126,7 @@ def interpret_dividend_yield(yield_val):
     """Interprets dividend yield."""
     if yield_val is None:
         return "0% ❓"
-    yield_percent = round(yield_val * 100, 2)
+    yield_percent = round(yield_val * 1, 2)
     if yield_percent > 3:
         return f"{yield_percent}% ✅ (High)"
     elif yield_percent > 1:
