@@ -25,10 +25,10 @@ def load_stock_data():
         # Check if Sector and Industry columns exist, if not, add them with None/N/A
         if 'Sector' not in df.columns:
             df['Sector'] = None
-            st.warning("Warning: 'Sector' column not found in 'nse_stocks.csv'. Sector-based features will be limited.")
+            #st.warning("Warning: 'Sector' column not found in 'nse_stocks.csv'. Sector-based features will be limited.")
         if 'Industry' not in df.columns:
             df['Industry'] = None
-            st.warning("Warning: 'Industry' column not found in 'nse_stocks.csv'. Industry-based features will be limited.")
+            #st.warning("Warning: 'Industry' column not found in 'nse_stocks.csv'. Industry-based features will be limited.")
 
         return df
     except FileNotFoundError:
@@ -68,7 +68,6 @@ def get_market_cap_category(market_cap_inr):
     else:
         return "Micro Cap", "Very small, high risk"
 
-
 def get_category_icon(category):
     return {
         "Mega Cap": "✅",
@@ -78,7 +77,6 @@ def get_category_icon(category):
         "Micro Cap": "🔴"
     }.get(category, "")
 
-# This function will now be used internally for comparison logic, not directly displayed
 def interpret_eps_raw(eps):
     if eps is None:
         return "N/A"
@@ -93,7 +91,6 @@ def interpret_eps_raw(eps):
     else:
         return "Good"
 
-# This function will now be used internally for comparison logic, not directly displayed
 def interpret_pe_raw(pe, industry_pe):
     if pe is None or industry_pe is None:
         return "N/A"
@@ -133,9 +130,9 @@ def get_eps_cagr_based_peg(ticker):
             cagr = calculate_cagr(eps_old, eps_new, periods)
 
             if cagr is not None and pe_ratio is not None:
-                if cagr <= 0:
+                if cagr <= 0: # PEG is not meaningful for non-growing or negative EPS growth
                     return None, "EPS CAGR is non-positive, PEG not meaningful"
-                peg = pe_ratio / (cagr * 100)
+                peg = pe_ratio / (cagr * 100) # CAGR is a decimal, convert to percentage for PEG formula
                 return round(peg, 2), None
             else:
                 return None, "CAGR or PE unavailable"
@@ -145,11 +142,10 @@ def get_eps_cagr_based_peg(ticker):
     except Exception as e:
         return None, f"Error calculating PEG: {e}"
 
-# This function will now be used internally for comparison logic, not directly displayed
 def interpret_dividend_yield_raw(dy):
     if dy is None:
         return "No dividends"
-    dy_percent = round(dy * 1, 2)
+    dy_percent = round(dy * 100, 2)
     if dy == 0:
         return "No dividends"
     elif dy < 1:
@@ -159,7 +155,6 @@ def interpret_dividend_yield_raw(dy):
     else:
         return "High"
 
-# This function will now be used internally for comparison logic, not directly displayed
 def interpret_roe_raw(roe):
     if roe is None:
         return "N/A"
@@ -171,7 +166,6 @@ def interpret_roe_raw(roe):
     else:
         return "High"
 
-# This function will now be used internally for comparison logic, not directly displayed
 def interpret_de_ratio_raw(de):
     if de is None:
         return "N/A"
@@ -179,7 +173,8 @@ def interpret_de_ratio_raw(de):
         de = float(de)
     except (ValueError, TypeError):
         return "N/A"
-    de_ratio = round(de / 100, 2) # Assuming yfinance gives percentage for Indian stocks here
+    # Assuming yfinance gives absolute ratio for debtToEquity, not percentage
+    de_ratio = round(de, 2) 
     if de_ratio < 1:
         return "Low Debt"
     elif 1 <= de_ratio < 2:
@@ -187,6 +182,34 @@ def interpret_de_ratio_raw(de):
     else:
         return "High Debt"
 
+# Helper functions for single stock view icons
+def get_eps_icon(interpretation):
+    return "🔴" if interpretation == "Negative" else ("🟠" if interpretation == "Low" else "✅")
+
+def get_dividend_icon(interpretation):
+    return "🔴" if interpretation == "No dividends" else ("🟠" if interpretation == "Low" else "✅")
+
+def get_roe_icon(interpretation):
+    return "🟠" if interpretation == "Low" else ("🟡" if interpretation == "Moderate" else "✅")
+
+def get_de_icon(interpretation):
+    return "🔴" if interpretation == "High Debt" else ("🟡" if interpretation == "Moderate Debt" else "✅")
+
+def interpret_pe_with_industry(pe, industry_pe):
+    if pe is None:
+        return "N/A"
+    if industry_pe is None:
+        return f"P/E: {round(pe, 2)} (Industry PE N/A)"
+
+    diff = pe - industry_pe
+    if diff > 10:
+        return f"P/E: {round(pe, 2)} (Overvalued compared to industry {round(industry_pe, 2)}) 🔴"
+    elif diff > 2:
+        return f"P/E: {round(pe, 2)} (Slightly Overvalued compared to industry {round(industry_pe, 2)}) 🟠"
+    elif diff < -2:
+        return f"P/E: {round(pe, 2)} (Undervalued compared to industry {round(industry_pe, 2)}) ✅"
+    else:
+        return f"P/E: {round(pe, 2)} (Fairly Priced compared to industry {round(industry_pe, 2)}) 🟡"
 
 @st.cache_data(ttl=3600) # Cache for 1 hour (3600 seconds)
 def get_stock_summary(ticker_symbol):
@@ -215,9 +238,14 @@ def get_stock_summary(ticker_symbol):
         # Calculate/format derived values
         market_cap_category, _ = get_market_cap_category(market_cap)
         market_cap_display = (
-            f"{round(market_cap / 1e9, 2)} B ({get_category_icon(market_cap_category)} {market_cap_category})"
+            f"{round(market_cap / 1e9, 2)} B" # For consistency in comparison, just show value
             if market_cap else "N/A"
         )
+        market_cap_category_icon_display = ( # For displaying icon in specific row
+             f"{get_category_icon(market_cap_category)} {market_cap_category}"
+            if market_cap else "N/A"
+        )
+
 
         hist = stock.history(period="max")
         all_time_high = "N/A"
@@ -245,10 +273,10 @@ def get_stock_summary(ticker_symbol):
         except Exception as e:
             free_cash_flow = f'N/A - Error: {e}'
 
-        profit_margin_percent = (
+        profit_margin_raw = profit_margin # Keep raw for potential future numerical comparison
+        profit_margin_display = (
             "N/A" if profit_margin is None else
-            f"{round(profit_margin * 100, 2)}% ❌ (Loss-Making)" if profit_margin < 0 else
-            f"{round(profit_margin * 100, 2)}%"
+            f"{round(profit_margin * 100, 2)}%" # Simple display for comparison
         )
         peg, peg_msg = get_eps_cagr_based_peg(full_ticker)
 
@@ -258,124 +286,110 @@ def get_stock_summary(ticker_symbol):
             "Sector": sector,
             "Industry": industry,
             "Current Price (₹)": current_price,
-            "All-Time High (₹)": ath_change_display,
-            "Market Cap": market_cap_display,
+            "All-Time High (₹)": all_time_high, # Use raw ATH for comparison
+            "Market Cap": market_cap, # Use raw market cap for comparison
             "P/E Ratio": stock_pe, # Raw value
             "EPS": trailing_eps, # Raw value
             "Dividend Yield": dividend_yield, # Raw value
-            "Profit Margin": profit_margin_percent, # Still a formatted string
-            "Free Cash Flow (₹ Cr)": free_cash_flow, # Formatted
+            "Profit Margin": profit_margin_raw, # Raw profit margin
+            "Free Cash Flow (₹ Cr)": free_cash_flow, # Formatted as it's a derived value
             "ROE": return_on_equity, # Raw value
             "Debt to Equity": debt_to_equity, # Raw value
-            "PEG Ratio": peg # Raw value
+            "PEG Ratio": peg, # Raw value
+            "Market Cap Category": market_cap_category_icon_display # For specific display in table
         }
         return summary, None
     except Exception as e:
         return None, f"Error processing stock: **{ticker_symbol.upper()}** - {e}"
 
-# --- NEW FUNCTION FOR COMPARISON INTERPRETATION ---
-def compare_and_interpret_metric(metric_name, value1, value2, industry_pe=None):
-    """
-    Compares two values for a given metric and returns a combined interpretation.
-    Highlights the 'better' value with an emoji.
-    """
-    if value1 is None and value2 is None:
-        return "N/A"
-    
-    # Handle cases where one value is None
-    if value1 is None:
-        return f"{value2} (N/A for Stock 1)"
-    if value2 is None:
-        return f"{value1} (N/A for Stock 2)"
+# --- STYLING FUNCTIONS FOR DATAFRAME ---
 
+def highlight_best_numeric(s, metric_type, industry_pe_value=None):
+    """
+    Highlights the 'better' value in a row for numeric metrics.
+    Applies bold and green background.
+    """
+    is_best = [False] * len(s) # Initialize all to False
     try:
-        # Convert to float for comparison if possible
-        num_value1 = float(value1)
-        num_value2 = float(value2)
-    except (ValueError, TypeError):
-        # If values are not numerical (e.g., 'N/A' strings), compare them directly or just display both
-        return f"{value1} | {value2}"
+        # Filter out None/N/A and convert to numeric for comparison
+        numeric_values = []
+        indices = []
+        for i, val in enumerate(s):
+            try:
+                numeric_values.append(float(val))
+                indices.append(i)
+            except (ValueError, TypeError):
+                numeric_values.append(None) # Keep None for non-numeric
 
-    interpretation_text = ""
-    stock1_str = str(round(num_value1, 2)) if isinstance(num_value1, (int, float)) else str(num_value1)
-    stock2_str = str(round(num_value2, 2)) if isinstance(num_value2, (int, float)) else str(num_value2)
+        if not numeric_values:
+            return [''] * len(s) # No numeric values to compare
 
-    # Specific logic for each metric
-    if metric_name == "P/E Ratio":
-        # Lower P/E is generally better, but also consider undervaluation/overvaluation
-        interpretation1 = interpret_pe_raw(num_value1, industry_pe)
-        interpretation2 = interpret_pe_raw(num_value2, industry_pe)
-        
-        # Prioritize "Undervalued"
-        if interpretation1 == "Undervalued" and interpretation2 != "Undervalued":
-            return f"{stock1_str} ✅ (Undervalued) | {stock2_str} ({interpretation2})"
-        elif interpretation2 == "Undervalued" and interpretation1 != "Undervalued":
-            return f"{stock1_str} ({interpretation1}) | {stock2_str} ✅ (Undervalued)"
-        # Then consider "Fairly Priced"
-        elif interpretation1 == "Fairly Priced" and interpretation2 == "Overvalued":
-             return f"{stock1_str} ✅ (Fair) | {stock2_str} ({interpretation2})"
-        elif interpretation2 == "Fairly Priced" and interpretation1 == "Overvalued":
-             return f"{stock1_str} ({interpretation1}) | {stock2_str} ✅ (Fair)"
-        # If both are good/fair, lower is still slightly better
-        elif num_value1 < num_value2:
-            return f"{stock1_str} ✅ ({interpretation1}) | {stock2_str} ({interpretation2})"
-        elif num_value2 < num_value1:
-            return f"{stock1_str} ({interpretation1}) | {stock2_str} ✅ ({interpretation2})"
-        else:
-            return f"{stock1_str} ({interpretation1}) | {stock2_str} ({interpretation2}) (Similar)"
+        # Determine the best based on metric_type
+        if metric_type == "higher": # e.g., EPS, Dividend Yield, ROE, Profit Margin, FCF
+            best_val = -float('inf')
+            best_idx = -1
+            for i, val in enumerate(numeric_values):
+                if val is not None and val > best_val:
+                    best_val = val
+                    best_idx = i
+            if best_idx != -1:
+                is_best[best_idx] = True
 
-    elif metric_name == "EPS":
-        # Higher EPS is better
-        if num_value1 > num_value2:
-            return f"{stock1_str} ✅ (Better EPS) | {stock2_str}"
-        elif num_value2 > num_value1:
-            return f"{stock1_str} | {stock2_str} ✅ (Better EPS)"
-        else:
-            return f"{stock1_str} | {stock2_str} (Similar EPS)"
+        elif metric_type == "lower": # e.g., P/E Ratio, Debt to Equity, PEG Ratio
+            best_val = float('inf')
+            best_idx = -1
+            for i, val in enumerate(numeric_values):
+                if val is not None and val >= 0 and val < best_val: # Consider non-negative for PE/PEG
+                    best_val = val
+                    best_idx = i
+            if best_idx != -1:
+                is_best[best_idx] = True
 
-    elif metric_name == "Dividend Yield":
-        # Higher Dividend Yield is better (for dividend-seeking investors)
-        if num_value1 > num_value2:
-            return f"{stock1_str}% ✅ (Higher Yield) | {stock2_str}%"
-        elif num_value2 > num_value1:
-            return f"{stock1_str}% | {stock2_str}% ✅ (Higher Yield)"
-        else:
-            return f"{stock1_str}% | {stock2_str}% (Similar Yield)"
+        elif metric_type == "pe_ratio":
+            # PE needs special handling considering industry average and undervaluation
+            # We'll just highlight the one that is considered 'Undervalued' or 'Fairly Priced' and lower.
+            best_score = float('inf')
+            best_idx = -1
+            scores = [] # Lower score is better
 
-    elif metric_name == "ROE":
-        # Higher ROE is better
-        num_value1_percent = round(num_value1 * 100, 2)
-        num_value2_percent = round(num_value2 * 100, 2)
-        if num_value1 > num_value2:
-            return f"{num_value1_percent}% ✅ (Higher ROE) | {num_value2_percent}%"
-        elif num_value2 > num_value1:
-            return f"{num_value1_percent}% | {num_value2_percent}% ✅ (Higher ROE)"
-        else:
-            return f"{num_value1_percent}% | {num_value2_percent}% (Similar ROE)"
+            for i, val in enumerate(numeric_values):
+                if val is None:
+                    scores.append(float('inf'))
+                    continue
 
-    elif metric_name == "Debt to Equity":
-        # Lower Debt to Equity is better (less risky)
-        num_value1_ratio = round(num_value1 / 100, 2)
-        num_value2_ratio = round(num_value2 / 100, 2)
-        if num_value1 < num_value2:
-            return f"{num_value1_ratio} ✅ (Lower Debt) | {num_value2_ratio}"
-        elif num_value2 < num_value1:
-            return f"{num_value1_ratio} | {num_value2_ratio} ✅ (Lower Debt)"
-        else:
-            return f"{num_value1_ratio} | {num_value2_ratio} (Similar Debt)"
+                interpretation = interpret_pe_raw(val, industry_pe_value)
+                if interpretation == "Undervalued":
+                    score = val - industry_pe_value - 100 # Give a very low score
+                elif interpretation == "Fairly Priced":
+                    score = abs(val - industry_pe_value) # Closer to industry PE is better
+                else: # Overvalued or Slightly Overvalued
+                    score = val # Higher PE, higher score
 
-    elif metric_name == "PEG Ratio":
-        # Lower PEG is better (ideally < 1)
-        if num_value1 < num_value2 and num_value1 >= 0: # PEG should be positive to be meaningful
-            return f"{stock1_str} ✅ (Better PEG) | {stock2_str}"
-        elif num_value2 < num_value1 and num_value2 >= 0:
-            return f"{stock1_str} | {stock2_str} ✅ (Better PEG)"
-        else:
-            return f"{stock1_str} | {stock2_str} (Similar PEG or not ideal)"
+                scores.append(score)
 
-    # For other metrics, just display both values or handle as needed
-    return f"{stock1_str} | {stock2_str}"
+            if scores:
+                min_score = min(scores)
+                # Find all indices that have this min_score
+                best_indices = [i for i, score in enumerate(scores) if score == min_score and scores[i] != float('inf')]
+                if best_indices:
+                    # If multiple are "best" (e.g., both undervalued), just highlight the one with actual lower PE
+                    if len(best_indices) > 1:
+                        actual_pe_vals = [numeric_values[i] for i in best_indices if numeric_values[i] is not None]
+                        if actual_pe_vals:
+                            lowest_pe = min(actual_pe_vals)
+                            for idx in best_indices:
+                                if numeric_values[idx] == lowest_pe:
+                                    is_best[idx] = True
+                                    break # Highlight only the first one if multiple have the same lowest PE
+                    else:
+                        is_best[best_indices[0]] = True
 
+    except Exception as e:
+        # For debugging: print(f"Error in highlight_best_numeric for {s.name}: {e}")
+        pass # Fallback to no highlighting on error
+
+    styles = ['background-color: lightgreen; font-weight: bold;' if b else '' for b in is_best]
+    return styles
 
 # User input for primary stock search
 user_input = st.text_input("🔍 Search by symbol or company name for the primary stock:",
@@ -522,68 +536,191 @@ if selected_symbol:
             if stock1_summary and stock2_summary:
                 st.subheader("📊 Stock Comparison")
 
-                comparison_metrics = [
-                    "Current Price (₹)",
-                    "All-Time High (₹)",
-                    "Market Cap",
-                    "P/E Ratio",
-                    "EPS",
-                    "Dividend Yield",
-                    "Profit Margin",
-                    "Free Cash Flow (₹ Cr)",
-                    "ROE",
-                    "Debt to Equity",
-                    "PEG Ratio"
+                # Prepare data for the DataFrame with separate columns
+                comparison_data = {
+                    "Metric": [],
+                    stock1_summary.get("Company Name", selected_symbol.upper()): [],
+                    stock2_summary.get("Company Name", compare_symbol.upper()): [],
+                    "Interpretation": [] # Add an interpretation column
+                }
+
+                # Helper to format numbers for display
+                def format_value(value, metric_type):
+                    if value is None:
+                        return "N/A"
+                    if metric_type == "percent":
+                        return f"{round(value * 100, 2)}%" if isinstance(value, (int, float)) else value
+                    elif metric_type == "currency":
+                        return f"₹ {round(value, 2)}" if isinstance(value, (int, float)) else value
+                    elif metric_type == "millions": # Assuming FCF is in Crores and we want to show it as is
+                        return f"₹ {round(value, 2)} Cr" if isinstance(value, (int, float)) else value
+                    else: # General numeric or string
+                        return round(value, 2) if isinstance(value, (int, float)) else value
+
+                # Populate the comparison data dictionary
+                # Use a specific order for metrics
+                metrics_to_compare = [
+                    ("Current Price (₹)", "currency"),
+                    ("All-Time High (₹)", "currency"),
+                    ("Market Cap", "value"), # Raw market cap now
+                    ("P/E Ratio", "value"),
+                    ("EPS", "value"),
+                    ("Dividend Yield", "percent"),
+                    ("Profit Margin", "percent"),
+                    ("Free Cash Flow (₹ Cr)", "millions"),
+                    ("ROE", "percent"),
+                    ("Debt to Equity", "value"),
+                    ("PEG Ratio", "value")
                 ]
+                
+                # Add Company Name and Sector/Industry at the top
+                comparison_data["Metric"].append("Company Name")
+                comparison_data[stock1_summary.get("Company Name", selected_symbol.upper())].append(stock1_summary.get("Company Name", selected_symbol.upper()))
+                comparison_data[stock2_summary.get("Company Name", compare_symbol.upper())].append(stock2_summary.get("Company Name", compare_symbol.upper()))
+                comparison_data["Interpretation"].append("Names of the compared companies")
 
-                comparison_data = {}
-                stock1_name = stock1_summary.get("Company Name", selected_symbol.upper())
-                stock2_name = stock2_summary.get("Company Name", compare_symbol.upper())
+                comparison_data["Metric"].append("Sector")
+                comparison_data[stock1_summary.get("Company Name", selected_symbol.upper())].append(stock1_summary.get("Sector"))
+                comparison_data[stock2_summary.get("Company Name", compare_symbol.upper())].append(stock2_summary.get("Sector"))
+                comparison_data["Interpretation"].append("Industry segment")
 
-                for metric in comparison_metrics:
+                comparison_data["Metric"].append("Industry")
+                comparison_data[stock1_summary.get("Company Name", selected_symbol.upper())].append(stock1_summary.get("Industry"))
+                comparison_data[stock2_summary.get("Company Name", compare_symbol.upper())].append(stock2_summary.get("Industry"))
+                comparison_data["Interpretation"].append("Specific business area")
+
+                comparison_data["Metric"].append("Market Cap Category")
+                comparison_data[stock1_summary.get("Company Name", selected_symbol.upper())].append(stock1_summary.get("Market Cap Category"))
+                comparison_data[stock2_summary.get("Company Name", compare_symbol.upper())].append(stock2_summary.get("Market Cap Category"))
+                comparison_data["Interpretation"].append("Size based on market capitalization")
+
+                # Now add the numerical metrics
+                for metric, format_type in metrics_to_compare:
                     value1 = stock1_summary.get(metric)
                     value2 = stock2_summary.get(metric)
+                    
+                    comparison_data["Metric"].append(metric)
+                    comparison_data[stock1_summary.get("Company Name", selected_symbol.upper())].append(format_value(value1, format_type))
+                    comparison_data[stock2_summary.get("Company Name", compare_symbol.upper())].append(format_value(value2, format_type))
+                    
+                    # Add generic interpretation for now, specific highlighting will do the real interpretation
+                    if metric == "P/E Ratio":
+                        interpretation_text = "Lower is generally better, but consider industry context."
+                    elif metric in ["EPS", "Dividend Yield", "ROE", "Free Cash Flow (₹ Cr)", "Profit Margin"]:
+                        interpretation_text = "Higher is generally better."
+                    elif metric == "Debt to Equity":
+                        interpretation_text = "Lower is generally better (less risk)."
+                    elif metric == "PEG Ratio":
+                        interpretation_text = "Lower (ideally < 1) is better."
+                    else:
+                        interpretation_text = "" # No specific interpretation for others
+                    comparison_data["Interpretation"].append(interpretation_text)
 
+                comparison_df = pd.DataFrame(comparison_data).set_index("Metric")
+
+                # Apply styling to highlight the best stock
+                def apply_comparison_style(row):
+                    styles = [''] * len(row)
+                    metric = row.name # Get the metric name from the index
+                    
+                    # Get raw numeric values from the original summary for comparison
+                    raw_val1 = stock1_summary.get(metric)
+                    raw_val2 = stock2_summary.get(metric)
+
+                    if raw_val1 is None or raw_val2 is None:
+                        return styles # Cannot compare if data is missing
+
+                    try:
+                        num_val1 = float(raw_val1)
+                        num_val2 = float(raw_val2)
+                    except (ValueError, TypeError):
+                        return styles # Cannot compare non-numeric
+
+                    best_style = 'background-color: lightgreen; font-weight: bold;'
+                    
+                    # Columns to apply style (assuming first two data columns are stock values)
+                    col_idx_stock1 = 0 # Index of the first stock's data column
+                    col_idx_stock2 = 1 # Index of the second stock's data column
+
+                    # Define the comparison logic for each metric
                     if metric == "P/E Ratio":
                         industry_pe1 = INDUSTRY_PE.get(stock1_summary.get("Sector"))
                         industry_pe2 = INDUSTRY_PE.get(stock2_summary.get("Sector"))
-                        
-                        # Use the P/E of the primary stock's sector for interpretation, or average if both available
-                        effective_industry_pe = industry_pe1 
+                        effective_industry_pe = industry_pe1
                         if industry_pe1 is None and industry_pe2 is not None:
                             effective_industry_pe = industry_pe2
                         elif industry_pe1 is not None and industry_pe2 is not None:
                              effective_industry_pe = (industry_pe1 + industry_pe2) / 2 # Can adjust this logic
                         
-                        comparison_data[metric] = compare_and_interpret_metric(metric, value1, value2, effective_industry_pe)
-                    elif metric in ["EPS", "Dividend Yield", "ROE", "Debt to Equity", "PEG Ratio"]:
-                        comparison_data[metric] = compare_and_interpret_metric(metric, value1, value2)
-                    elif metric == "Current Price (₹)" or metric == "All-Time High (₹)":
-                        # For these, just display both values as direct comparison is usually desired
-                        comparison_data[metric] = f"{value1} | {value2}"
+                        interp1 = interpret_pe_raw(num_val1, effective_industry_pe)
+                        interp2 = interpret_pe_raw(num_val2, effective_industry_pe)
+
+                        # Prioritize Undervalued > Fairly Priced > Lower PE otherwise
+                        is_undervalued1 = (interp1 == "Undervalued")
+                        is_undervalued2 = (interp2 == "Undervalued")
+                        is_fair1 = (interp1 == "Fairly Priced")
+                        is_fair2 = (interp2 == "Fairly Priced")
+
+                        if is_undervalued1 and not is_undervalued2:
+                            styles[col_idx_stock1] = best_style
+                        elif is_undervalued2 and not is_undervalued1:
+                            styles[col_idx_stock2] = best_style
+                        elif is_fair1 and not is_fair2: # if both not undervalued, but one is fair
+                            styles[col_idx_stock1] = best_style
+                        elif is_fair2 and not is_fair1:
+                            styles[col_idx_stock2] = best_style
+                        elif num_val1 < num_val2: # If both similar interpretation, lower PE is better
+                            styles[col_idx_stock1] = best_style
+                        elif num_val2 < num_val1:
+                            styles[col_idx_stock2] = best_style
+
+                    elif metric in ["EPS", "Dividend Yield", "ROE", "Profit Margin", "Free Cash Flow (₹ Cr)"]:
+                        # Higher is better
+                        if num_val1 > num_val2:
+                            styles[col_idx_stock1] = best_style
+                        elif num_val2 > num_val1:
+                            styles[col_idx_stock2] = best_style
+                    
+                    elif metric == "Debt to Equity":
+                        # Lower is better (less risky)
+                        if num_val1 < num_val2:
+                            styles[col_idx_stock1] = best_style
+                        elif num_val2 < num_val1:
+                            styles[col_idx_stock2] = best_style
+
+                    elif metric == "PEG Ratio":
+                        # Lower and positive is better
+                        if num_val1 is not None and num_val2 is not None and num_val1 >= 0 and num_val2 >= 0:
+                            if num_val1 < num_val2:
+                                styles[col_idx_stock1] = best_style
+                            elif num_val2 < num_val1:
+                                styles[col_idx_stock2] = best_style
+                        elif num_val1 is not None and num_val1 >= 0: # Only stock1 has a valid PEG
+                            styles[col_idx_stock1] = best_style
+                        elif num_val2 is not None and num_val2 >= 0: # Only stock2 has a valid PEG
+                            styles[col_idx_stock2] = best_style
+
                     elif metric == "Market Cap":
-                        # Market cap display is already formatted string, just combine
-                        comparison_data[metric] = f"{value1} | {value2}"
-                    elif metric == "Profit Margin":
-                         # Profit margin is already formatted string, just combine
-                         comparison_data[metric] = f"{value1} | {value2}"
-                    elif metric == "Free Cash Flow (₹ Cr)":
-                        # Free cash flow is already formatted string, just combine
-                        comparison_data[metric] = f"{value1} | {value2}"
-                    else:
-                        comparison_data[metric] = f"{value1} | {value2}" # Default for others
+                        # For Market Cap, usually larger is considered more stable
+                        if num_val1 > num_val2:
+                            styles[col_idx_stock1] = best_style
+                        elif num_val2 > num_val1:
+                            styles[col_idx_stock2] = best_style
+                    
+                    # No specific highlighting for "Current Price" or "All-Time High" as "better" is subjective
 
-                comparison_df = pd.DataFrame(comparison_data.items(), columns=["Metric", "Comparison Result"])
-                comparison_df = comparison_df.set_index("Metric")
-
-                # Add a row for the company names to the header
-                header_row = pd.DataFrame({
-                    "Metric": ["Company Name"],
-                    "Comparison Result": [f"{stock1_name} | {stock2_name}"]
-                }).set_index("Metric")
-
-                st.dataframe(pd.concat([header_row, comparison_df]))
-
+                    return styles
+                
+                # Apply the styling. `subset` specifies which columns the styling function should operate on.
+                # Here it's the two stock data columns.
+                styled_df = comparison_df.style.apply(
+                    apply_comparison_style, 
+                    axis=1, # Apply row-wise
+                    subset=pd.Index([stock1_summary.get("Company Name", selected_symbol.upper()), 
+                                     stock2_summary.get("Company Name", compare_symbol.upper())])
+                )
+                
+                st.dataframe(styled_df, use_container_width=True)
 
             elif stock1_summary:
                 if st.session_state.compare_search_input and not compare_symbol:
@@ -599,14 +736,14 @@ if selected_symbol:
                     "Industry": stock1_summary.get("Industry"),
                     "Current Price (₹)": stock1_summary.get("Current Price (₹)"),
                     "All-Time High (₹)": stock1_summary.get("All-Time High (₹)"),
-                    "Market Cap": stock1_summary.get("Market Cap"),
+                    "Market Cap": stock1_summary.get("Market Cap") + f" ({stock1_summary.get('Market Cap Category')})", # Add category back
                     "P/E vs Industry": interpret_pe_with_industry(stock1_summary.get("P/E Ratio"), INDUSTRY_PE.get(stock1_summary.get("Sector"))),
-                    "EPS": interpret_eps_raw(stock1_summary.get("EPS")) + f" ({round(stock1_summary.get('EPS'),2)})" if stock1_summary.get("EPS") is not None else "N/A",
-                    "Dividend Yield": interpret_dividend_yield_raw(stock1_summary.get("Dividend Yield")) + f" ({round(stock1_summary.get('Dividend Yield')*100,2)}%)" if stock1_summary.get("Dividend Yield") is not None else "N/A",
-                    "Profit Margin": stock1_summary.get("Profit Margin"),
-                    "Free Cash Flow (₹ Cr)": stock1_summary.get("Free Cash Flow (₹ Cr)"),
-                    "ROE": interpret_roe_raw(stock1_summary.get("ROE")) + f" ({round(stock1_summary.get('ROE')*100,2)}%)" if stock1_summary.get("ROE") is not None else "N/A",
-                    "Debt to Equity": interpret_de_ratio_raw(stock1_summary.get("Debt to Equity")) + f" ({round(stock1_summary.get('Debt to Equity')/100,2)})" if stock1_summary.get("Debt to Equity") is not None else "N/A",
+                    "EPS": f"{round(stock1_summary.get('EPS'),2)} {get_eps_icon(interpret_eps_raw(stock1_summary.get('EPS')))}" if stock1_summary.get("EPS") is not None else "N/A",
+                    "Dividend Yield": f"{round(stock1_summary.get('Dividend Yield')*100,2)}% {get_dividend_icon(interpret_dividend_yield_raw(stock1_summary.get('Dividend Yield')))}" if stock1_summary.get("Dividend Yield") is not None else "N/A",
+                    "Profit Margin": f"{round(stock1_summary.get('Profit Margin')*100,2)}%" if stock1_summary.get('Profit Margin') is not None else "N/A", # Formatted for single view
+                    "Free Cash Flow (₹ Cr)": f"₹ {round(stock1_summary.get('Free Cash Flow (₹ Cr)'), 2)} Cr" if stock1_summary.get('Free Cash Flow (₹ Cr)') != 'N/A' else "N/A", # Ensure formatting
+                    "ROE": f"{round(stock1_summary.get('ROE')*100,2)}% {get_roe_icon(interpret_roe_raw(stock1_summary.get('ROE')))}" if stock1_summary.get("ROE") is not None else "N/A",
+                    "Debt to Equity": f"{round(stock1_summary.get('Debt to Equity'),2)} {get_de_icon(interpret_de_ratio_raw(stock1_summary.get('Debt to Equity')))}" if stock1_summary.get("Debt to Equity") is not None else "N/A",
                     "PEG Ratio": f"{stock1_summary.get('PEG Ratio')} (Lower is better)" if stock1_summary.get('PEG Ratio') is not None else "N/A"
                 }
 
@@ -679,22 +816,22 @@ if selected_symbol:
                     stock1_yf = yf.Ticker(selected_symbol + ".NS")
                     hist_price1 = stock1_yf.history(period=compare_chart_period)
                     if not hist_price1.empty:
-                        st.line_chart(hist_price1["Close"].round(2).rename(stock1_name))
+                        st.line_chart(hist_price1["Close"].round(2).rename(stock1_summary.get("Company Name", selected_symbol.upper())))
                     else:
-                        st.warning(f"No price data for {stock1_name}")
+                        st.warning(f"No price data for {stock1_summary.get('Company Name', selected_symbol.upper())}")
                 except Exception as e:
-                    st.warning(f"Could not load price chart for {stock1_name}. Error: {e}")
+                    st.warning(f"Could not load price chart for {stock1_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
 
             with col2_price:
                 try:
                     stock2_yf = yf.Ticker(compare_symbol + ".NS")
                     hist_price2 = stock2_yf.history(period=compare_chart_period)
                     if not hist_price2.empty:
-                        st.line_chart(hist_price2["Close"].round(2).rename(stock2_name))
+                        st.line_chart(hist_price2["Close"].round(2).rename(stock2_summary.get("Company Name", compare_symbol.upper())))
                     else:
-                        st.warning(f"No price data for {stock2_name}")
+                        st.warning(f"No price data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
                 except Exception as e:
-                    st.warning(f"Could not load price chart for {stock2_name}. Error: {e}")
+                    st.warning(f"Could not load price chart for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
             st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
             col1_pat, col2_pat = st.columns(2)
@@ -706,11 +843,11 @@ if selected_symbol:
                         pat_df1 = financials1.loc[["Net Income"]].transpose()
                         pat_df1.index = pat_df1.index.year
                         pat_df1["PAT"] = (pat_df1["Net Income"] / 1e7)
-                        st.bar_chart(pat_df1[["PAT"]].round(2).rename(columns={'PAT': stock1_name + ' PAT'}))
+                        st.bar_chart(pat_df1[["PAT"]].round(2).rename(columns={'PAT': stock1_summary.get("Company Name", selected_symbol.upper()) + ' PAT'}))
                     else:
-                        st.warning(f"No PAT data for {stock1_name}")
+                        st.warning(f"No PAT data for {stock1_summary.get('Company Name', selected_symbol.upper())}")
                 except Exception as e:
-                    st.warning(f"Could not retrieve PAT data for {stock1_name}. Error: {e}")
+                    st.warning(f"Could not retrieve PAT data for {stock1_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
 
             with col2_pat:
                 try:
@@ -720,11 +857,11 @@ if selected_symbol:
                         pat_df2 = financials2.loc[["Net Income"]].transpose()
                         pat_df2.index = pat_df2.index.year
                         pat_df2["PAT"] = (pat_df2["Net Income"] / 1e7)
-                        st.bar_chart(pat_df2[["PAT"]].round(2).rename(columns={'PAT': stock2_name + ' PAT'}))
+                        st.bar_chart(pat_df2[["PAT"]].round(2).rename(columns={'PAT': stock2_summary.get("Company Name", compare_symbol.upper()) + ' PAT'}))
                     else:
-                        st.warning(f"No PAT data for {stock2_name}")
+                        st.warning(f"No PAT data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
                 except Exception as e:
-                    st.warning(f"Could not retrieve PAT data for {stock2_name}. Error: {e}")
+                    st.warning(f"Could not retrieve PAT data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
             st.markdown("##### 📈 Historical Revenue (₹ in Crores)")
             col1_rev, col2_rev = st.columns(2)
@@ -736,11 +873,11 @@ if selected_symbol:
                         revenue_df1 = financials1.loc[["Total Revenue"]].transpose()
                         revenue_df1.index = revenue_df1.index.year
                         revenue_df1["Total Revenue"] = (revenue_df1["Total Revenue"] / 1e7)
-                        st.bar_chart(revenue_df1[["Total Revenue"]].round(2).rename(columns={'Total Revenue': stock1_name + ' Revenue'}))
+                        st.bar_chart(revenue_df1[["Total Revenue"]].round(2).rename(columns={'Total Revenue': stock1_summary.get("Company Name", selected_symbol.upper()) + ' Revenue'}))
                     else:
-                        st.warning(f"No Revenue data for {stock1_name}")
+                        st.warning(f"No Revenue data for {stock1_summary.get('Company Name', selected_symbol.upper())}")
                 except Exception as e:
-                    st.warning(f"Could not retrieve revenue data for {stock1_name}. Error: {e}")
+                    st.warning(f"Could not retrieve revenue data for {stock1_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
 
             with col2_rev:
                 try:
@@ -750,11 +887,11 @@ if selected_symbol:
                         revenue_df2 = financials2.loc[["Total Revenue"]].transpose()
                         revenue_df2.index = revenue_df2.index.year
                         revenue_df2["Total Revenue"] = (revenue_df2["Total Revenue"] / 1e7)
-                        st.bar_chart(revenue_df2[["Total Revenue"]].round(2).rename(columns={'Total Revenue': stock2_name + ' Revenue'}))
+                        st.bar_chart(revenue_df2[["Total Revenue"]].round(2).rename(columns={'Total Revenue': stock2_summary.get("Company Name", compare_symbol.upper()) + ' Revenue'}))
                     else:
-                        st.warning(f"No Revenue data for {stock2_name}")
+                        st.warning(f"No Revenue data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
                 except Exception as e:
-                    st.warning(f"Could not retrieve revenue data for {stock2_name}. Error: {e}")
+                    st.warning(f"Could not retrieve revenue data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
             st.markdown("##### 💰 Historical Free Cash Flow (₹ in Crores)")
             col1_fcf, col2_fcf = st.columns(2)
@@ -766,11 +903,11 @@ if selected_symbol:
                         fcf_df1 = cash_flow_statement1.loc[['Free Cash Flow']].transpose()
                         fcf_df1.index = fcf_df1.index.year
                         fcf_df1['Free Cash Flow (₹ Cr)'] = fcf_df1['Free Cash Flow'] / 1e7
-                        st.bar_chart(fcf_df1[['Free Cash Flow (₹ Cr)']].round(2).rename(columns={'Free Cash Flow (₹ Cr)': stock1_name + ' FCF'}))
+                        st.bar_chart(fcf_df1[['Free Cash Flow (₹ Cr)']].round(2).rename(columns={'Free Cash Flow (₹ Cr)': stock1_summary.get("Company Name", selected_symbol.upper()) + ' FCF'}))
                     else:
-                        st.warning(f"No FCF data for {stock1_name}")
+                        st.warning(f"No FCF data for {stock1_summary.get('Company Name', selected_symbol.upper())}")
                 except Exception as e:
-                    st.warning(f"Could not retrieve FCF data for {stock1_name}. Error: {e}")
+                    st.warning(f"Could not retrieve FCF data for {stock1_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
 
             with col2_fcf:
                 try:
@@ -780,11 +917,11 @@ if selected_symbol:
                         fcf_df2 = cash_flow_statement2.loc[['Free Cash Flow']].transpose()
                         fcf_df2.index = fcf_df2.index.year
                         fcf_df2['Free Cash Flow (₹ Cr)'] = fcf_df2['Free Cash Flow'] / 1e7
-                        st.bar_chart(fcf_df2[['Free Cash Flow (₹ Cr)']].round(2).rename(columns={'Free Cash Flow (₹ Cr)': stock2_name + ' FCF'}))
+                        st.bar_chart(fcf_df2[['Free Cash Flow (₹ Cr)']].round(2).rename(columns={'Free Cash Flow (₹ Cr)': stock2_summary.get("Company Name", compare_symbol.upper()) + ' FCF'}))
                     else:
-                        st.warning(f"No FCF data for {stock2_name}")
+                        st.warning(f"No FCF data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
                 except Exception as e:
-                    st.warning(f"Could not retrieve FCF data for {stock2_name}. Error: {e}")
+                    st.warning(f"Could not retrieve FCF data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
     else: # Not in compare mode (single stock view)
         stock_summary, error = get_stock_summary(selected_symbol)
@@ -799,15 +936,15 @@ if selected_symbol:
                 "Sector": stock_summary.get("Sector"),
                 "Industry": stock_summary.get("Industry"),
                 "Current Price (₹)": stock_summary.get("Current Price (₹)"),
-                "All-Time High (₹)": stock_summary.get("All-Time High (₹)"),
-                "Market Cap": stock_summary.get("Market Cap"),
+                "All-Time High (₹)": stock_summary.get("All-Time High (₹)") + f" ({round((stock_summary.get('Current Price (₹)') - stock_summary.get('All-Time High (₹)')) / stock_summary.get('All-Time High (₹)') * 100, 2)}%)" if stock_summary.get('All-Time High (₹)') is not None and stock_summary.get('Current Price (₹)') is not None else "N/A", # Add percentage change for single view
+                "Market Cap": f"₹ {round(stock_summary.get('Market Cap') / 1e9, 2)} B ({stock_summary.get('Market Cap Category')})", # Add category back
                 "P/E vs Industry": interpret_pe_with_industry(stock_summary.get("P/E Ratio"), INDUSTRY_PE.get(stock_summary.get("Sector"))),
                 "EPS": f"{round(stock_summary.get('EPS'), 2)} {get_eps_icon(interpret_eps_raw(stock_summary.get('EPS')))}" if stock_summary.get("EPS") is not None else "N/A",
                 "Dividend Yield": f"{round(stock_summary.get('Dividend Yield')*100,2)}% {get_dividend_icon(interpret_dividend_yield_raw(stock_summary.get('Dividend Yield')))}" if stock_summary.get("Dividend Yield") is not None else "N/A",
-                "Profit Margin": stock_summary.get("Profit Margin"),
-                "Free Cash Flow (₹ Cr)": stock_summary.get("Free Cash Flow (₹ Cr)"),
+                "Profit Margin": f"{round(stock_summary.get('Profit Margin')*100,2)}%" if stock_summary.get('Profit Margin') is not None else "N/A", # Formatted for single view
+                "Free Cash Flow (₹ Cr)": f"₹ {round(stock_summary.get('Free Cash Flow (₹ Cr)'), 2)} Cr" if stock_summary.get('Free Cash Flow (₹ Cr)') != 'N/A' else "N/A", # Ensure formatting
                 "ROE": f"{round(stock_summary.get('ROE')*100,2)}% {get_roe_icon(interpret_roe_raw(stock_summary.get('ROE')))}" if stock_summary.get("ROE") is not None else "N/A",
-                "Debt to Equity": f"{round(stock_summary.get('Debt to Equity')/100,2)} {get_de_icon(interpret_de_ratio_raw(stock_summary.get('Debt to Equity')))}" if stock_summary.get("Debt to Equity") is not None else "N/A",
+                "Debt to Equity": f"{round(stock_summary.get('Debt to Equity'),2)} {get_de_icon(interpret_de_ratio_raw(stock_summary.get('Debt to Equity')))}" if stock_summary.get("Debt to Equity") is not None else "N/A",
                 "PEG Ratio": f"{stock_summary.get('PEG Ratio')} (Lower is better)" if stock_summary.get('PEG Ratio') is not None else "N/A"
             }
             df = pd.DataFrame(single_stock_display_summary.items(), columns=["Metric", "Value"])
@@ -873,16 +1010,3 @@ if selected_symbol:
                     st.warning("Total Revenue data not available in financials.")
             except Exception as e:
                 st.warning(f"Could not retrieve historical revenue data. Error: {e}")
-
-# Helper functions for single stock view interpretations (added for consistency)
-def get_eps_icon(interpretation):
-    return "🔴" if interpretation == "Negative" else ("🟠" if interpretation == "Low" else "✅")
-
-def get_dividend_icon(interpretation):
-    return "🔴" if interpretation == "No dividends" else ("🟠" if interpretation == "Low" else "✅")
-
-def get_roe_icon(interpretation):
-    return "🟠" if interpretation == "Low" else ("🟡" if interpretation == "Moderate" else "✅")
-
-def get_de_icon(interpretation):
-    return "🔴" if interpretation == "High Debt" else ("🟡" if interpretation == "Moderate Debt" else "✅")
