@@ -793,34 +793,33 @@ if selected_symbol:
             try:
                 stock_yf = yf.Ticker(selected_symbol + ".NS")
                 financials = stock_yf.financials
-                annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
-
-                if not annual_financials.empty and "Net Income" in annual_financials.columns:
-                    pat_df = annual_financials[["Net Income"]].copy()
+                if not financials.empty and "Net Income" in financials.index:
+                    pat_df = financials.loc[["Net Income"]].transpose()
                     pat_df.index = pat_df.index.year
-                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7).round(2)
-                    st.bar_chart(pat_df[["PAT"]]) # Changed to bar_chart for better PAT visualization
+                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7)
+                    st.line_chart(pat_df[["PAT"]].round(2))
                 else:
                     st.warning("Net Income data not available in financials to calculate PAT.")
             except Exception as e:
                 st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
+
+
 
             st.subheader("📈 Historical Revenue (₹ in Crores)")
 
             try:
                 stock_yf = yf.Ticker(selected_symbol + ".NS")
                 financials = stock_yf.financials
-                annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
-
-                if not annual_financials.empty and "Total Revenue" in annual_financials.columns:
-                    revenue_df = annual_financials[["Total Revenue"]].copy()
+                if not financials.empty and "Total Revenue" in financials.index:
+                    revenue_df = financials.loc[["Total Revenue"]].transpose()
                     revenue_df.index = revenue_df.index.year
-                    revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7).round(2)
-                    st.bar_chart(revenue_df[["Total Revenue"]])
+                    revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7)
+                    st.bar_chart(revenue_df[["Total Revenue"]].round(2))
                 else:
                     st.warning("Total Revenue data not available in financials.")
             except Exception as e:
                 st.warning(f"Could not retrieve historical revenue data. Error: {e}")
+
 
             st.subheader("💰 Historical Free Cash Flow (₹ in Crores)")
 
