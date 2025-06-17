@@ -789,6 +789,21 @@ if selected_symbol:
                     st.warning("No historical stock data available for the selected period.")
             except Exception as e:
                 st.warning(f"Could not load stock price chart. Error: {e}")
+             st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
+
+            try:
+                stock_yf = yf.Ticker(selected_symbol + ".NS")
+                financials = stock_yf.financials
+                if not financials.empty and "Net Income" in financials.index:
+                    pat_df = financials.loc[["Net Income"]].transpose()
+                    pat_df.index = pat_df.index.year
+                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7)
+                    st.line_chart(pat_df[["PAT"]].round(2))
+                else:
+                    st.warning("Net Income data not available in financials to calculate PAT.")
+            except Exception as e:
+                st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
+
 
 
 
