@@ -367,8 +367,8 @@ def get_formatted_comparison_value(metric_name, value1, value2, industry_pe1=Non
         formatted_value1 = f"{round(float_value1, 2)}" if float_value1 is not None else "N/A"
         formatted_value2 = f"{round(float_value2, 2)}" if float_value2 is not None else "N/A"
     elif metric_name == "Dividend Yield":
-        formatted_value1 = f"{round(float_value1 * 100, 2)}%" if float_value1 is not None else "0%"
-        formatted_value2 = f"{round(float_value2 * 100, 2)}%" if float_value2 is not None else "0%"
+        formatted_value1 = f"{round(float_value1 * 1, 2)}%" if float_value1 is not None else "0%"
+        formatted_value2 = f"{round(float_value2 *1, 2)}%" if float_value2 is not None else "0%"
     elif metric_name == "Profit Margin":
         formatted_value1 = f"{round(float_value1 * 100, 2)}%" if float_value1 is not None else "N/A"
         formatted_value2 = f"{round(float_value2 * 100, 2)}%" if float_value2 is not None else "N/A"
