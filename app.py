@@ -655,8 +655,7 @@ if selected_symbol:
                     st.warning(f"Could not retrieve revenue data for {stock1_raw_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
 
             with col2_rev:
-                try:
-                    
+                try:   
                 except Exception as e:
                     st.warning(f"Could not retrieve PAT data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
