@@ -657,18 +657,18 @@ if selected_symbol:
             with col2_rev:
                 try:
                     stock2_yf = yf.Ticker(compare_symbol + ".NS")
-                    financials2 = stock2_yf.financials
-                    annual_financials2 = financials2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials2.index.names else financials2.sort_index()
-
-                    if not annual_financials2.empty and "Total Revenue" in annual_financials2.columns:
-                        revenue_df2 = annual_financials2[["Total Revenue"]].copy()
-                        revenue_df2.index = revenue_df2.index.year
-                        revenue_df2["Total Revenue"] = (revenue_df2["Total Revenue"] / 1e7).round(2)
-                        st.bar_chart(revenue_df2[["Total Revenue"]].rename(columns={'Total Revenue': stock2_raw_summary.get('Company Name', compare_symbol.upper()) + ' Revenue'})) # <-- This line was missing
-                    else:
-                        st.warning(f"No Revenue data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}")
-                except Exception as e:
-                    st.warning(f"Could not retrieve revenue data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
+                    financials2 = stock2_yf.financials
+                    annual_financials2 = financials2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials2.index.names else financials2.sort_index()
+                    
+                    if not annual_financials2.empty and "Total Revenue" in annual_financials2.columns:
+                        revenue_df2 = annual_financials2[["Total Revenue"]].copy()
+                        revenue_df2.index = revenue_df2.index.year
+                        revenue_df2["Total Revenue"] = (revenue_df2["Total Revenue"] / 1e7).round(2)
+                        st.bar_chart(revenue_df2[["Total Revenue"]].rename(columns={'Total Revenue': stock2_raw_summary.get('Company Name', compare_symbol.upper()) + ' Revenue'}))
+                    else:
+                        st.warning(f"No Revenue data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}")
+                    except Exception as e:
+                        st.warning(f"Could not retrieve revenue data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
             # --- Historical Free Cash Flow (FCF) Chart Comparison ---
             st.markdown("##### 💰 Historical Free Cash Flow (₹ in Crores)")
