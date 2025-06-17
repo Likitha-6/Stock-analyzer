@@ -16,7 +16,6 @@ if 'compare_search_input' not in st.session_state:
     st.session_state.compare_search_input = ""
 
 # Load dynamic search CSV - No longer checking for Sector/Industry
-@st.cache_data
 def load_stock_data():
     try:
         df = pd.read_csv("nse stocks.csv")
