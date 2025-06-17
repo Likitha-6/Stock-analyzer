@@ -656,6 +656,18 @@ if selected_symbol:
 
             with col2_rev:
                 try:
+                    stock1_yf = yf.Ticker(selected_symbol + ".NS")
+                    financials1 = stock1_yf.financials
+                    annual_financials1 = financials1.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials1.index.names else financials1.sort_index()
+
+                    if not annual_financials1.empty and "Total Revenue" in annual_financials1.columns:
+                        revenue_df1 = annual_financials1[["Total Revenue"]].copy()
+                        revenue_df1.index = revenue_df1.index.year
+                        revenue_df1["Total Revenue"] = (revenue_df1["Total Revenue"] / 1e7).round(2)
+                        st.bar_chart(revenue_df1[["Total Revenue"]].rename(columns={'Total Revenue': stock1_raw_summary.get('Company Name', selected_symbol.upper()) + ' Revenue'}))
+                    else:
+                        st.warning(f"No Revenue data for {stock1_raw_summary.get('Company Name', selected_symbol.upper())}")
+                
                 except Exception as e:
                     st.warning(f"Could not retrieve PAT data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
