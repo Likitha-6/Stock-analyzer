@@ -713,7 +713,7 @@ if selected_symbol:
                 "Company Name": stock1_summary.get("Company Name"),
                 "Symbol": stock1_summary.get("Symbol"),
                 "Current Price (₹)": stock1_summary.get("Current Price (₹)"),
-                "All-Time High (₹)": stock1_summary.get("All-Time High (₹)") + f" ({round((stock1_summary.get('Current Price (₹)') - stock1_summary.get('All-Time High (₹)')) / stock1_summary.get('All-Time High (₹)') * 100, 2)}%)" if stock1_summary.get('All-Time High (₹)') is not None and stock1_summary.get('Current Price (₹)') is not None and stock1_summary.get('All-Time High (₹)') !=0 else "N/A",
+                "All-Time High (₹)": (f"{stock1_summary.get('All-Time High (₹)')} ({round((stock1_summary.get('Current Price (₹)') - stock1_summary.get('All-Time High (₹)')) / stock1_summary.get('All-Time High (₹)') * 100, 2)}%)"if stock1_summary.get('All-Time High (₹)') is not None and stock1_summary.get('Current Price (₹)') is not None and stock1_summary.get('All-Time High (₹)') !=0else "N/A"),
                 "Market Cap": f"₹ {round(stock1_summary.get('Market Cap') / 1e9, 2)} B ({stock1_summary.get('Market Cap Category')})",
                 "P/E Ratio": interpret_pe_no_industry(stock1_summary.get("P/E Ratio")),
                 "EPS": f"{round(stock1_summary.get('EPS'), 2)} {get_eps_icon(interpret_eps_raw(stock1_summary.get('EPS')))}" if stock1_summary.get("EPS") is not None else "N/A",
