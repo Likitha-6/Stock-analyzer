@@ -84,22 +84,29 @@ def interpret_eps(eps):
     return f"₹{round(eps, 2)}" # Zero EPS
 
 def interpret_pe_with_industry(pe_ratio, sector):
-    """Interprets P/E ratio against industry average."""
+    """Interprets P/E ratio against industry average, now explicitly includes industry average in string."""
     if pe_ratio is None or pe_ratio <= 0:
-        return "N/A (Non-positive P/E)" # Or 'Loss-making' etc.
+        return "N/A (Non-positive P/E)"
     
     industry_avg_pe = INDUSTRY_PE.get(sector, None)
+    
+    # New part: include industry average in the string for clarity
+    industry_avg_display = ""
+    if industry_avg_pe is not None:
+        industry_avg_display = f" vs Industry Avg {round(industry_avg_pe, 2)}"
+    else:
+        industry_avg_display = " vs Industry Avg N/A"
 
     if industry_avg_pe is None:
-        return f"{round(pe_ratio, 2)} ❓ (Industry Avg N/A)"
+        return f"{round(pe_ratio, 2)}{industry_avg_display} ❓" # No specific interpretation if industry avg N/A
     
     if pe_ratio < industry_avg_pe * 0.8:
-        return f"{round(pe_ratio, 2)}vs {industry_avg_pe} ✅ Undervalued"
+        return f"{round(pe_ratio, 2)}{industry_avg_display} ✅ Undervalued"
     elif pe_ratio > industry_avg_pe * 1.2:
-        return f"{round(pe_ratio, 2)} vs {industry_avg_pe}🔺 Overvalued"
+        return f"{round(pe_ratio, 2)}{industry_avg_display} 🔺 Overvalued"
     elif pe_ratio > industry_avg_pe:
-        return f"{round(pe_ratio, 2)}vs {industry_avg_pe} 🟠 Slightly Overvalued"
-    return f"{round(pe_ratio, 2)}vs {industry_avg_pe} ✅ Fairly Priced"
+        return f"{round(pe_ratio, 2)}{industry_avg_display} 🟠 Slightly Overvalued"
+    return f"{round(pe_ratio, 2)}{industry_avg_display} ✅ Fairly Priced"
 
 def calculate_cagr(start_value, end_value, years):
     """Calculates Compound Annual Growth Rate."""
