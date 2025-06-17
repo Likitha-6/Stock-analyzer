@@ -193,7 +193,7 @@ def interpret_pe_no_industry(pe):
         return f"P/E: {round(pe, 2)} (High) 🟠"
 
 
-@st.cache_data(ttl=3600) # Cache for 1 hour (3600 seconds)
+ # Cache for 1 hour (3600 seconds)
 def get_stock_summary(ticker_symbol):
     full_ticker = ticker_symbol + ".NS"
     stock = yf.Ticker(full_ticker)
@@ -205,8 +205,6 @@ def get_stock_summary(ticker_symbol):
             return None, f"⚠️ Could not fetch data for **{ticker_symbol.upper()}**. Please check the symbol."
 
         # Sector and Industry are no longer fetched or returned
-        # sector = info.get("sector", "N/A")
-        # industry = info.get("industry", "N/A")
 
         # Get raw values for metrics
         current_price = info.get("currentPrice")
@@ -267,8 +265,6 @@ def get_stock_summary(ticker_symbol):
         summary = {
             "Company Name": info.get("longName"),
             "Symbol": ticker_symbol,
-            # "Sector": sector, # Removed
-            # "Industry": industry, # Removed
             "Current Price (₹)": current_price,
             "All-Time High (₹)": all_time_high, # Use raw ATH for comparison
             "Market Cap": market_cap, # Use raw market cap for comparison
@@ -288,13 +284,13 @@ def get_stock_summary(ticker_symbol):
 
 # --- STYLING FUNCTIONS FOR DATAFRAME ---
 
-def highlight_best_numeric(s, metric_type): # Removed industry_pe_value
+def highlight_best_numeric(s, metric_type):
     """
     Highlights the 'better' value in a row for numeric metrics.
     Applies bold and green background.
     """
     styles = [''] * len(s) # Initialize all to empty strings for no styling
-    
+
     # Extract numeric values and their original indices from the Series
     numeric_values = []
     original_indices = []
@@ -311,18 +307,18 @@ def highlight_best_numeric(s, metric_type): # Removed industry_pe_value
         return styles
 
     best_style = 'background-color: lightgreen; font-weight: bold;'
-    
+
     try:
         if metric_type == "higher": # e.g., EPS, Dividend Yield, ROE, Profit Margin, FCF
             best_val = -float('inf')
             best_idx = -1
-            
+
             # Find the maximum numeric value
             for i, val in enumerate(numeric_values):
                 if val is not None and val > best_val:
                     best_val = val
                     best_idx = i
-            
+
             # Apply style to all cells that match the best value (handles ties)
             if best_idx != -1:
                 for i, val in enumerate(numeric_values):
@@ -338,7 +334,7 @@ def highlight_best_numeric(s, metric_type): # Removed industry_pe_value
                 if val is not None and val >= 0 and val < best_val:
                     best_val = val
                     best_idx = i
-            
+
             # Apply style to all cells that match the best value (handles ties)
             if best_idx != -1:
                 for i, val in enumerate(numeric_values):
@@ -346,7 +342,7 @@ def highlight_best_numeric(s, metric_type): # Removed industry_pe_value
                         styles[original_indices[i]] = best_style
 
         elif metric_type == "market_cap":
-            # For Market Cap, typically larger is considered "better" (more stable)
+            # For Market Cap, typically larger is considered more stable
             best_val = -float('inf')
             best_idx = -1
             for i, val in enumerate(numeric_values):
@@ -408,11 +404,14 @@ compare_mode = st.checkbox("🔄 Compare stocks")
 
 # Main app logic
 if selected_symbol:
-    if compare_mode:
+    # Always fetch summary for the primary stock
+    stock1_summary, error1 = get_stock_summary(selected_symbol)
+
+    if error1:
+        st.error(error1)
+    elif compare_mode:
         st.subheader("🆚 Compare With Another Stock")
 
-        # Removed compare_col_main, compare_col_competitors and the "Similar Companies" logic
-        # Now the comparison input takes full width
         st.session_state.compare_search_input = st.text_input(
             "🔍 Search by symbol or company name for the second stock:",
             value=st.session_state.compare_search_input,
@@ -455,11 +454,7 @@ if selected_symbol:
         else:
             st.info("Please enter a company name or symbol for the second stock.")
 
-        stock1_summary, error1 = get_stock_summary(selected_symbol)
         stock2_summary, error2 = (None, None)
-
-        if error1:
-            st.error(error1)
 
         if compare_symbol:
             stock2_summary, error2 = get_stock_summary(compare_symbol)
@@ -540,13 +535,10 @@ if selected_symbol:
                 raw_val2 = stock2_summary.get(metric)
 
                 # Identify the positions of the stock data columns in the row (for styling)
-                # These are the column indices AFTER the 'Metric' column (which is the index)
-                # and before the 'Interpretation' column.
                 stock1_col_name = stock1_summary.get("Company Name", selected_symbol.upper())
                 stock2_col_name = stock2_summary.get("Company Name", compare_symbol.upper())
-                
+
                 # Get the integer position of the columns in the DataFrame row
-                # We need to consider that the 'Metric' column is the index, so column 0 is the first stock's data
                 col_idx_stock1 = comparison_df.columns.get_loc(stock1_col_name)
                 col_idx_stock2 = comparison_df.columns.get_loc(stock2_col_name)
 
@@ -570,10 +562,11 @@ if selected_symbol:
                             styles[col_idx_stock1] = best_style
                         elif num_val2 < num_val1:
                             styles[col_idx_stock2] = best_style
-                    elif num_val1 >= 0: # Only stock1 has positive PE
+                    elif num_val1 is not None and num_val1 >= 0 and (num_val2 is None or num_val2 < 0): # Stock1 is valid positive, Stock2 is invalid/negative
                         styles[col_idx_stock1] = best_style
-                    elif num_val2 >= 0: # Only stock2 has positive PE
+                    elif num_val2 is not None and num_val2 >= 0 and (num_val1 is None or num_val1 < 0): # Stock2 is valid positive, Stock1 is invalid/negative
                         styles[col_idx_stock2] = best_style
+
 
                 elif metric in ["EPS", "Dividend Yield", "ROE", "Profit Margin", "Free Cash Flow (₹ Cr)"]:
                     # Higher is better
@@ -596,9 +589,9 @@ if selected_symbol:
                             styles[col_idx_stock1] = best_style
                         elif num_val2 < num_val1:
                             styles[col_idx_stock2] = best_style
-                    elif num_val1 >= 0: # Only stock1 has a valid PEG
+                    elif num_val1 is not None and num_val1 >= 0: # Only stock1 has a valid positive PEG
                         styles[col_idx_stock1] = best_style
-                    elif num_val2 >= 0: # Only stock2 has a valid PEG
+                    elif num_val2 is not None and num_val2 >= 0: # Only stock2 has a valid positive PEG
                         styles[col_idx_stock2] = best_style
 
                 elif metric == "Market Cap":
@@ -623,18 +616,19 @@ if selected_symbol:
 
             st.dataframe(styled_df, use_container_width=True)
 
-        elif stock1_summary:
+        elif stock1_summary: # Only stock1 summary available, display its single view
             if st.session_state.compare_search_input and not compare_symbol:
-                st.warning("Please select a valid second stock from the dropdown or search result.")
+                st.warning("Please select a valid second stock from the dropdown or search result to enable full comparison.")
             else:
-                st.warning("Please search and select a second stock to compare for full comparison view.")
+                st.info("Enter a second stock in the search bar above to enable comparison.") # More helpful message
+
+            # The single stock display logic remains here, but moved outside the `if compare_symbol` block
+            # to be executed if compare_mode is true but no valid second stock is selected yet.
             st.subheader(f"📋 Fundamentals Summary for {stock1_summary.get('Company Name', selected_symbol.upper())}")
             # For single view, we want full interpretations back
             single_stock_display_summary = {
                 "Company Name": stock1_summary.get("Company Name"),
                 "Symbol": stock1_summary.get("Symbol"),
-                # "Sector": stock1_summary.get("Sector"), # Removed
-                # "Industry": stock1_summary.get("Industry"), # Removed
                 "Current Price (₹)": stock1_summary.get("Current Price (₹)"),
                 "All-Time High (₹)": stock1_summary.get("All-Time High (₹)") + f" ({round((stock1_summary.get('Current Price (₹)') - stock1_summary.get('All-Time High (₹)')) / stock1_summary.get('All-Time High (₹)') * 100, 2)}%)" if stock1_summary.get('All-Time High (₹)') is not None and stock1_summary.get('Current Price (₹)') is not None and stock1_summary.get('All-Time High (₹)') !=0 else "N/A", # Add percentage change for single view
                 "Market Cap": f"₹ {round(stock1_summary.get('Market Cap') / 1e9, 2)} B ({stock1_summary.get('Market Cap Category')})", # Add category back
@@ -704,8 +698,92 @@ if selected_symbol:
                     revenue_df = financials.loc[["Total Revenue"]].transpose()
                     revenue_df.index = revenue_df.index.year
                     revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7)
+                    st.bar_chart(revenue_df[["Total Revenue"].round(2)])
+                else:
+                    st.warning("Total Revenue data not available in financials.")
+            except Exception as e:
+                st.warning(f"Could not retrieve historical revenue data. Error: {e}")
+
+    else: # Not in compare mode (single stock view)
+        # Display the single stock summary directly
+        if stock1_summary:
+            st.subheader(f"📋 Stock Fundamentals Summary for {stock1_summary.get('Company Name', selected_symbol.upper())}")
+            # For single view, we want full interpretations back
+            single_stock_display_summary = {
+                "Company Name": stock1_summary.get("Company Name"),
+                "Symbol": stock1_summary.get("Symbol"),
+                "Current Price (₹)": stock1_summary.get("Current Price (₹)"),
+                "All-Time High (₹)": stock1_summary.get("All-Time High (₹)") + f" ({round((stock1_summary.get('Current Price (₹)') - stock1_summary.get('All-Time High (₹)')) / stock1_summary.get('All-Time High (₹)') * 100, 2)}%)" if stock1_summary.get('All-Time High (₹)') is not None and stock1_summary.get('Current Price (₹)') is not None and stock1_summary.get('All-Time High (₹)') !=0 else "N/A",
+                "Market Cap": f"₹ {round(stock1_summary.get('Market Cap') / 1e9, 2)} B ({stock1_summary.get('Market Cap Category')})",
+                "P/E Ratio": interpret_pe_no_industry(stock1_summary.get("P/E Ratio")),
+                "EPS": f"{round(stock1_summary.get('EPS'), 2)} {get_eps_icon(interpret_eps_raw(stock1_summary.get('EPS')))}" if stock1_summary.get("EPS") is not None else "N/A",
+                "Dividend Yield": f"{round(stock1_summary.get('Dividend Yield')*100,2)}% {get_dividend_icon(interpret_dividend_yield_raw(stock1_summary.get('Dividend Yield')))}" if stock1_summary.get("Dividend Yield") is not None else "N/A",
+                "Profit Margin": f"{round(stock1_summary.get('Profit Margin')*100,2)}%" if stock1_summary.get('Profit Margin') is not None else "N/A",
+                "Free Cash Flow (₹ Cr)": f"₹ {round(stock1_summary.get('Free Cash Flow (₹ Cr)'), 2)} Cr" if stock1_summary.get('Free Cash Flow (₹ Cr)') != 'N/A' else "N/A",
+                "ROE": f"{round(stock1_summary.get('ROE')*100,2)}% {get_roe_icon(interpret_roe_raw(stock1_summary.get('ROE')))}" if stock1_summary.get("ROE") is not None else "N/A",
+                "Debt to Equity": f"{round(stock1_summary.get('Debt to Equity'),2)} {get_de_icon(interpret_de_ratio_raw(stock1_summary.get('Debt to Equity')))}" if stock1_summary.get("Debt to Equity") is not None else "N/A",
+                "PEG Ratio": f"{stock1_summary.get('PEG Ratio')} (Lower is better)" if stock1_summary.get('PEG Ratio') is not None else "N/A"
+            }
+            df = pd.DataFrame(single_stock_display_summary.items(), columns=["Metric", "Value"])
+            st.dataframe(df.set_index("Metric"))
+
+            st.subheader("📉 Historical Stock Price Chart")
+
+            try:
+                stock_yf = yf.Ticker(selected_symbol + ".NS")
+                period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4, key="price_period_single") # Changed key for single mode
+                hist_price = stock_yf.history(period=period)
+                if not hist_price.empty:
+                    st.line_chart(hist_price["Close"].round(2))
+                else:
+                    st.warning("No historical stock data available for the selected period.")
+            except Exception as e:
+                st.warning(f"Could not load stock price chart. Error: {e}")
+
+            st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
+
+            try:
+                stock_yf = yf.Ticker(selected_symbol + ".NS")
+                financials = stock_yf.financials
+                if not financials.empty and "Net Income" in financials.index:
+                    pat_df = financials.loc[["Net Income"]].transpose()
+                    pat_df.index = pat_df.index.year
+                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7)
+                    st.line_chart(pat_df[["PAT"]].round(2))
+                else:
+                    st.warning("Net Income data not available in financials to calculate PAT.")
+            except Exception as e:
+                st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
+            st.subheader("💰 Historical Free Cash Flow (₹ in Crores)")
+
+            try:
+                stock_yf = yf.Ticker(selected_symbol + ".NS")
+                cash_flow_statement = stock_yf.cashflow
+
+                if not cash_flow_statement.empty and 'Free Cash Flow' in cash_flow_statement.index:
+                    fcf_df = cash_flow_statement.loc[['Free Cash Flow']].transpose()
+                    fcf_df.index = fcf_df.index.year
+                    fcf_df.rename(columns={'Free Cash Flow': 'Free Cash Flow (₹ Cr)'}, inplace=True)
+                    fcf_df['Free Cash Flow (₹ Cr)'] = fcf_df['Free Cash Flow'] / 1e7
+                    st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']].round(2))
+                else:
+                    st.warning("Free Cash Flow data not available in cash flow statements.")
+            except Exception as e:
+                st.warning(f"Could not retrieve historical Free Cash Flow data. Error: {e}")
+
+            st.subheader("📈 Historical Revenue (₹ in Crores)")
+
+            try:
+                stock_yf = yf.Ticker(selected_symbol + ".NS")
+                financials = stock_yf.financials
+                if not financials.empty and "Total Revenue" in financials.index:
+                    revenue_df = financials.loc[["Total Revenue"]].transpose()
+                    revenue_df.index = revenue_df.index.year
+                    revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7)
                     st.bar_chart(revenue_df[["Total Revenue"]].round(2))
                 else:
                     st.warning("Total Revenue data not available in financials.")
             except Exception as e:
                 st.warning(f"Could not retrieve historical revenue data. Error: {e}")
+        else:
+            st.warning("No primary stock selected. Please select a primary stock to view its fundamentals.")
