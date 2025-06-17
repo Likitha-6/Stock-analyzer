@@ -775,33 +775,28 @@ if selected_symbol:
             df = pd.DataFrame(display_summary_for_single_mode.items(), columns=["Metric", "Value"])
             st.dataframe(df.set_index("Metric"))
 
-            st.subheader("📉 Historical Stock Price Chart")
-
+            st.markdown("##### 📉 Historical Price Chart")
             try:
-                stock_yf = yf.Ticker(selected_symbol + ".NS")
-                period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4, key="price_period")
-                hist_price = stock_yf.history(period=period)
-                if not hist_price.empty:
-                    st.line_chart(hist_price["Close"].round(2))
+                stock1_yf = yf.Ticker(selected_symbol + ".NS")
+                hist_price1 = stock1_yf.history(period=compare_chart_period)["Close"].round(2)
+                hist_price1 = hist_price1.rename(stock1_raw_summary.get('Company Name', selected_symbol.upper()))
+            
+                stock2_yf = yf.Ticker(compare_symbol + ".NS")
+                hist_price2 = stock2_yf.history(period=compare_chart_period)["Close"].round(2)
+                hist_price2 = hist_price2.rename(stock2_raw_summary.get('Company Name', compare_symbol.upper()))
+            
+                # Combine the close prices into a single DataFrame
+                combined_price_df = pd.DataFrame({
+                    stock1_raw_summary.get('Company Name', selected_symbol.upper()): hist_price1,
+                    stock2_raw_summary.get('Company Name', compare_symbol.upper()): hist_price2
+                }).dropna() # Drop rows where either stock has no data for that date
+            
+                if not combined_price_df.empty:
+                    st.line_chart(combined_price_df)
                 else:
-                    st.warning("No historical stock data available for the selected period.")
+                    st.warning("No common historical price data available for comparison.")
             except Exception as e:
-                st.warning(f"Could not load stock price chart. Error: {e}")
-
-            st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
-
-            try:
-                stock_yf = yf.Ticker(selected_symbol + ".NS")
-                financials = stock_yf.financials
-                if not financials.empty and "Net Income" in financials.index:
-                    pat_df = financials.loc[["Net Income"]].transpose()
-                    pat_df.index = pat_df.index.year
-                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7)
-                    st.line_chart(pat_df[["PAT"]].round(2))
-                else:
-                    st.warning("Net Income data not available in financials to calculate PAT.")
-            except Exception as e:
-                st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
+                st.warning(f"Could not load historical price chart comparison. Error: {e}")
 
 
 
