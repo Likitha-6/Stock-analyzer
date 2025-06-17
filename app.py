@@ -821,27 +821,29 @@ if selected_symbol:
                 st.warning(f"Could not retrieve historical revenue data. Error: {e}")
 
 
-            st.subheader("💰 Historical Free Cash Flow (₹ in Crores)")
+            st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
 
             try:
                 stock_yf = yf.Ticker(selected_symbol + ".NS")
-                cash_flow_statement = stock_yf.cashflow
-
-                if not cash_flow_statement.empty and 'Free Cash Flow' in cash_flow_statement.index:
-                    # Select 'Free Cash Flow' row, transpose, and convert index to year
-                    fcf_df = cash_flow_statement.loc[['Free Cash Flow']].transpose()
-                    fcf_df.index = fcf_df.index.year # Convert datetime index to year
-
-                    # Rename column for plotting clarity
-                    fcf_df.rename(columns={'Free Cash Flow': 'Free Cash Flow (₹ Cr)'}, inplace=True)
-
-                    # Convert to Crores (adjust 1e7 based on your unit verification)
-                    fcf_df['Free Cash Flow (₹ Cr)'] = fcf_df['Free Cash Flow (₹ Cr)'] / 1e7
-
-                    # Plotting a bar chart for FCF is often better for yearly values
-                    st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']].round(2))
+                financials = stock_yf.financials
+            
+                # This part is crucial for correctly parsing yfinance financials
+                # It flattens the index and filters for 'ANNUAL' data, making metrics columns
+                annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
+            
+                # Check if the annual_financials DataFrame is not empty and 'Net Income' is a column
+                if not annual_financials.empty and "Net Income" in annual_financials.columns:
+                    pat_df = annual_financials[["Net Income"]].copy() # Select the 'Net Income' column
+                    pat_df.index = pat_df.index.year # Set index to year for plotting
+                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7).round(2) # Convert to Crores and round
+                    
+                    # Debugging: Print the DataFrame to see its content before plotting
+                    # st.write("PAT DataFrame for", selected_symbol, ":")
+                    # st.write(pat_df)
+            
+                    st.bar_chart(pat_df[["PAT"]]) # Use bar_chart for financial statements
                 else:
-                    st.warning("Free Cash Flow data not available in cash flow statements.")
+                    st.warning("Net Income data not available in financials to calculate PAT.")
             except Exception as e:
-                st.warning(f"Could not retrieve historical Free Cash Flow data. Error: {e}")
+                st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
 
