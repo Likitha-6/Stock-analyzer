@@ -404,97 +404,97 @@ if selected_symbol:
                     st.warning(f"Could not load price chart for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
             # --- Historical Profit After Tax (PAT) Chart Comparison ---
-            '''st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
-            col1_pat, col2_pat = st.columns(2)
-            with col1_pat:
-                try:
-                    stock1_yf = yf.Ticker(selected_symbol + ".NS")
-                    financials1 = stock1_yf.financials
-                    if not financials1.empty and "Net Income" in financials1.index:
-                        pat_df1 = financials1.loc[["Net Income"]].transpose()
-                        pat_df1.index = pat_df1.index.year
-                        pat_df1["PAT"] = (pat_df1["Net Income"] / 1e7)
-                        st.bar_chart(pat_df1[["PAT"]].round(2).rename(columns={'PAT': stock1_summary.get('Company Name', selected_symbol.upper()) + ' PAT'}))
-                    else:
-                        st.warning(f"No PAT data for {stock1_summary.get('Company Name', selected_symbol.upper())}")
-                except Exception as e:
-                    st.warning(f"Could not retrieve PAT data for {stock1_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
+            # '''st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
+            # col1_pat, col2_pat = st.columns(2)
+            # with col1_pat:
+            #     try:
+            #         stock1_yf = yf.Ticker(selected_symbol + ".NS")
+            #         financials1 = stock1_yf.financials
+            #         if not financials1.empty and "Net Income" in financials1.index:
+            #             pat_df1 = financials1.loc[["Net Income"]].transpose()
+            #             pat_df1.index = pat_df1.index.year
+            #             pat_df1["PAT"] = (pat_df1["Net Income"] / 1e7)
+            #             st.bar_chart(pat_df1[["PAT"]].round(2).rename(columns={'PAT': stock1_summary.get('Company Name', selected_symbol.upper()) + ' PAT'}))
+            #         else:
+            #             st.warning(f"No PAT data for {stock1_summary.get('Company Name', selected_symbol.upper())}")
+            #     except Exception as e:
+            #         st.warning(f"Could not retrieve PAT data for {stock1_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
 
-            with col2_pat:
-                try:
-                    stock2_yf = yf.Ticker(compare_symbol + ".NS")
-                    financials2 = stock2_yf.financials
-                    if not financials2.empty and "Net Income" in financials2.index:
-                        pat_df2 = financials2.loc[["Net Income"]].transpose()
-                        pat_df2.index = pat_df2.index.year
-                        pat_df2["PAT"] = (pat_df2["Net Income"] / 1e7)
-                        st.bar_chart(pat_df2[["PAT"]].round(2).rename(columns={'PAT': stock2_summary.get('Company Name', compare_symbol.upper()) + ' PAT'}))
-                    else:
-                        st.warning(f"No PAT data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
-                except Exception as e:
-                    st.warning(f"Could not retrieve PAT data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
+            # with col2_pat:
+            #     try:
+            #         stock2_yf = yf.Ticker(compare_symbol + ".NS")
+            #         financials2 = stock2_yf.financials
+            #         if not financials2.empty and "Net Income" in financials2.index:
+            #             pat_df2 = financials2.loc[["Net Income"]].transpose()
+            #             pat_df2.index = pat_df2.index.year
+            #             pat_df2["PAT"] = (pat_df2["Net Income"] / 1e7)
+            #             st.bar_chart(pat_df2[["PAT"]].round(2).rename(columns={'PAT': stock2_summary.get('Company Name', compare_symbol.upper()) + ' PAT'}))
+            #         else:
+            #             st.warning(f"No PAT data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
+            #     except Exception as e:
+            #         st.warning(f"Could not retrieve PAT data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
-            # --- Historical Revenue Chart Comparison ---
-            st.markdown("##### 📈 Historical Revenue (₹ in Crores)")
-            col1_rev, col2_rev = st.columns(2)
-            with col1_rev:
-                try:
-                    stock1_yf = yf.Ticker(selected_symbol + ".NS")
-                    financials1 = stock1_yf.financials
-                    if not financials1.empty and "Total Revenue" in financials1.index:
-                        revenue_df1 = financials1.loc[["Total Revenue"]].transpose()
-                        revenue_df1.index = revenue_df1.index.year
-                        revenue_df1["Total Revenue"] = (revenue_df1["Total Revenue"] / 1e7)
-                        st.bar_chart(revenue_df1[["Total Revenue"]].round(2).rename(columns={'Total Revenue': stock1_summary.get('Company Name', selected_symbol.upper()) + ' Revenue'}))
-                    else:
-                        st.warning(f"No Revenue data for {stock1_summary.get('Company Name', selected_symbol.upper())}")
-                except Exception as e:
-                    st.warning(f"Could not retrieve revenue data for {stock1_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
+            # # --- Historical Revenue Chart Comparison ---
+            # st.markdown("##### 📈 Historical Revenue (₹ in Crores)")
+            # col1_rev, col2_rev = st.columns(2)
+            # with col1_rev:
+            #     try:
+            #         stock1_yf = yf.Ticker(selected_symbol + ".NS")
+            #         financials1 = stock1_yf.financials
+            #         if not financials1.empty and "Total Revenue" in financials1.index:
+            #             revenue_df1 = financials1.loc[["Total Revenue"]].transpose()
+            #             revenue_df1.index = revenue_df1.index.year
+            #             revenue_df1["Total Revenue"] = (revenue_df1["Total Revenue"] / 1e7)
+            #             st.bar_chart(revenue_df1[["Total Revenue"]].round(2).rename(columns={'Total Revenue': stock1_summary.get('Company Name', selected_symbol.upper()) + ' Revenue'}))
+            #         else:
+            #             st.warning(f"No Revenue data for {stock1_summary.get('Company Name', selected_symbol.upper())}")
+            #     except Exception as e:
+            #         st.warning(f"Could not retrieve revenue data for {stock1_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
 
-            with col2_rev:
-                try:
-                    stock2_yf = yf.Ticker(compare_symbol + ".NS")
-                    financials2 = stock2_yf.financials
-                    if not financials2.empty and "Total Revenue" in financials2.index:
-                        revenue_df2 = financials2.loc[["Total Revenue"]].transpose()
-                        revenue_df2.index = revenue_df2.index.year
-                        revenue_df2["Total Revenue"] = (revenue_df2["Total Revenue"] / 1e7)
-                        st.bar_chart(revenue_df2[["Total Revenue"]].round(2).rename(columns={'Total Revenue': stock2_summary.get('Company Name', compare_symbol.upper()) + ' Revenue'}))
-                    else:
-                        st.warning(f"No Revenue data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
-                except Exception as e:
-                    st.warning(f"Could not retrieve revenue data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
+            # with col2_rev:
+            #     try:
+            #         stock2_yf = yf.Ticker(compare_symbol + ".NS")
+            #         financials2 = stock2_yf.financials
+            #         if not financials2.empty and "Total Revenue" in financials2.index:
+            #             revenue_df2 = financials2.loc[["Total Revenue"]].transpose()
+            #             revenue_df2.index = revenue_df2.index.year
+            #             revenue_df2["Total Revenue"] = (revenue_df2["Total Revenue"] / 1e7)
+            #             st.bar_chart(revenue_df2[["Total Revenue"]].round(2).rename(columns={'Total Revenue': stock2_summary.get('Company Name', compare_symbol.upper()) + ' Revenue'}))
+            #         else:
+            #             st.warning(f"No Revenue data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
+            #     except Exception as e:
+            #         st.warning(f"Could not retrieve revenue data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
-            # --- Historical Free Cash Flow (FCF) Chart Comparison ---
-            st.markdown("##### 💰 Historical Free Cash Flow (₹ in Crores)")
-            col1_fcf, col2_fcf = st.columns(2)
-            with col1_fcf:
-                try:
-                    stock1_yf = yf.Ticker(selected_symbol + ".NS")
-                    cash_flow_statement1 = stock1_yf.cashflow
-                    if not cash_flow_statement1.empty and 'Free Cash Flow' in cash_flow_statement1.index:
-                        fcf_df1 = cash_flow_statement1.loc[['Free Cash Flow']].transpose()
-                        fcf_df1.index = fcf_df1.index.year
-                        fcf_df1['Free Cash Flow (₹ Cr)'] = fcf_df1['Free Cash Flow'] / 1e7
-                        st.bar_chart(fcf_df1[['Free Cash Flow (₹ Cr)']].round(2).rename(columns={'Free Cash Flow (₹ Cr)': stock1_summary.get('Company Name', selected_symbol.upper()) + ' FCF'}))
-                    else:
-                        st.warning(f"No FCF data for {stock1_summary.get('Company Name', selected_symbol.upper())}")
-                except Exception as e:
-                    st.warning(f"Could not retrieve FCF data for {stock1_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
+            # # --- Historical Free Cash Flow (FCF) Chart Comparison ---
+            # st.markdown("##### 💰 Historical Free Cash Flow (₹ in Crores)")
+            # col1_fcf, col2_fcf = st.columns(2)
+            # with col1_fcf:
+            #     try:
+            #         stock1_yf = yf.Ticker(selected_symbol + ".NS")
+            #         cash_flow_statement1 = stock1_yf.cashflow
+            #         if not cash_flow_statement1.empty and 'Free Cash Flow' in cash_flow_statement1.index:
+            #             fcf_df1 = cash_flow_statement1.loc[['Free Cash Flow']].transpose()
+            #             fcf_df1.index = fcf_df1.index.year
+            #             fcf_df1['Free Cash Flow (₹ Cr)'] = fcf_df1['Free Cash Flow'] / 1e7
+            #             st.bar_chart(fcf_df1[['Free Cash Flow (₹ Cr)']].round(2).rename(columns={'Free Cash Flow (₹ Cr)': stock1_summary.get('Company Name', selected_symbol.upper()) + ' FCF'}))
+            #         else:
+            #             st.warning(f"No FCF data for {stock1_summary.get('Company Name', selected_symbol.upper())}")
+            #     except Exception as e:
+            #         st.warning(f"Could not retrieve FCF data for {stock1_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
 
-            with col2_fcf:
-                try:
-                    stock2_yf = yf.Ticker(compare_symbol + ".NS")
-                    cash_flow_statement2 = stock2_yf.cashflow
-                    if not cash_flow_statement2.empty and 'Free Cash Flow' in cash_flow_statement2.index:
-                        fcf_df2 = cash_flow_statement2.loc[['Free Cash Flow']].transpose()
-                        fcf_df2.index = fcf_df2.index.year
-                        fcf_df2['Free Cash Flow (₹ Cr)'] = fcf_df2['Free Cash Flow'] / 1e7
-                        st.bar_chart(fcf_df2[['Free Cash Flow (₹ Cr)']].round(2).rename(columns={'Free Cash Flow (₹ Cr)': stock2_summary.get('Company Name', compare_symbol.upper()) + ' FCF'}))
-                    else:
-                        st.warning(f"No FCF data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
-                except Exception as e:
-                    st.warning(f"Could not retrieve FCF data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")'''
+            # with col2_fcf:
+            #     try:
+            #         stock2_yf = yf.Ticker(compare_symbol + ".NS")
+            #         cash_flow_statement2 = stock2_yf.cashflow
+            #         if not cash_flow_statement2.empty and 'Free Cash Flow' in cash_flow_statement2.index:
+            #             fcf_df2 = cash_flow_statement2.loc[['Free Cash Flow']].transpose()
+            #             fcf_df2.index = fcf_df2.index.year
+            #             fcf_df2['Free Cash Flow (₹ Cr)'] = fcf_df2['Free Cash Flow'] / 1e7
+            #             st.bar_chart(fcf_df2[['Free Cash Flow (₹ Cr)']].round(2).rename(columns={'Free Cash Flow (₹ Cr)': stock2_summary.get('Company Name', compare_symbol.upper()) + ' FCF'}))
+            #         else:
+            #             st.warning(f"No FCF data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
+            #     except Exception as e:
+            #         st.warning(f"Could not retrieve FCF data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")'''
             # --- END CHART COMPARISON ---
 
         elif stock1_summary: # Only primary stock available
@@ -532,57 +532,57 @@ if selected_symbol:
             except Exception as e:
                 st.warning(f"Could not load stock price chart. Error: {e}")
 
-            st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
+            # '''st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
 
-            try:
-                stock_yf = yf.Ticker(selected_symbol + ".NS")
-                financials = stock_yf.financials
-                if not financials.empty and "Net Income" in financials.index:
-                    pat_df = financials.loc[["Net Income"]].transpose()
-                    pat_df.index = pat_df.index.year
-                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7)
-                    st.line_chart(pat_df[["PAT"]].round(2))
-                else:
-                    st.warning("Net Income data not available in financials to calculate PAT.")
-            except Exception as e:
-                st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
+            # try:
+            #     stock_yf = yf.Ticker(selected_symbol + ".NS")
+            #     financials = stock_yf.financials
+            #     if not financials.empty and "Net Income" in financials.index:
+            #         pat_df = financials.loc[["Net Income"]].transpose()
+            #         pat_df.index = pat_df.index.year
+            #         pat_df["PAT"] = (pat_df["Net Income"] / 1e7)
+            #         st.line_chart(pat_df[["PAT"]].round(2))
+            #     else:
+            #         st.warning("Net Income data not available in financials to calculate PAT.")
+            # except Exception as e:
+            #     st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
 
-            st.subheader("📈 Historical Revenue (₹ in Crores)")
+            # st.subheader("📈 Historical Revenue (₹ in Crores)")
 
-            try:
-                stock_yf = yf.Ticker(selected_symbol + ".NS")
-                financials = stock_yf.financials
-                if not financials.empty and "Total Revenue" in financials.index:
-                    revenue_df = financials.loc[["Total Revenue"]].transpose()
-                    revenue_df.index = revenue_df.index.year
-                    revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7)
-                    st.bar_chart(revenue_df[["Total Revenue"]].round(2))
-                else:
-                    st.warning("Total Revenue data not available in financials.")
-            except Exception as e:
-                st.warning(f"Could not retrieve historical revenue data. Error: {e}")
+            # try:
+            #     stock_yf = yf.Ticker(selected_symbol + ".NS")
+            #     financials = stock_yf.financials
+            #     if not financials.empty and "Total Revenue" in financials.index:
+            #         revenue_df = financials.loc[["Total Revenue"]].transpose()
+            #         revenue_df.index = revenue_df.index.year
+            #         revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7)
+            #         st.bar_chart(revenue_df[["Total Revenue"]].round(2))
+            #     else:
+            #         st.warning("Total Revenue data not available in financials.")
+            # except Exception as e:
+            #     st.warning(f"Could not retrieve historical revenue data. Error: {e}")
 
-            st.subheader("💰 Historical Free Cash Flow (₹ in Crores)")
+            # st.subheader("💰 Historical Free Cash Flow (₹ in Crores)")
 
-            try:
-                stock_yf = yf.Ticker(selected_symbol + ".NS")
-                cash_flow_statement = stock_yf.cashflow
+            # try:
+            #     stock_yf = yf.Ticker(selected_symbol + ".NS")
+            #     cash_flow_statement = stock_yf.cashflow
 
-                if not cash_flow_statement.empty and 'Free Cash Flow' in cash_flow_statement.index:
-                    # Select 'Free Cash Flow' row, transpose, and convert index to year
-                    fcf_df = cash_flow_statement.loc[['Free Cash Flow']].transpose()
-                    fcf_df.index = fcf_df.index.year # Convert datetime index to year
+            #     if not cash_flow_statement.empty and 'Free Cash Flow' in cash_flow_statement.index:
+            #         # Select 'Free Cash Flow' row, transpose, and convert index to year
+            #         fcf_df = cash_flow_statement.loc[['Free Cash Flow']].transpose()
+            #         fcf_df.index = fcf_df.index.year # Convert datetime index to year
 
-                    # Rename column for plotting clarity
-                    fcf_df.rename(columns={'Free Cash Flow': 'Free Cash Flow (₹ Cr)'}, inplace=True)
+            #         # Rename column for plotting clarity
+            #         fcf_df.rename(columns={'Free Cash Flow': 'Free Cash Flow (₹ Cr)'}, inplace=True)
 
-                    # Convert to Crores (adjust 1e7 based on your unit verification)
-                    fcf_df['Free Cash Flow (₹ Cr)'] = fcf_df['Free Cash Flow (₹ Cr)'] / 1e7
+            #         # Convert to Crores (adjust 1e7 based on your unit verification)
+            #         fcf_df['Free Cash Flow (₹ Cr)'] = fcf_df['Free Cash Flow (₹ Cr)'] / 1e7
 
-                    # Plotting a bar chart for FCF is often better for yearly values
-                    st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']].round(2))
-                else:
-                    st.warning("Free Cash Flow data not available in cash flow statements.")
-            except Exception as e:
-                st.warning(f"Could not retrieve historical Free Cash Flow data. Error: {e}")
+            #         # Plotting a bar chart for FCF is often better for yearly values
+            #         st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']].round(2))
+            #     else:
+            #         st.warning("Free Cash Flow data not available in cash flow statements.")
+            # except Exception as e:
+            #     st.warning(f"Could not retrieve historical Free Cash Flow data. Error: {e}") '''
 
