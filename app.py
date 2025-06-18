@@ -404,7 +404,7 @@ if selected_symbol:
                     st.warning(f"Could not load price chart for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
             # --- Historical Profit After Tax (PAT) Chart Comparison ---
-            st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
+            '''st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
             col1_pat, col2_pat = st.columns(2)
             with col1_pat:
                 try:
@@ -494,7 +494,7 @@ if selected_symbol:
                     else:
                         st.warning(f"No FCF data for {stock2_summary.get('Company Name', compare_symbol.upper())}")
                 except Exception as e:
-                    st.warning(f"Could not retrieve FCF data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
+                    st.warning(f"Could not retrieve FCF data for {stock2_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")'''
             # --- END CHART COMPARISON ---
 
         elif stock1_summary: # Only primary stock available
