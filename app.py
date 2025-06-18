@@ -578,25 +578,29 @@ if selected_symbol:
             st.markdown("##### 📉 Historical Price Chart")
             col1_price, col2_price = st.columns(2)
             with col1_price:
-                # Debugging statements removed for cleaner production code
                 try:
+                    # Check if stock1_raw_summary is valid BEFORE trying to get company name
+                    company_name1 = stock1_raw_summary.get('Company Name', st.session_state.selected_symbol.upper()) if stock1_raw_summary else st.session_state.selected_symbol.upper()
                     hist_price1 = primary_ticker.history(period=compare_chart_period)
                     if not hist_price1.empty:
-                        st.line_chart(hist_price1["Close"].round(2).rename(stock1_raw_summary.get('Company Name', st.session_state.selected_symbol.upper())))
+                        st.line_chart(hist_price1["Close"].round(2).rename(company_name1))
                     else:
-                        st.warning(f"No price data for {stock1_raw_summary.get('Company Name', st.session_state.selected_symbol.upper())}")
+                        st.warning(f"No price data for {company_name1}")
                 except Exception as e:
-                    st.warning(f"Could not load price chart for {stock1_raw_summary.get('Company Name', st.session_state.selected_symbol.upper())}. Error: {e}")
+                    st.warning(f"Could not load price chart for {company_name1}. Error: {e}")
 
             with col2_price:
                 try:
+                    # Check if stock2_raw_summary is valid BEFORE trying to get company name
+                    company_name2 = stock2_raw_summary.get('Company Name', st.session_state.compare_symbol.upper()) if stock2_raw_summary else st.session_state.compare_symbol.upper()
                     hist_price2 = second_ticker.history(period=compare_chart_period)
                     if not hist_price2.empty:
-                        st.line_chart(hist_price2["Close"].round(2).rename(stock2_raw_summary.get('Company Name', st.session_state.compare_symbol.upper())))
+                        st.line_chart(hist_price2["Close"].round(2).rename(company_name2))
                     else:
-                        st.warning(f"No price data for {stock2_raw_summary.get('Company Name', st.session_state.compare_symbol.upper())}")
+                        st.warning(f"No price data for {company_name2}")
                 except Exception as e:
-                    st.warning(f"Could not load price chart for {stock2_raw_summary.get('Company Name', st.session_state.compare_symbol.upper())}. Error: {e}")
+                    st.warning(f"Could not load price chart for {company_name2}. Error: {e}")
+
 
             # --- Historical Profit After Tax (PAT) Chart Comparison ---
             st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
