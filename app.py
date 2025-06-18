@@ -766,49 +766,42 @@ if selected_symbol:
             st.subheader("📉 Historical Stock Price Chart")
 
             try:
-                stock_yf = yf.Ticker(selected_symbol + ".NS")
-                period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4, key="price_period")
-                hist_price = stock_yf.history(period=period)
+                # Reuse primary_ticker
+                period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4, key="price_period_single")
+                hist_price = primary_ticker.history(period=period)
                 if not hist_price.empty:
                     st.line_chart(hist_price["Close"].round(2))
                 else:
                     st.warning("No historical stock data available for the selected period.")
             except Exception as e:
                 st.warning(f"Could not load stock price chart. Error: {e}")
-                
+
             st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
-            st.write(f"--- Debugging PAT Chart ({selected_symbol}) ---")
             try:
-                stock_yf = yf.Ticker(selected_symbol + ".NS")
-                financials = stock_yf.financials
+                financials = primary_ticker.financials
                 annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
-                st.write(f"Is annual_financials empty? {annual_financials.empty}")
-                st.write(f"Does annual_financials have 'Net Income' column? {'Net Income' in annual_financials.columns}")
                 if not annual_financials.empty and "Net Income" in annual_financials.columns:
                     pat_df = annual_financials[["Net Income"]].copy()
                     pat_df.index = pat_df.index.year
                     pat_df["PAT"] = (pat_df["Net Income"] / 1e7).round(2)
-                    st.write("pat_df.head():", pat_df.head())
-                    st.bar_chart(pat_df[["PAT"]].rename(columns={'PAT': stock_raw_summary.get('Company Name', selected_symbol.upper()) + ' PAT'}))
+                    st.bar_chart(pat_df[["PAT"]].rename(columns={'PAT': stock_summary.get('Company Name', st.session_state.selected_symbol.upper()) + ' PAT'}))
                 else:
-                    st.warning(f"No PAT data for {stock_raw_summary.get('Company Name', selected_symbol.upper())}")
+                    st.warning(f"No PAT data for {stock_summary.get('Company Name', st.session_state.selected_symbol.upper())}")
             except Exception as e:
-                st.warning(f"Could not retrieve PAT data for {stock_raw_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
-            
-
-
+                st.warning(f"Could not retrieve PAT data for {stock_summary.get('Company Name', st.session_state.selected_symbol.upper())}. Error: {e}")
 
 
             st.subheader("📈 Historical Revenue (₹ in Crores)")
-
             try:
-                stock_yf = yf.Ticker(selected_symbol + ".NS")
-                financials = stock_yf.financials
-                if not financials.empty and "Total Revenue" in financials.index:
-                    revenue_df = financials.loc[["Total Revenue"]].transpose()
+                financials = primary_ticker.financials
+                # Ensure we are consistently using 'ANNUAL' data if available
+                annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
+
+                if not annual_financials.empty and "Total Revenue" in annual_financials.columns:
+                    revenue_df = annual_financials[["Total Revenue"]].copy()
                     revenue_df.index = revenue_df.index.year
-                    revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7)
-                    st.bar_chart(revenue_df[["Total Revenue"]].round(2))
+                    revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7).round(2)
+                    st.bar_chart(revenue_df[["Total Revenue"]]) # No need to rename columns in single chart as it takes index name
                 else:
                     st.warning("Total Revenue data not available in financials.")
             except Exception as e:
@@ -816,28 +809,20 @@ if selected_symbol:
 
 
             st.subheader("💰 Historical Free Cash Flow (₹ in Crores)")
-
             try:
-                stock_yf = yf.Ticker(selected_symbol + ".NS")
-                cash_flow_statement = stock_yf.cashflow
+                cash_flow_statement = primary_ticker.cashflow
+                annual_cash_flow = cash_flow_statement.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in cash_flow_statement.index.names else cash_flow_statement.sort_index()
 
-                if not cash_flow_statement.empty and 'Free Cash Flow' in cash_flow_statement.index:
-                    # Select 'Free Cash Flow' row, transpose, and convert index to year
-                    fcf_df = cash_flow_statement.loc[['Free Cash Flow']].transpose()
-                    fcf_df.index = fcf_df.index.year # Convert datetime index to year
-
-                    # Rename column for plotting clarity
-                    fcf_df.rename(columns={'Free Cash Flow': 'Free Cash Flow (₹ Cr)'}, inplace=True)
-
-                    # Convert to Crores (adjust 1e7 based on your unit verification)
-                    fcf_df['Free Cash Flow (₹ Cr)'] = fcf_df['Free Cash Flow (₹ Cr)'] / 1e7
-
-                    # Plotting a bar chart for FCF is often better for yearly values
-                    st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']].round(2))
+                if not annual_cash_flow.empty and 'Free Cash Flow' in annual_cash_flow.columns:
+                    fcf_df = annual_cash_flow[['Free Cash Flow']].copy()
+                    fcf_df.index = fcf_df.index.year
+                    fcf_df['Free Cash Flow (₹ Cr)'] = (fcf_df['Free Cash Flow'] / 1e7).round(2)
+                    st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']]) # No need to rename columns in single chart
                 else:
                     st.warning("Free Cash Flow data not available in cash flow statements.")
             except Exception as e:
                 st.warning(f"Could not retrieve historical Free Cash Flow data. Error: {e}")
+
 
 
 
