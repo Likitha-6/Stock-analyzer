@@ -772,7 +772,7 @@ if selected_symbol:
             try:
                 # Reuse primary_ticker
                 period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4, key="price_period_single")
-                hist_price = primary_ticker.history(period=period)
+                hist_price = selected_symbol.history(period=period)
                 if not hist_price.empty:
                     st.line_chart(hist_price["Close"].round(2))
                 else:
@@ -782,7 +782,7 @@ if selected_symbol:
 
             st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
             try:
-                financials = primary_ticker.financials
+                financials = selected_symbol.financials
                 annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
                 if not annual_financials.empty and "Net Income" in annual_financials.columns:
                     pat_df = annual_financials[["Net Income"]].copy()
@@ -797,7 +797,7 @@ if selected_symbol:
 
             st.subheader("📈 Historical Revenue (₹ in Crores)")
             try:
-                financials = primary_ticker.financials
+                financials = selected_symbol.financials
                 # Ensure we are consistently using 'ANNUAL' data if available
                 annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
 
@@ -814,7 +814,7 @@ if selected_symbol:
 
             st.subheader("💰 Historical Free Cash Flow (₹ in Crores)")
             try:
-                cash_flow_statement = primary_ticker.cashflow
+                cash_flow_statement = selected_symbol.cashflow
                 annual_cash_flow = cash_flow_statement.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in cash_flow_statement.index.names else cash_flow_statement.sort_index()
 
                 if not annual_cash_flow.empty and 'Free Cash Flow' in annual_cash_flow.columns:
