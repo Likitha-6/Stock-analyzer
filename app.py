@@ -585,3 +585,4 @@ if selected_symbol:
                     st.warning("Free Cash Flow data not available in cash flow statements.")
             except Exception as e:
                 st.warning(f"Could not retrieve historical Free Cash Flow data. Error: {e}")
+
