@@ -648,6 +648,7 @@ if selected_symbol:
                     st.warning(f"Could not retrieve PAT data for {stock2_raw_summary.get('Company Name', compare_symbol.upper())}. Error: {e}")
 
 
+
             # --- Historical Revenue Chart Comparison ---
             st.markdown("##### 📈 Historical Revenue (₹ in Crores)")
             col1_rev, col2_rev = st.columns(2)
