@@ -827,6 +827,7 @@ if selected_symbol:
 
 
 
+
             st.subheader("📈 Historical Revenue (₹ in Crores)")
 
             try:
