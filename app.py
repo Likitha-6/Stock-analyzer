@@ -581,7 +581,7 @@ if selected_symbol:
                 try:
                     # Check if stock1_raw_summary is valid BEFORE trying to get company name
                     company_name1 = stock1_raw_summary.get('Company Name', st.session_state.selected_symbol.upper()) if stock1_raw_summary else st.session_state.selected_symbol.upper()
-                    hist_price1 = primary_ticker.history(period=compare_chart_period)
+                    hist_price1 = selected_symbol.history(period=compare_chart_period)
                     if not hist_price1.empty:
                         st.line_chart(hist_price1["Close"].round(2).rename(company_name1))
                     else:
@@ -593,7 +593,7 @@ if selected_symbol:
                 try:
                     # Check if stock2_raw_summary is valid BEFORE trying to get company name
                     company_name2 = stock2_raw_summary.get('Company Name', st.session_state.compare_symbol.upper()) if stock2_raw_summary else st.session_state.compare_symbol.upper()
-                    hist_price2 = second_ticker.history(period=compare_chart_period)
+                    hist_price2 = compare_symbol.history(period=compare_chart_period)
                     if not hist_price2.empty:
                         st.line_chart(hist_price2["Close"].round(2).rename(company_name2))
                     else:
