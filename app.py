@@ -810,21 +810,25 @@ if selected_symbol:
             except Exception as e:
                 st.warning(f"Could not load stock price chart. Error: {e}")
                 
-            st.subheader("📊 Historical Profit After Tax (PAT in ₹ Crores)")
-
+            st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
+            st.write(f"--- Debugging PAT Chart ({selected_symbol}) ---")
             try:
                 stock_yf = yf.Ticker(selected_symbol + ".NS")
                 financials = stock_yf.financials
-                if not financials.empty and "Net Income" in financials.index:
-                    pat_df = financials.loc[["Net Income"]].transpose()
+                annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
+                st.write(f"Is annual_financials empty? {annual_financials.empty}")
+                st.write(f"Does annual_financials have 'Net Income' column? {'Net Income' in annual_financials.columns}")
+                if not annual_financials.empty and "Net Income" in annual_financials.columns:
+                    pat_df = annual_financials[["Net Income"]].copy()
                     pat_df.index = pat_df.index.year
-                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7)
-                    st.line_chart(pat_df[["PAT"]].round(2))
+                    pat_df["PAT"] = (pat_df["Net Income"] / 1e7).round(2)
+                    st.write("pat_df.head():", pat_df.head())
+                    st.bar_chart(pat_df[["PAT"]].rename(columns={'PAT': stock_raw_summary.get('Company Name', selected_symbol.upper()) + ' PAT'}))
                 else:
-                    st.warning("Net Income data not available in financials to calculate PAT.")
+                    st.warning(f"No PAT data for {stock_raw_summary.get('Company Name', selected_symbol.upper())}")
             except Exception as e:
-                st.warning(f"Could not retrieve PAT (Profit) data. Error: {e}")
-
+                st.warning(f"Could not retrieve PAT data for {stock_raw_summary.get('Company Name', selected_symbol.upper())}. Error: {e}")
+            
 
 
 
