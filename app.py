@@ -617,7 +617,7 @@ if selected_symbol:
                         pat_df1["PAT"] = (pat_df1["Net Income"] / 1e7).round(2) # Convert and round
                         st.bar_chart(pat_df1[["PAT"]])
                     else:
-                        st.warning(f"No PAT data ")
+                        st.warning("No PAT data ")
                 except Exception as e:
                     st.warning(f"Could not retrieve PAT data . Error: {e}")
 
@@ -631,7 +631,7 @@ if selected_symbol:
                         pat_df2["PAT"] = (pat_df2["Net Income"] / 1e7).round(2)
                         st.bar_chart(pat_df2[["PAT"]])
                     else:
-                        st.warning(f"No PAT data ")
+                        st.warning("No PAT data ")
                 except Exception as e:
                     st.warning(f"Could not retrieve PAT data . Error: {e}")
 
@@ -648,7 +648,7 @@ if selected_symbol:
                         revenue_df1["Total Revenue"] = (revenue_df1["Total Revenue"] / 1e7).round(2)
                         st.bar_chart(revenue_df1[["Total Revenue"]])
                     else:
-                        st.warning(f"No Revenue data ")
+                        st.warning("No Revenue data ")
                 except Exception as e:
                     st.warning(f"Could not retrieve revenue data. Error: {e}")
 
@@ -662,7 +662,7 @@ if selected_symbol:
                         revenue_df2["Total Revenue"] = (revenue_df2["Total Revenue"] / 1e7).round(2)
                         st.bar_chart(revenue_df2[["Total Revenue"]])
                     else:
-                        st.warning(f"No Revenue data ")
+                        st.warning("No Revenue data ")
                 except Exception as e:
                     st.warning(f"Could not retrieve revenue data . Error: {e}")
 
@@ -680,7 +680,7 @@ if selected_symbol:
                         fcf_df1['Free Cash Flow (₹ Cr)'] = (fcf_df1['Free Cash Flow'] / 1e7).round(2)
                         st.bar_chart(fcf_df1[['Free Cash Flow (₹ Cr)']])
                     else:
-                        st.warning(f"No FCF data ")
+                        st.warning("No FCF data ")
                 except Exception as e:
                     st.warning(f"Could not retrieve FCF data . Error: {e}")
 
@@ -695,7 +695,7 @@ if selected_symbol:
                         fcf_df2['Free Cash Flow (₹ Cr)'] = (fcf_df2['Free Cash Flow'] / 1e7).round(2)
                         st.bar_chart(fcf_df2[['Free Cash Flow (₹ Cr)']])
                     else:
-                        st.warning(f"No FCF data ")
+                        st.warning("No FCF data ")
                 except Exception as e:
                     st.warning(f"Could not retrieve FCF data . Error: {e}")
             # --- END CHART COMPARISON ---
@@ -792,7 +792,7 @@ if selected_symbol:
                     pat_df["PAT"] = (pat_df["Net Income"] / 1e7).round(2)
                     st.bar_chart(pat_df[["PAT"]])
                 else:
-                    st.warning(f"No PAT data ")
+                    st.warning("No PAT data ")
             except Exception as e:
                 st.warning(f"Could not retrieve PAT data . Error: {e}")
 
