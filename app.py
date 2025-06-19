@@ -611,8 +611,7 @@ if selected_symbol:
                 try:
                     ticker=yf.Ticker(selected_symbol + ".NS")
                     fin=ticker.financials.T
-                    fin.index = fin.index.year   
-                    
+                    fin.index=pd.to_datetime(fin.index).year
                     financials1 = fin
                     annual_financials1 = financials1.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials1.index.names else financials1.sort_index()
                     if not annual_financials1.empty and "Net Income" in annual_financials1.columns:
@@ -629,7 +628,7 @@ if selected_symbol:
                 try:
                     ticker_2=yf.Ticker(compare_symbol + ".NS")
                     fin_2=ticker_2.financials.T
-                    fin_2.index=fin_2.index.year
+                    fin_2.index=pd.to_datetime(fin_2.index).year
                     financials2 = fin_2
                     annual_financials2 = financials2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials2.index.names else financials2.sort_index()
                     if not annual_financials2.empty and "Net Income" in annual_financials2.columns:
@@ -649,7 +648,7 @@ if selected_symbol:
                 try:
                     ticker=yf.Ticker(selected_symbol + ".NS")
                     fin=ticker.financials.T
-                    fin.index = fin.index.year   
+                    fin.index = pd.to_datetime(fin.index).year
                     financials1 = fin
                     annual_financials1 = financials1.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials1.index.names else financials1.sort_index()
                     if not annual_financials1.empty and "Total Revenue" in annual_financials1.columns:
@@ -666,7 +665,7 @@ if selected_symbol:
                 try:
                     ticker_2=yf.Ticker(compare_symbol + ".NS")
                     fin_2=ticker_2.financials.T
-                    fin_2.index=fin_2.index.year
+                    fin_2.index=pd.to_datetime(fin_2.index).year
                     financials2 = fin_2
                     annual_financials2 = financials2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials2.index.names else financials2.sort_index()
                     if not annual_financials2.empty and "Total Revenue" in annual_financials2.columns:
@@ -686,7 +685,7 @@ if selected_symbol:
                 try:
                     ticker=yf.Ticker(selected_symbol + ".NS")
                     cf = ticker.cashflow.T              # transpose
-                    cf.index = cf.index.year
+                    cf.index = pd.to_datetime(cf.index).year
                     cash_flow_statement1 = cf
                     annual_cash_flow1 = cash_flow_statement1.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in cash_flow_statement1.index.names else cash_flow_statement1.sort_index()
 
@@ -704,7 +703,7 @@ if selected_symbol:
                 try:
                     ticker_2=yf.Ticker(compare_symbol + ".NS")
                     cf_2 = ticker_2.cashflow.T              # transpose
-                    cf_2.index = cf_2.index.year
+                    cf_2.index = pd.to_datetime(cf_2.index).year
                     cash_flow_statement2 = cf_2
                     annual_cash_flow2 = cash_flow_statement2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in cash_flow_statement2.index.names else cash_flow_statement2.sort_index()
 
@@ -805,7 +804,7 @@ if selected_symbol:
             try:
                 ticker=yf.Ticker(selected_symbol + ".NS")
                 fin=ticker.financials.T
-                fin.index=fin.index.year
+                fin.index=pd.to_datetime(fin.index).year
                 
                 
                 financials = fin
@@ -825,7 +824,7 @@ if selected_symbol:
             try:
                 ticker=yf.Ticker(selected_symbol + ".NS")
                 fin=ticker.financials.T
-                fin.index=fin.index.year
+                fin.index=pd.to_datetime(fin.index).year
                 
                 financials = fin
                 # Ensure we are consistently using 'ANNUAL' data if available
@@ -846,7 +845,7 @@ if selected_symbol:
             try:
                 ticker_2=yf.Ticker(selected_symbol + ".NS")
                 cf_2 = ticker_2.cashflow.T              # transpose
-                cf_2.index = cf_2.index.year
+                cf_2.index = pd.to_datetime(cf_2.index).year
                 cash_flow_statement = cf_2
                 annual_cash_flow = cash_flow_statement.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in cash_flow_statement.index.names else cash_flow_statement.sort_index()
 
