@@ -620,7 +620,7 @@ if selected_symbol:
                         pat_df1 = annual_financials1[["Net Income"]].copy().dropna()
                          
                         pat_df1["PAT"] = (pat_df1["Net Income"] / 1e7).round(2) # Convert and round
-                        st.bar_chart(pat_df1[["PAT"]])
+                        st.line_chart(pat_df1[["PAT"]])
                     else:
                         st.warning("No PAT data ")
                 except Exception as e:
@@ -640,7 +640,7 @@ if selected_symbol:
                         pat_df2 = annual_financials2[["Net Income"]].copy().dropna()
                         
                         pat_df2["PAT"] = (pat_df2["Net Income"] / 1e7).round(2)
-                        st.bar_chart(pat_df2[["PAT"]])
+                        st.line_chart(pat_df2[["PAT"]])
                     else:
                         st.warning("No PAT data ")
                 except Exception as e:
@@ -825,7 +825,7 @@ if selected_symbol:
                     pat_df = annual_financials[["Net Income"]].copy().dropna()
                    
                     pat_df["PAT"] = (pat_df["Net Income"] / 1e7).round(2)
-                    st.bar_chart(pat_df[["PAT"]])
+                    st.line_chart(pat_df[["PAT"]])
                 else:
                     st.warning("No PAT data ")
             except Exception as e:
