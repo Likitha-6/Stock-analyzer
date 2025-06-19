@@ -609,7 +609,11 @@ if selected_symbol:
             col1_pat, col2_pat = st.columns(2)
             with col1_pat:
                 try:
-                    financials1 = yf.Ticker(selected_symbol + ".NS").financials
+                    ticker=yf.Ticker(selected_symbol + ".NS")
+                    fin=ticker.financials.T
+                    fin.index = fin.index.year   
+                    
+                    financials1 = fin
                     annual_financials1 = financials1.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials1.index.names else financials1.sort_index()
                     if not annual_financials1.empty and "Net Income" in annual_financials1.columns:
                         pat_df1 = annual_financials1[["Net Income"]].copy()
@@ -623,7 +627,10 @@ if selected_symbol:
 
             with col2_pat:
                 try:
-                    financials2 = yf.Ticker(compare_symbol + ".NS").financials
+                    ticker_2=yf.Ticker(compare_symbol + ".NS")
+                    fin_2=ticker_2.financials.T
+                    fin_2.index=fin_2.index.year
+                    financials2 = fin_2
                     annual_financials2 = financials2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials2.index.names else financials2.sort_index()
                     if not annual_financials2.empty and "Net Income" in annual_financials2.columns:
                         pat_df2 = annual_financials2[["Net Income"]].copy()
@@ -640,7 +647,10 @@ if selected_symbol:
             col1_rev, col2_rev = st.columns(2)
             with col1_rev:
                 try:
-                    financials1 = yf.Ticker(selected_symbol + ".NS").financials
+                    ticker=yf.Ticker(selected_symbol + ".NS")
+                    fin=ticker.financials.T
+                    fin.index = fin.index.year   
+                    financials1 = fin
                     annual_financials1 = financials1.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials1.index.names else financials1.sort_index()
                     if not annual_financials1.empty and "Total Revenue" in annual_financials1.columns:
                         revenue_df1 = annual_financials1[["Total Revenue"]].copy()
@@ -654,7 +664,10 @@ if selected_symbol:
 
             with col2_rev:
                 try:
-                    financials2 = yf.Ticker(compare_symbol + ".NS").financials
+                    ticker_2=yf.Ticker(compare_symbol + ".NS")
+                    fin_2=ticker_2.financials.T
+                    fin_2.index=fin_2.index.year
+                    financials2 = fin_2
                     annual_financials2 = financials2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials2.index.names else financials2.sort_index()
                     if not annual_financials2.empty and "Total Revenue" in annual_financials2.columns:
                         revenue_df2 = annual_financials2[["Total Revenue"]].copy()
@@ -671,7 +684,10 @@ if selected_symbol:
             col1_fcf, col2_fcf = st.columns(2)
             with col1_fcf:
                 try:
-                    cash_flow_statement1 = yf.Ticker(selected_symbol + ".NS").cashflow
+                    ticker=yf.Ticker(selected_symbol + ".NS")
+                    cf = ticker.cashflow.T              # transpose
+                    cf.index = cf.index.year
+                    cash_flow_statement1 = cf
                     annual_cash_flow1 = cash_flow_statement1.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in cash_flow_statement1.index.names else cash_flow_statement1.sort_index()
 
                     if not annual_cash_flow1.empty and 'Free Cash Flow' in annual_cash_flow1.columns:
@@ -686,7 +702,10 @@ if selected_symbol:
 
             with col2_fcf:
                 try:
-                    cash_flow_statement2 = yf.Ticker(compare_symbol + ".NS").cashflow
+                    ticker_2=yf.Ticker(compare_symbol + ".NS")
+                    cf_2 = ticker_2.cashflow.T              # transpose
+                    cf_2.index = cf_2.index.year
+                    cash_flow_statement2 = cf_2
                     annual_cash_flow2 = cash_flow_statement2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in cash_flow_statement2.index.names else cash_flow_statement2.sort_index()
 
                     if not annual_cash_flow2.empty and 'Free Cash Flow' in annual_cash_flow2.columns:
@@ -784,7 +803,12 @@ if selected_symbol:
 
             st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
             try:
-                financials = yf.Ticker(selected_symbol + ".NS").financials
+                ticker=yf.Ticker(selected_symbol + ".NS")
+                fin=ticker.financials.T
+                fin.index=fin.index.year
+                
+                
+                financials = fin
                 annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
                 if not annual_financials.empty and "Net Income" in annual_financials.columns:
                     pat_df = annual_financials[["Net Income"]].copy()
@@ -799,7 +823,11 @@ if selected_symbol:
 
             st.subheader("📈 Historical Revenue (₹ in Crores)")
             try:
-                financials = yf.Ticker(selected_symbol + ".NS").financials
+                ticker=yf.Ticker(selected_symbol + ".NS")
+                fin=ticker.financials.T
+                fin.index=fin.index.year
+                
+                financials = fin
                 # Ensure we are consistently using 'ANNUAL' data if available
                 annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
 
@@ -816,7 +844,10 @@ if selected_symbol:
 
             st.subheader("💰 Historical Free Cash Flow (₹ in Crores)")
             try:
-                cash_flow_statement = yf.Ticker(selected_symbol + ".NS").cashflow
+                ticker_2=yf.Ticker(selected_symbol + ".NS")
+                cf_2 = ticker_2.cashflow.T              # transpose
+                cf_2.index = cf_2.index.year
+                cash_flow_statement = cf_2
                 annual_cash_flow = cash_flow_statement.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in cash_flow_statement.index.names else cash_flow_statement.sort_index()
 
                 if not annual_cash_flow.empty and 'Free Cash Flow' in annual_cash_flow.columns:
