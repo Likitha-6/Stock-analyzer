@@ -100,55 +100,6 @@ def interpret_pe_with_industry(pe, industry_pe):
 
     return f"{round(pe,2)} (Industry Avg: {industry_pe}) {interpretation}"
 
-def calculate_cagr(start_value, end_value, periods):
-    if start_value is None or end_value is None or periods is None: return None
-    try:
-        start_value = float(start_value)
-        end_value = float(end_value)
-        periods = int(periods)
-        if start_value <= 0 or end_value <= 0 or periods == 0:
-            return None
-        return (end_value / start_value) ** (1 / periods) - 1
-    except (ValueError, TypeError):
-        return None
-
-
-def get_eps_cagr_based_peg(ticker):
-    stock = yf.Ticker(ticker)
-    pe_ratio = stock.info.get("trailingPE")
-
-    try:
-        earnings = stock.earnings
-        if earnings.empty:
-            return None, "No EPS data available for PEG calculation"
-
-        # Limit to last 5 years of annual earnings for CAGR
-        # Ensure earnings DataFrame is sorted by index (year)
-        annual_earnings = earnings.reset_index().set_index('periodType').loc['ANNUAL'].sort_index()
-
-        if annual_earnings.shape[0] >= 5:
-            eps_data = annual_earnings['Earnings'].tail(5)
-            eps_old = eps_data.iloc[0]
-            eps_new = eps_data.iloc[-1]
-            periods = len(eps_data) - 1
-
-            if periods <= 0:
-                return None, "Not enough data points for CAGR calculation"
-
-            cagr = calculate_cagr(eps_old, eps_new, periods)
-
-            if cagr is not None and pe_ratio is not None:
-                if cagr <= 0: # Cannot calculate meaningful PEG with non-positive growth
-                    return None, "EPS CAGR is non-positive, PEG not meaningful"
-                peg = pe_ratio / (cagr * 100) # CAGR is typically decimal, PE is absolute
-                return round(peg, 2), None
-            else:
-                return None, "CAGR or PE unavailable"
-        else:
-            return None, "Not enough EPS data (need at least 5 years) for 5-year CAGR"
-
-    except Exception as e:
-        return None, f"Error calculating PEG: {e}"
 
 
 def interpret_dividend_yield(dy):
@@ -184,14 +135,6 @@ def interpret_de_ratio(de):
         de = float(de)
     except (ValueError, TypeError):
         return "N/A"
-
-    # Heuristic: If the debtToEquity value is significantly greater than 2,
-    # and it's an Indian stock (where yfinance often gives percentages),
-    # assume it's a percentage and convert it to a ratio.
-    #if de > 2.0 and de > 10: # If it's something like 50 or 100, treat as percentage
-        #de_ratio = round(de / 100, 2)
-    #else: # Otherwise, treat it as a ratio
-        #de_ratio = round(de, 2)
     de_ratio=round(de/100,2)
 
     if de_ratio < 1:
@@ -200,113 +143,7 @@ def interpret_de_ratio(de):
         return f"{de_ratio} 🟡 (Moderate)"
     else: # de_ratio is 2 or higher
         return f"{de_ratio} 🔴 (High Risk)"
-def get_all_yfinance_data(symbol):
-    """
-    Fetches comprehensive yfinance data for a given symbol.
-    Returns ticker object, info, financials, balance_sheet, cashflow.
-    """
-    try:
-        ticker = yf.Ticker(symbol)
-        info = ticker.info
-        financials = ticker.financials
-        balance_sheet = ticker.balance_sheet
-        cashflow = ticker.cashflow
-        return ticker, info, financials, balance_sheet, cashflow
-    except Exception as e:
-        # st.error(f"Error fetching yfinance data for {symbol}: {e}") # Suppress for cleaner output within calculate_derived_metrics
-        return None, None, None, None, None
 
-# --- NEW: Function to calculate PEG and ROCE ---
-def calculate_roce_and_peg(symbol):
-    """
-    Calculates ROCE and PEG Ratio for a given stock symbol.
-    Returns a dictionary with 'ROCE' and 'PEG_Ratio' or NaN if calculation fails.
-    """
-    metrics = {
-        'ROCE': np.nan,
-        'PEG_Ratio': np.nan
-    }
-
-    ticker, info, financials, balance_sheet, cashflow = get_all_yfinance_data(symbol)
-
-    if not ticker or not info or financials.empty or balance_sheet.empty:
-        return metrics # Return NaNs if base data is missing
-
-    # --- 1. Calculate ROCE (Return on Capital Employed) ---
-    try:
-        latest_financials = financials.iloc[:, 0] # Most recent annual column
-        latest_balance_sheet = balance_sheet.iloc[:, 0] # Most recent annual column
-
-        net_income = latest_financials.get('Net Income')
-        interest_expense = latest_financials.get('Interest Expense')
-        income_tax_expense = latest_financials.get('Income Tax Expense')
-
-        ebit = net_income
-        if not pd.isna(interest_expense):
-            ebit += interest_expense
-        if not pd.isna(income_tax_expense):
-            ebit += income_tax_expense
-
-        total_assets = latest_balance_sheet.get('Total Assets')
-        current_liabilities = latest_balance_sheet.get('Current Liabilities')
-
-        # Capital Employed = Total Assets - Current Liabilities (can also be Equity + Non-current Liabilities)
-        capital_employed = total_assets - current_liabilities
-
-        if pd.notna(ebit) and pd.notna(capital_employed) and capital_employed != 0:
-            roce = (ebit / capital_employed) * 100 # Express as percentage
-            metrics['ROCE'] = round(roce, 2)
-        # else: st.warning(f"ROCE data missing/zero for {symbol}. EBIT: {ebit}, CE: {capital_employed}")
-    except Exception as e:
-        # st.warning(f"Error calculating ROCE for {symbol}: {e}")
-        pass
-
-    # --- 2. Calculate PEG Ratio (Price/Earnings to Growth) ---
-    try:
-        pe_ratio = info.get('forwardPE') # Prefer forward P/E
-        if pd.isna(pe_ratio):
-            pe_ratio = info.get('trailingPE') # Fallback to trailing P/E
-
-        if pd.isna(pe_ratio) or pe_ratio <= 0:
-            # st.warning(f"P/E Ratio not available or not meaningful for {symbol} (P/E: {pe_ratio}). Cannot calculate PEG.")
-            pass
-        else:
-            annual_earnings = financials.T.sort_index(ascending=True) # Sort by date ascending
-            
-            # Ensure 'Net Income' and 'Diluted Average Shares' are available and convertible to numeric
-            annual_earnings = annual_earnings[['Net Income', 'Diluted Average Shares']].apply(pd.to_numeric, errors='coerce').dropna()
-
-            eps_data = []
-            if 'Net Income' in annual_earnings.columns and 'Diluted Average Shares' in annual_earnings.columns:
-                for idx, row in annual_earnings.iterrows():
-                    net_income = row['Net Income']
-                    diluted_shares = row['Diluted Average Shares']
-                    if pd.notna(net_income) and pd.notna(diluted_shares) and diluted_shares > 0:
-                        eps_data.append(net_income / diluted_shares)
-
-            if len(eps_data) >= 3: # Need at least 3 data points for 2 years of growth for CAGR
-                start_eps = eps_data[0]
-                end_eps = eps_data[-1]
-                num_years = len(eps_data) - 1 # Number of growth periods
-
-                if start_eps > 0 and end_eps > 0: # Only calculate CAGR for positive EPS
-                    eps_growth_rate = ((end_eps / start_eps)**(1/num_years)) - 1
-                    
-                    if eps_growth_rate > 0.001: # Small positive threshold
-                        peg_ratio = pe_ratio / (eps_growth_rate * 100) # Convert growth rate to percentage
-                        metrics['PEG_Ratio'] = round(peg_ratio, 2)
-                    # else: st.warning(f"EPS Growth rate for {symbol} is too low or zero ({eps_growth_rate:.2%}). Cannot calculate meaningful PEG.")
-                # else: st.warning(f"Cannot calculate meaningful PEG for {symbol} due to non-positive EPS values.")
-            # else: st.warning(f"Insufficient historical EPS data for {symbol} (found {len(eps_data)} years). Cannot calculate PEG.")
-
-    except Exception as e:
-        # st.warning(f"Error calculating PEG for {symbol}: {e}")
-        pass
-
-    return metrics
-    
-
- # Cache for 1 hour (3600 seconds)
 def get_stock_summary(ticker_symbol):
     full_ticker = ticker_symbol + ".NS"
     stock = yf.Ticker(full_ticker)
@@ -328,7 +165,6 @@ def get_stock_summary(ticker_symbol):
             # Add more heuristics as needed
 
         stock_pe = info.get("trailingPE")
-        peg, peg_msg = get_eps_cagr_based_peg(full_ticker)
         
         current_price = info.get("currentPrice")
         
@@ -355,9 +191,7 @@ def get_stock_summary(ticker_symbol):
             free_cash_flow = None # Set to None on error or missing data
             
         profit_margin = info.get("profitMargins")
-        derived_metrics = calculate_roce_and_peg(full_ticker)
-        roce = derived_metrics.get('ROCE')
-        peg_ratio = derived_metrics.get('PEG_Ratio')
+        
         
         summary = {
             "Company Name": info.get("longName"),
@@ -374,8 +208,6 @@ def get_stock_summary(ticker_symbol):
             "Free Cash Flow": free_cash_flow, # Already in Crores
             "ROE": info.get("returnOnEquity"),
             "Debt to Equity": info.get("debtToEquity"),
-            "PEG": peg_ratio, 
-            "ROCE": roce,
         }
         return summary, None
     except Exception as e:
@@ -401,7 +233,7 @@ def get_formatted_comparison_value(metric_name, value1, value2, industry_pe1=Non
 
     # Determine which is "better" for tick mark
     # These metrics prefer higher values
-    if metric_name in ["Market Cap", "EPS", "Dividend Yield", "Profit Margin", "Free Cash Flow", "ROE","ROCE"]:
+    if metric_name in ["Market Cap", "EPS", "Dividend Yield", "Profit Margin", "Free Cash Flow", "ROE"]:
         if float_value1 is not None and float_value2 is not None:
             if float_value1 > float_value2:
                 tick_stock1 = " ✅"
@@ -413,7 +245,7 @@ def get_formatted_comparison_value(metric_name, value1, value2, industry_pe1=Non
         elif float_value2 is not None:
             tick_stock2 = " ✅"
     # This metric prefers lower values
-    elif metric_name in ["Debt to Equity","PEG"]:
+    elif metric_name in ["Debt to Equity"]:
         # Special handling for Debt to Equity to correctly compare ratio vs ratio/percentage
         # Convert to ratio if it seems to be a percentage (e.g., 50 -> 0.5)
         val1_ratio = value1 / 100 if value1 is not None and value1 > 2 else value1
@@ -488,13 +320,7 @@ def get_formatted_comparison_value(metric_name, value1, value2, industry_pe1=Non
     elif metric_name == "ROE":
         formatted_value1 = f"{round(float_value1 * 100, 2)}%" if float_value1 is not None else "N/A"
         formatted_value2 = f"{round(float_value2 * 100, 2)}%" if float_value2 is not None else "N/A"
-    elif metric_name == "ROCE":
-        formatted_value1 = f"{round(float_value1,2)}%" if value1 is not None else "N/A"
-        formatted_value2 = f"{round(float_value2,2)}%" if value2 is not None else "N/A"
-
-    elif metric_name == "PEG":
-        formatted_value1 = f"{round(float_value1,2)}" if value1 is not None else "N/A"
-        formatted_value2 = f"{round(float_value2,2)}" if value2 is not None else "N/A"
+   
     elif metric_name == "Debt to Equity":
         # Re-apply the ratio conversion for display, as comparison was done on ratios
         val1_display = round(value1 / 100, 2) if value1 is not None and value1 > 2 else (round(value1,2) if value1 is not None else None)
@@ -608,7 +434,7 @@ if selected_symbol:
             display_metrics_order = [
                 "Company Name", "Sector", "Current Price", "All-Time High", "Market Cap",
                 "P/E vs Industry", "EPS", "Dividend Yield", "Profit Margin",
-                "Free Cash Flow", "ROE","ROCE","PEG", "Debt to Equity"
+                "Free Cash Flow", "ROE", "Debt to Equity"
             ]
             
             comparison_display_dict = {}
@@ -644,13 +470,9 @@ if selected_symbol:
                 elif metric == "EPS":
                     value1 = stock1_raw_summary.get("EPS")
                     value2 = stock2_raw_summary.get("EPS")
-                elif metric == "ROCE":
-                    value1 = stock1_raw_summary.get("ROCE")
-                    value2 = stock2_raw_summary.get("ROCE")
                 
-                elif metric == "PEG":
-                    value1 = stock1_raw_summary.get("PEG")
-                    value2 = stock2_raw_summary.get("PEG")
+                
+                
                 elif metric == "Dividend Yield":
                     value1 = stock1_raw_summary.get("Dividend Yield")
                     value2 = stock2_raw_summary.get("Dividend Yield")
@@ -879,8 +701,6 @@ if selected_symbol:
                 "Profit Margin": f"{round(stock1_raw_summary['Profit Margin'] * 100, 2)}%" if stock1_raw_summary['Profit Margin'] is not None and stock1_raw_summary['Profit Margin'] >= 0 else (f"{round(stock1_raw_summary['Profit Margin'] * 100, 2)}% ❌ (Loss-Making)" if stock1_raw_summary['Profit Margin'] is not None else "N/A"),
                 "Free Cash Flow (₹ Cr)": f"{round(stock1_raw_summary['Free Cash Flow'], 2)}" if stock1_raw_summary['Free Cash Flow'] is not None else "N/A",
                 "ROE": interpret_roe(stock1_raw_summary["ROE"]),
-                "ROCE": f"{round(stock1_raw_summary['ROCE'],2)}%" if stock1_raw_summary['ROCE'] is not None else "N/A",
-                "PEG":  f"{round(stock1_raw_summary['PEG'],2)}"   if stock1_raw_summary['PEG']  is not None else "N/A",
                 "Debt to Equity": interpret_de_ratio(stock1_raw_summary["Debt to Equity"]),
             }
             df = pd.DataFrame(single_stock_display_summary.items(), columns=["Metric", "Value"])
