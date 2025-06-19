@@ -199,6 +199,111 @@ def interpret_de_ratio(de):
         return f"{de_ratio} 🟡 (Moderate)"
     else: # de_ratio is 2 or higher
         return f"{de_ratio} 🔴 (High Risk)"
+def get_all_yfinance_data(symbol):
+    """
+    Fetches comprehensive yfinance data for a given symbol.
+    Returns ticker object, info, financials, balance_sheet, cashflow.
+    """
+    try:
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+        financials = ticker.financials
+        balance_sheet = ticker.balance_sheet
+        cashflow = ticker.cashflow
+        return ticker, info, financials, balance_sheet, cashflow
+    except Exception as e:
+        # st.error(f"Error fetching yfinance data for {symbol}: {e}") # Suppress for cleaner output within calculate_derived_metrics
+        return None, None, None, None, None
+
+# --- NEW: Function to calculate PEG and ROCE ---
+def calculate_roce_and_peg(symbol):
+    """
+    Calculates ROCE and PEG Ratio for a given stock symbol.
+    Returns a dictionary with 'ROCE' and 'PEG_Ratio' or NaN if calculation fails.
+    """
+    metrics = {
+        'ROCE': np.nan,
+        'PEG_Ratio': np.nan
+    }
+
+    ticker, info, financials, balance_sheet, cashflow = get_all_yfinance_data(symbol)
+
+    if not ticker or not info or financials.empty or balance_sheet.empty:
+        return metrics # Return NaNs if base data is missing
+
+    # --- 1. Calculate ROCE (Return on Capital Employed) ---
+    try:
+        latest_financials = financials.iloc[:, 0] # Most recent annual column
+        latest_balance_sheet = balance_sheet.iloc[:, 0] # Most recent annual column
+
+        net_income = latest_financials.get('Net Income')
+        interest_expense = latest_financials.get('Interest Expense')
+        income_tax_expense = latest_financials.get('Income Tax Expense')
+
+        ebit = net_income
+        if not pd.isna(interest_expense):
+            ebit += interest_expense
+        if not pd.isna(income_tax_expense):
+            ebit += income_tax_expense
+
+        total_assets = latest_balance_sheet.get('Total Assets')
+        current_liabilities = latest_balance_sheet.get('Current Liabilities')
+
+        # Capital Employed = Total Assets - Current Liabilities (can also be Equity + Non-current Liabilities)
+        capital_employed = total_assets - current_liabilities
+
+        if pd.notna(ebit) and pd.notna(capital_employed) and capital_employed != 0:
+            roce = (ebit / capital_employed) * 100 # Express as percentage
+            metrics['ROCE'] = round(roce, 2)
+        # else: st.warning(f"ROCE data missing/zero for {symbol}. EBIT: {ebit}, CE: {capital_employed}")
+    except Exception as e:
+        # st.warning(f"Error calculating ROCE for {symbol}: {e}")
+        pass
+
+    # --- 2. Calculate PEG Ratio (Price/Earnings to Growth) ---
+    try:
+        pe_ratio = info.get('forwardPE') # Prefer forward P/E
+        if pd.isna(pe_ratio):
+            pe_ratio = info.get('trailingPE') # Fallback to trailing P/E
+
+        if pd.isna(pe_ratio) or pe_ratio <= 0:
+            # st.warning(f"P/E Ratio not available or not meaningful for {symbol} (P/E: {pe_ratio}). Cannot calculate PEG.")
+            pass
+        else:
+            annual_earnings = financials.T.sort_index(ascending=True) # Sort by date ascending
+            
+            # Ensure 'Net Income' and 'Diluted Average Shares' are available and convertible to numeric
+            annual_earnings = annual_earnings[['Net Income', 'Diluted Average Shares']].apply(pd.to_numeric, errors='coerce').dropna()
+
+            eps_data = []
+            if 'Net Income' in annual_earnings.columns and 'Diluted Average Shares' in annual_earnings.columns:
+                for idx, row in annual_earnings.iterrows():
+                    net_income = row['Net Income']
+                    diluted_shares = row['Diluted Average Shares']
+                    if pd.notna(net_income) and pd.notna(diluted_shares) and diluted_shares > 0:
+                        eps_data.append(net_income / diluted_shares)
+
+            if len(eps_data) >= 3: # Need at least 3 data points for 2 years of growth for CAGR
+                start_eps = eps_data[0]
+                end_eps = eps_data[-1]
+                num_years = len(eps_data) - 1 # Number of growth periods
+
+                if start_eps > 0 and end_eps > 0: # Only calculate CAGR for positive EPS
+                    eps_growth_rate = ((end_eps / start_eps)**(1/num_years)) - 1
+                    
+                    if eps_growth_rate > 0.001: # Small positive threshold
+                        peg_ratio = pe_ratio / (eps_growth_rate * 100) # Convert growth rate to percentage
+                        metrics['PEG_Ratio'] = round(peg_ratio, 2)
+                    # else: st.warning(f"EPS Growth rate for {symbol} is too low or zero ({eps_growth_rate:.2%}). Cannot calculate meaningful PEG.")
+                # else: st.warning(f"Cannot calculate meaningful PEG for {symbol} due to non-positive EPS values.")
+            # else: st.warning(f"Insufficient historical EPS data for {symbol} (found {len(eps_data)} years). Cannot calculate PEG.")
+
+    except Exception as e:
+        # st.warning(f"Error calculating PEG for {symbol}: {e}")
+        pass
+
+    return metrics
+    
 
  # Cache for 1 hour (3600 seconds)
 def get_stock_summary(ticker_symbol):
@@ -249,6 +354,9 @@ def get_stock_summary(ticker_symbol):
             free_cash_flow = None # Set to None on error or missing data
             
         profit_margin = info.get("profitMargins")
+        derived_metrics = calculate_roce_and_peg(full_ticker)
+        roce = derived_metrics.get('ROCE')
+        peg_ratio = derived_metrics.get('PEG_Ratio')
         
         summary = {
             "Company Name": info.get("longName"),
@@ -265,8 +373,8 @@ def get_stock_summary(ticker_symbol):
             "Free Cash Flow": free_cash_flow, # Already in Crores
             "ROE": info.get("returnOnEquity"),
             "Debt to Equity": info.get("debtToEquity"),
-            "PEG Ratio Raw": peg, # Keep PEG raw for potential future use, though not directly used in comparison display as per request
-            "PEG Msg": peg_msg # Keep PEG message for single stock display
+            "PEG": peg_ratio, # Keep PEG raw for potential future use, though not directly used in comparison display as per request
+            "ROCE": roce # Keep PEG message for single stock display
         }
         return summary, None
     except Exception as e:
