@@ -373,8 +373,8 @@ def get_stock_summary(ticker_symbol):
             "Free Cash Flow": free_cash_flow, # Already in Crores
             "ROE": info.get("returnOnEquity"),
             "Debt to Equity": info.get("debtToEquity"),
-            "PEG": peg_ratio, # Keep PEG raw for potential future use, though not directly used in comparison display as per request
-            "ROCE": roce # Keep PEG message for single stock display
+            "PEG": peg_ratio, 
+            "ROCE": roce,
         }
         return summary, None
     except Exception as e:
@@ -400,7 +400,7 @@ def get_formatted_comparison_value(metric_name, value1, value2, industry_pe1=Non
 
     # Determine which is "better" for tick mark
     # These metrics prefer higher values
-    if metric_name in ["Market Cap", "EPS", "Dividend Yield", "Profit Margin", "Free Cash Flow", "ROE"]:
+    if metric_name in ["Market Cap", "EPS", "Dividend Yield", "Profit Margin", "Free Cash Flow", "ROE","ROCE"]:
         if float_value1 is not None and float_value2 is not None:
             if float_value1 > float_value2:
                 tick_stock1 = " ✅"
@@ -412,7 +412,7 @@ def get_formatted_comparison_value(metric_name, value1, value2, industry_pe1=Non
         elif float_value2 is not None:
             tick_stock2 = " ✅"
     # This metric prefers lower values
-    elif metric_name == "Debt to Equity":
+    elif metric_name in ["Debt to Equity","PEG"]:
         # Special handling for Debt to Equity to correctly compare ratio vs ratio/percentage
         # Convert to ratio if it seems to be a percentage (e.g., 50 -> 0.5)
         val1_ratio = value1 / 100 if value1 is not None and value1 > 2 else value1
@@ -487,6 +487,13 @@ def get_formatted_comparison_value(metric_name, value1, value2, industry_pe1=Non
     elif metric_name == "ROE":
         formatted_value1 = f"{round(float_value1 * 100, 2)}%" if float_value1 is not None else "N/A"
         formatted_value2 = f"{round(float_value2 * 100, 2)}%" if float_value2 is not None else "N/A"
+    elif metric_name == "ROCE":
+        formatted_value1 = f"{round(float_value1,2)}%" if value1 is not None else "N/A"
+        formatted_value2 = f"{round(float_value2,2)}%" if value2 is not None else "N/A"
+
+    elif metric_name == "PEG":
+        formatted_value1 = f"{round(float_value1,2)}" if value1 is not None else "N/A"
+        formatted_value2 = f"{round(float_value2,2)}" if value2 is not None else "N/A"
     elif metric_name == "Debt to Equity":
         # Re-apply the ratio conversion for display, as comparison was done on ratios
         val1_display = round(value1 / 100, 2) if value1 is not None and value1 > 2 else (round(value1,2) if value1 is not None else None)
@@ -600,7 +607,7 @@ if selected_symbol:
             display_metrics_order = [
                 "Company Name", "Sector", "Current Price", "All-Time High", "Market Cap",
                 "P/E vs Industry", "EPS", "Dividend Yield", "Profit Margin",
-                "Free Cash Flow", "ROE", "Debt to Equity"
+                "Free Cash Flow", "ROE","ROCE","PEG", "Debt to Equity"
             ]
             
             comparison_display_dict = {}
@@ -636,6 +643,13 @@ if selected_symbol:
                 elif metric == "EPS":
                     value1 = stock1_raw_summary.get("EPS")
                     value2 = stock2_raw_summary.get("EPS")
+                elif metric == "ROCE":
+                    value1 = stock1_raw_summary.get("ROCE")
+                    value2 = stock2_raw_summary.get("ROCE")
+                
+                elif metric == "PEG":
+                    value1 = stock1_raw_summary.get("PEG")
+                    value2 = stock2_raw_summary.get("PEG")
                 elif metric == "Dividend Yield":
                     value1 = stock1_raw_summary.get("Dividend Yield")
                     value2 = stock2_raw_summary.get("Dividend Yield")
@@ -864,6 +878,8 @@ if selected_symbol:
                 "Profit Margin": f"{round(stock1_raw_summary['Profit Margin'] * 100, 2)}%" if stock1_raw_summary['Profit Margin'] is not None and stock1_raw_summary['Profit Margin'] >= 0 else (f"{round(stock1_raw_summary['Profit Margin'] * 100, 2)}% ❌ (Loss-Making)" if stock1_raw_summary['Profit Margin'] is not None else "N/A"),
                 "Free Cash Flow (₹ Cr)": f"{round(stock1_raw_summary['Free Cash Flow'], 2)}" if stock1_raw_summary['Free Cash Flow'] is not None else "N/A",
                 "ROE": interpret_roe(stock1_raw_summary["ROE"]),
+                "ROCE": f"{round(stock1_raw_summary['ROCE'],2)}%" if stock1_raw_summary['ROCE'] is not None else "N/A",
+                "PEG":  f"{round(stock1_raw_summary['PEG'],2)}"   if stock1_raw_summary['PEG']  is not None else "N/A",
                 "Debt to Equity": interpret_de_ratio(stock1_raw_summary["Debt to Equity"]),
             }
             df = pd.DataFrame(single_stock_display_summary.items(), columns=["Metric", "Value"])
