@@ -11,13 +11,9 @@ st.title("📈 Indian Stock Analyzer (Fundamentals)")
 st.markdown("---")
 compare_mode = st.checkbox("🔄 Compare stocks")
 
-# Load dynamic search CSV
 
-# Cache for 1 hour to avoid re-reading on every rerun
 def load_stock_data():
     try:
-        # Changed filename from "nse stocks.csv" to "nse_stocks.csv" for better practice
-        # Ensure this file is present in your app directory
         df = pd.read_csv("nse stocks.csv")
         df["Searchable"] = df["Symbol"] + " - " + df["Company Name"]
         return df
@@ -42,8 +38,7 @@ INDUSTRY_PE = {
     "Basic Materials": 14.6,
     "Communication Services": 18.4,
     "Real Estate": 16.0,
-    "Automotive": 22.1, # Added for Tata Motors example
-    # Add more as needed based on your nse_stocks.csv
+    "Automotive": 22.1, 
 }
 
 def get_market_cap_category(market_cap_inr):
@@ -214,7 +209,7 @@ def get_stock_summary(ticker_symbol):
         return None, f"Error processing stock: **{ticker_symbol.upper()}** - {e}"
 
 
-# --- New Helper function for comparison formatting and tick logic ---
+
 def get_formatted_comparison_value(metric_name, value1, value2, industry_pe1=None, industry_pe2=None):
     tick_stock1 = ""
     tick_stock2 = ""
@@ -381,8 +376,6 @@ else:
 if selected_symbol:
     if compare_mode:
         st.subheader("🆚 Compare With Another Stock")
-
-        # --- NEW SEARCH BAR FOR SECOND STOCK ---
         compare_user_input = st.text_input("🔍 Search by symbol or company name for the second stock:")
         compare_symbol = None
 
@@ -415,7 +408,6 @@ if selected_symbol:
                 st.warning("CSV data not loaded. Cannot search for second stock.")
         else:
             st.info("Please enter a company name or symbol to search for the second stock.")
-        # --- END NEW SEARCH BAR ---
 
         stock1_raw_summary, error1 = get_stock_summary(selected_symbol)
         stock2_raw_summary, error2 = (None, None) # Initialize
@@ -504,10 +496,7 @@ if selected_symbol:
             comparison_data.index.name = "Metric" # Set the index name
 
             st.subheader("📊 Stock Comparison")
-            # Using st.dataframe for better display control and formatting
             st.dataframe(comparison_data)
-
-            # --- START CHART COMPARISON (Existing Code - No Changes for functionality) ---
             st.markdown("---")
             st.subheader("📈 Historical Data Comparison")
 
@@ -670,7 +659,6 @@ if selected_symbol:
                         st.warning("No FCF data ")
                 except Exception as e:
                     st.warning(f"Could not retrieve FCF data . Error: {e}")
-            # --- END CHART COMPARISON ---
 
         elif stock1_raw_summary: # Only primary stock available, in compare mode but second not selected/found
             if compare_user_input and not compare_symbol:
@@ -680,7 +668,6 @@ if selected_symbol:
             
             # Fallback to display single stock if only one is found in compare mode
             st.subheader(f"📋 Fundamentals Summary for {stock1_raw_summary.get('Company Name', selected_symbol.upper())}")
-            # For single stock display, we still use the old interpret functions for rich text
             single_stock_display_summary = {
                 "Company Name": stock1_raw_summary["Company Name"],
                 "Sector": stock1_raw_summary["Sector"],
@@ -715,7 +702,6 @@ if selected_symbol:
         if error:
             st.error(error)
         elif stock_summary:
-            # Reconstruct for single display using original interpretation functions
             display_summary_for_single_mode = {
                 "Company Name": stock_summary.get("Company Name"),
                 "Sector": stock_summary.get("Sector"),
@@ -760,10 +746,7 @@ if selected_symbol:
                 fin=ticker.financials.T
                 fin.index=pd.to_datetime(fin.index)
                 fin.index=fin.index.year
-                fin = fin.apply(pd.to_numeric, errors="coerce")  # Convert all to numeric
-            
-                
-                
+                fin = fin.apply(pd.to_numeric, errors="coerce")  # Convert all to numeric  
                 financials = fin
                 annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
                 if not annual_financials.empty and "Net Income" in annual_financials.columns:
@@ -784,7 +767,6 @@ if selected_symbol:
                 fin.index=pd.to_datetime(fin.index)
                 fin.index=fin.index.year
                 fin = fin.apply(pd.to_numeric, errors="coerce")  # Convert all to numeric
-                
                 financials = fin
                 # Ensure we are consistently using 'ANNUAL' data if available
                 annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
@@ -812,7 +794,7 @@ if selected_symbol:
                     fcf_df = annual_cash_flow[['Free Cash Flow']].copy()
                     
                     fcf_df['Free Cash Flow (₹ Cr)'] = (fcf_df['Free Cash Flow'] / 1e7).round(2)
-                    st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']]) # No need to rename columns in single chart
+                    st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']]) 
                 else:
                     st.warning("Free Cash Flow data not available in cash flow statements.")
             except Exception as e:
