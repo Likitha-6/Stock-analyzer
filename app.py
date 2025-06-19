@@ -617,7 +617,7 @@ if selected_symbol:
                     annual_financials1 = financials1.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials1.index.names else financials1.sort_index()
                     if not annual_financials1.empty and "Net Income" in annual_financials1.columns:
                         pat_df1 = annual_financials1[["Net Income"]].copy()
-                        pat_df1.index = pat_df1.index.year # Use the year from the DatetimeIndex
+                         # Use the year from the DatetimeIndex
                         pat_df1["PAT"] = (pat_df1["Net Income"] / 1e7).round(2) # Convert and round
                         st.bar_chart(pat_df1[["PAT"]])
                     else:
@@ -635,7 +635,7 @@ if selected_symbol:
                     annual_financials2 = financials2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials2.index.names else financials2.sort_index()
                     if not annual_financials2.empty and "Net Income" in annual_financials2.columns:
                         pat_df2 = annual_financials2[["Net Income"]].copy()
-                        pat_df2.index = pat_df2.index.year
+                        
                         pat_df2["PAT"] = (pat_df2["Net Income"] / 1e7).round(2)
                         st.bar_chart(pat_df2[["PAT"]])
                     else:
@@ -656,7 +656,7 @@ if selected_symbol:
                     annual_financials1 = financials1.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials1.index.names else financials1.sort_index()
                     if not annual_financials1.empty and "Total Revenue" in annual_financials1.columns:
                         revenue_df1 = annual_financials1[["Total Revenue"]].copy()
-                        revenue_df1.index = revenue_df1.index.year
+                        
                         revenue_df1["Total Revenue"] = (revenue_df1["Total Revenue"] / 1e7).round(2)
                         st.bar_chart(revenue_df1[["Total Revenue"]])
                     else:
@@ -674,7 +674,7 @@ if selected_symbol:
                     annual_financials2 = financials2.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials2.index.names else financials2.sort_index()
                     if not annual_financials2.empty and "Total Revenue" in annual_financials2.columns:
                         revenue_df2 = annual_financials2[["Total Revenue"]].copy()
-                        revenue_df2.index = revenue_df2.index.year
+                       
                         revenue_df2["Total Revenue"] = (revenue_df2["Total Revenue"] / 1e7).round(2)
                         st.bar_chart(revenue_df2[["Total Revenue"]])
                     else:
@@ -696,7 +696,7 @@ if selected_symbol:
 
                     if not annual_cash_flow1.empty and 'Free Cash Flow' in annual_cash_flow1.columns:
                         fcf_df1 = annual_cash_flow1[['Free Cash Flow']].copy()
-                        fcf_df1.index = fcf_df1.index.year
+                        
                         fcf_df1['Free Cash Flow (₹ Cr)'] = (fcf_df1['Free Cash Flow'] / 1e7).round(2)
                         st.bar_chart(fcf_df1[['Free Cash Flow (₹ Cr)']])
                     else:
@@ -715,7 +715,7 @@ if selected_symbol:
 
                     if not annual_cash_flow2.empty and 'Free Cash Flow' in annual_cash_flow2.columns:
                         fcf_df2 = annual_cash_flow2[['Free Cash Flow']].copy()
-                        fcf_df2.index = fcf_df2.index.year
+                    
                         fcf_df2['Free Cash Flow (₹ Cr)'] = (fcf_df2['Free Cash Flow'] / 1e7).round(2)
                         st.bar_chart(fcf_df2[['Free Cash Flow (₹ Cr)']])
                     else:
@@ -818,7 +818,7 @@ if selected_symbol:
                 annual_financials = financials.reset_index().set_index('periodType').loc['ANNUAL'].sort_index() if 'periodType' in financials.index.names else financials.sort_index()
                 if not annual_financials.empty and "Net Income" in annual_financials.columns:
                     pat_df = annual_financials[["Net Income"]].copy()
-                    pat_df.index = pat_df.index.year
+                   
                     pat_df["PAT"] = (pat_df["Net Income"] / 1e7).round(2)
                     st.bar_chart(pat_df[["PAT"]])
                 else:
@@ -840,7 +840,7 @@ if selected_symbol:
 
                 if not annual_financials.empty and "Total Revenue" in annual_financials.columns:
                     revenue_df = annual_financials[["Total Revenue"]].copy()
-                    revenue_df.index = revenue_df.index.year
+                    
                     revenue_df["Total Revenue"] = (revenue_df["Total Revenue"] / 1e7).round(2)
                     st.bar_chart(revenue_df[["Total Revenue"]]) # No need to rename columns in single chart as it takes index name
                 else:
@@ -860,7 +860,7 @@ if selected_symbol:
 
                 if not annual_cash_flow.empty and 'Free Cash Flow' in annual_cash_flow.columns:
                     fcf_df = annual_cash_flow[['Free Cash Flow']].copy()
-                    fcf_df.index = fcf_df.index.year
+                    
                     fcf_df['Free Cash Flow (₹ Cr)'] = (fcf_df['Free Cash Flow'] / 1e7).round(2)
                     st.bar_chart(fcf_df[['Free Cash Flow (₹ Cr)']]) # No need to rename columns in single chart
                 else:
