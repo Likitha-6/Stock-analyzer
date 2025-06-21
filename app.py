@@ -4,7 +4,7 @@ import pandas as pd
 import requests
 import difflib
 import numpy as np
-import plotly.graph_objs as go
+import plotly.graph_objs 
 
 # Streamlit setup
 st.set_page_config(page_title="Indian Stock Analyzer", page_icon="📊")
