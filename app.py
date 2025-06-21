@@ -353,10 +353,35 @@ def plot_historical_price(ticker_symbol, company_name, period):
         xaxis_title='Date',
         yaxis_title='Close Price (INR)',
         hovermode="x unified",
-        # No explicit y-axis range setting here for auto-scaling
+        yaxis=dict(
+            autorange=True, # Ensure auto-ranging is on
+            rangemode='normal' # Crucial change: calculate range based only on data values
+        )
     )
     st.plotly_chart(fig, use_container_width=True)
+def plot_financial_chart(df, y_column, title, y_axis_title, chart_type='line'):
+    if df.empty or y_column not in df.columns or df[y_column].isnull().all():
+        st.warning(f"No {y_column} data available for this stock.")
+        return
 
+    fig = go.Figure()
+    
+    if chart_type == 'line':
+        fig.add_trace(go.Scatter(x=df.index, y=df[y_column], mode='lines+markers', name=y_column))
+    elif chart_type == 'bar':
+        fig.add_trace(go.Bar(x=df.index, y=df[y_column], name=y_column))
+    
+    fig.update_layout(
+        title=title,
+        xaxis_title='Year',
+        yaxis_title=y_axis_title,
+        hovermode="x unified",
+        yaxis=dict(
+            autorange=True, # Ensure auto-ranging is on
+            rangemode='normal' # Crucial change: calculate range based only on data values
+        )
+    )
+    st.plotly_chart(fig, use_container_width=True)
 # User input for primary stock search
 user_input = st.text_input("🔍 Search by symbol or company name for the primary stock:")
 
