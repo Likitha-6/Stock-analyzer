@@ -4,6 +4,7 @@ import pandas as pd
 import requests
 import difflib
 import numpy as np
+import plotly.graph_objs as go
 
 # Streamlit setup
 st.set_page_config(page_title="Indian Stock Analyzer", page_icon="📊")
@@ -336,6 +337,25 @@ def get_formatted_comparison_value(metric_name, value1, value2, industry_pe1=Non
         formatted_value2 = value2 if value2 is not None else "N/A"
 
     return formatted_value1 + tick_stock1, formatted_value2 + tick_stock2
+def plot_historical_price(ticker_symbol, company_name, period):
+    full_ticker = ticker_symbol + ".NS"
+    hist_price = yf.Ticker(full_ticker).history(period=period)
+
+    if hist_price.empty:
+        st.warning(f"No price data for {company_name}")
+        return
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=hist_price.index, y=hist_price['Close'], mode='lines', name='Close Price'))
+
+    fig.update_layout(
+        title=f'{company_name} Historical Price - {period}',
+        xaxis_title='Date',
+        yaxis_title='Close Price (INR)',
+        hovermode="x unified",
+        # No explicit y-axis range setting here for auto-scaling
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 # User input for primary stock search
 user_input = st.text_input("🔍 Search by symbol or company name for the primary stock:")
@@ -500,7 +520,6 @@ if selected_symbol:
             st.markdown("---")
             st.subheader("📈 Historical Data Comparison")
 
-            # Chart Period Selector for Comparison Mode
             compare_chart_period = st.selectbox(
                 "Select period for historical charts:",
                 ["1mo", "3mo", "6mo", "1y", "3y", "5y", "max"],
@@ -514,28 +533,15 @@ if selected_symbol:
             st.session_state["selected_symbol"] = selected_symbol
             st.session_state["compare_symbol"] = compare_symbol
             with col1_price:
-                try:
-                    # Check if stock1_raw_summary is valid BEFORE trying to get company name
-                    company_name1 = stock1_raw_summary.get('Company Name', st.session_state.selected_symbol.upper()) if stock1_raw_summary else st.session_state.selected_symbol.upper()
-                    hist_price1 = yf.Ticker(selected_symbol + ".NS").history(period=compare_chart_period)
-                    if not hist_price1.empty:
-                        st.line_chart(hist_price1["Close"].round(2).rename(company_name1))
-                    else:
-                        st.warning(f"No price data for {company_name1}")
-                except Exception as e:
-                    st.warning(f"Could not load price chart for {company_name1}. Error: {e}")
+                # Call the new plotting function
+                company_name1 = stock1_raw_summary.get('Company Name', selected_symbol.upper()) if stock1_raw_summary else selected_symbol.upper()
+                plot_historical_price(selected_symbol, company_name1, compare_chart_period)
 
             with col2_price:
-                try:
-                    # Check if stock2_raw_summary is valid BEFORE trying to get company name
-                    company_name2 = stock2_raw_summary.get('Company Name', st.session_state.compare_symbol.upper()) if stock2_raw_summary else st.session_state.compare_symbol.upper()
-                    hist_price2 = yf.Ticker(compare_symbol + ".NS").history(period=compare_chart_period)
-                    if not hist_price2.empty:
-                        st.line_chart(hist_price2["Close"].round(2).rename(company_name2))
-                    else:
-                        st.warning(f"No price data for {company_name2}")
-                except Exception as e:
-                    st.warning(f"Could not load price chart for {company_name2}. Error: {e}")
+                # Call the new plotting function
+                company_name2 = stock2_raw_summary.get('Company Name', compare_symbol.upper()) if stock2_raw_summary else compare_symbol.upper()
+                plot_historical_price(compare_symbol, company_name2, compare_chart_period)
+
 
 
             # --- Historical Profit After Tax (PAT) Chart Comparison ---
@@ -729,16 +735,18 @@ if selected_symbol:
 
             st.subheader("📉 Historical Stock Price Chart")
 
-            try:
-                # Reuse primary_ticker
-                period = st.selectbox("Select period for price chart:", ["1mo", "3mo", "6mo", "1y", "5y", "max"], index=4, key="price_period_single")
-                hist_price = yf.Ticker(selected_symbol + ".NS").history(period=period)
-                if not hist_price.empty:
-                    st.line_chart(hist_price["Close"].round(2))
-                else:
-                    st.warning("No historical stock data available for the selected period.")
-            except Exception as e:
-                st.warning(f"Could not load stock price chart. Error: {e}")
+            # Chart Period Selector for Single Stock Mode
+            single_chart_period = st.selectbox(
+                "Select period for historical chart:",
+                ["1mo", "3mo", "6mo", "1y", "3y", "5y", "max"],
+                index=3, # Default to 1 year
+                key="single_chart_period"
+            )
+
+            # Call the new plotting function
+            company_name = stock_summary.get('Company Name', selected_symbol.upper())
+            plot_historical_price(selected_symbol, company_name, single_chart_period)
+
 
             st.markdown("##### 📊 Historical Profit After Tax (PAT in ₹ Crores)")
             try:
