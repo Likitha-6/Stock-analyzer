@@ -17,20 +17,18 @@ def load_industry_info() -> pd.DataFrame:
     return pd.read_sql("SELECT * FROM industry_info", ENGINE)
 
 def load_master() -> pd.DataFrame:
-    """Join company and industry tables safely."""
+    """Join company_info and industry_info on Symbol."""
     sql = """
-        SELECT  
+        SELECT
             c.Symbol,
             c."Company Name",
-            c.Sector,
-            c.Industry AS CompanyIndustry,
-            c.MarketCap,
             i."Big Sectors",
             i.Industry
         FROM company_info AS c
         LEFT JOIN industry_info AS i ON c.Symbol = i.Symbol
     """
     return pd.read_sql(sql, ENGINE)
+
 
 
 # --- 2. Ad-hoc helpers -------------------------------------------------
