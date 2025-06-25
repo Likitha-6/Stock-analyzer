@@ -6,3 +6,4 @@ altair
 scikit-learn
 sqlalchemy
 matplotlib
+plotly
