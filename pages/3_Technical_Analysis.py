@@ -146,10 +146,12 @@ fig.update_xaxes(showgrid=False,
 fig.update_yaxes(showgrid=False)
 
 fig.update_layout(
-    height=800 if rows==2 else 600,
+    height=800 if rows == 2 else 600,
     title=f"{symbol} — {interval_key}",
     xaxis_rangeslider_visible=True,
-    legend=dict(orientation="h", y=1.02)
+    legend=dict(orientation="h", y=1.02),
+    dragmode="pan"  # ← ADD THIS LINE
 )
+
 
 st.plotly_chart(fig, use_container_width=True)
