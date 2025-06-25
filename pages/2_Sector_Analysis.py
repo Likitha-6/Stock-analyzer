@@ -82,7 +82,11 @@ st.subheader(f"📊 Summary – {ind_sel}")
 st.markdown(f"**Total companies in industry:** {len(scoped_df)}")
 
 if not avg_df.empty:
-    avg_vals = avg_df.mean(numeric_only=True)
+    numeric_cols = ["PE Ratio", "EPS", "ROE", "Profit Margin", "Debt to Equity", "Market Cap"]
+    for col in numeric_cols:
+        avg_df[col] = pd.to_numeric(avg_df[col], errors="coerce")
+    
+    avg_vals = avg_df[numeric_cols].mean()
     cols = st.columns(6)
     cols[0].metric("Avg PE", f"{avg_vals.get('PE Ratio', float('nan')):.2f}")
     cols[1].metric("Avg EPS", f"{avg_vals.get('EPS', float('nan')):.2f}")
