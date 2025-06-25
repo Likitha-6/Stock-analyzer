@@ -125,4 +125,5 @@ for sym in sel_syms:
         "EPS": icon_hi(m["EPS"], avg_vals.get("EPS")),
         "ROE": icon_hi(m["ROE"], avg_vals.get("ROE")),
         "PM": icon_hi(m["Profit Margin"], avg_vals.get("Profit Margin")),
+    }
 
