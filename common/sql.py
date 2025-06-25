@@ -17,13 +17,21 @@ def load_industry_info() -> pd.DataFrame:
     return pd.read_sql("SELECT * FROM industry_info", ENGINE)
 
 def load_master() -> pd.DataFrame:
-    """Join the two tables on Symbol, similar to your old merge."""
+    """Join company and industry tables safely."""
     sql = """
-        SELECT  c.*, i."Big Sectors", i.Industry
-        FROM    company_info  AS c
-        LEFT JOIN industry_info AS i USING (Symbol)
+        SELECT  
+            c.Symbol,
+            c."Company Name",
+            c.Sector,
+            c.Industry AS CompanyIndustry,
+            c.MarketCap,
+            i."Big Sectors",
+            i.Industry
+        FROM company_info AS c
+        LEFT JOIN industry_info AS i ON c.Symbol = i.Symbol
     """
     return pd.read_sql(sql, ENGINE)
+
 
 # --- 2. Ad-hoc helpers -------------------------------------------------
 
