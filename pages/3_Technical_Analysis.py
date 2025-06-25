@@ -12,9 +12,20 @@ symbol = st.text_input("Enter NSE Symbol", "INFY").upper()
 period = st.selectbox("Select Time Range", ["3mo", "6mo", "1y", "2y", "5y", "max"], index=1)
 
 # ── Download data ──
+# ── Download data ──
 df = yf.download(f"{symbol}.NS", period=period, interval="1d")
-df = df.dropna(subset=["Open", "High", "Low", "Close", "Volume"])
+
+# Check if necessary columns are present
+required_cols = ["Open", "High", "Low", "Close", "Volume"]
+missing_cols = [col for col in required_cols if col not in df.columns]
+
+if df.empty or missing_cols:
+    st.error(f"⚠️ Data not available or missing columns: {', '.join(missing_cols)}")
+    st.stop()
+
+df = df.dropna(subset=required_cols)
 df["SMA20"] = df["Close"].rolling(20).mean()
+
 
 # ── Create figure with secondary y-axis ──
 fig = make_subplots(
