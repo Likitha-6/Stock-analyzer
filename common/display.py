@@ -15,7 +15,7 @@ from common.finance import (
     human_market_cap,
 )
 from common.charts import _price_chart, _rev_pm_fcf_frames
-from similar_peers import similar_description_peers
+from common.peer_finder import top_peers
 
 # ────────────────────────────────────────────────────────────────
 # 1️⃣  Two‑stock comparison block
