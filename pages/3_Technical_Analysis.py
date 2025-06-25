@@ -8,23 +8,27 @@ st.set_page_config(page_title="📉 Technical Analysis", page_icon="📉")
 st.title("📉 Technical Analysis")
 
 # ── User input ──
-symbol = st.text_input("Enter NSE Symbol", "INFY").upper()
-period = st.selectbox("Select Time Range", ["3mo", "6mo", "1y", "2y", "5y", "max"], index=1)
+symbol = st.text_input("Enter NSE Symbol (e.g. RELIANCE)", "RELIANCE")
+period = st.selectbox("Select period", ["1mo", "3mo", "6mo", "1y", "3y", "5y", "max"], index=2)
 
-# ── Download data ──
-# ── Download data ──
-df = yf.download(f"{symbol}.NS", period=period, interval="1d")
+if symbol:
+    df = yf.download(f"{symbol}.NS", period=period, interval="1d")
 
-# Check if necessary columns are present
-required_cols = ["Open", "High", "Low", "Close", "Volume"]
-missing_cols = [col for col in required_cols if col not in df.columns]
+    if df.empty:
+        st.error("⚠️ No data returned for the given symbol and period.")
+        st.stop()
 
-if df.empty or missing_cols:
-    st.error(f"⚠️ Data not available or missing columns: {', '.join(missing_cols)}")
-    st.stop()
+    # Ensure required columns exist
+    expected_cols = ["Open", "High", "Low", "Close", "Volume"]
+    if not all(col in df.columns for col in expected_cols):
+        st.error(f"⚠️ Missing expected columns in data: {df.columns.tolist()}")
+        st.stop()
 
-df = df.dropna(subset=required_cols)
-df["SMA20"] = df["Close"].rolling(20).mean()
+    df = df.dropna(subset=expected_cols)
+    df["SMA20"] = df["Close"].rolling(20).mean()
+
+    st.success("✅ Data loaded successfully.")
+    st.write(df.head())
 
 
 # ── Create figure with secondary y-axis ──
