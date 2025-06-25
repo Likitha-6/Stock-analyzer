@@ -41,7 +41,7 @@ period = st.sidebar.selectbox("Period", ["1d","5d","30d","3mo","6mo","1y","2y","
                               index=["1d","5d","30d","3mo","6mo","1y","2y","5y","max"].index(period_default))
 
 sma_vals = st.sidebar.multiselect("SMA lengths", [5,10,20,50,100,200], default=[20])
-ema_vals = st.sidebar.multiselect("EMA lengths", [5,10,20,50,100,200])
+ema_len = st.sidebar.slider("EMA length", 5, 200, 20)  # default 20
 show_rsi = st.sidebar.checkbox("Show RSI", value=False)
 rsi_len  = st.sidebar.number_input("RSI length", 5, 50, 14) if show_rsi else None
 
@@ -77,8 +77,7 @@ if interval_label == "4 h":
 # ──────────── Indicators ────────────
 for n in sma_vals:
     df[f"SMA{n}"] = df["Close"].rolling(n).mean()
-for n in ema_vals:
-    df[f"EMA{n}"] = df["Close"].ewm(span=n, adjust=False).mean()
+df[f"EMA{ema_len}"] = df["Close"].ewm(span=ema_len, adjust=False).mean()
 if show_rsi:
     delta = df["Close"].diff()
     gain  = delta.clip(lower=0).rolling(rsi_len).mean()
@@ -126,7 +125,10 @@ fig.add_trace(go.Candlestick(
 for n in sma_vals:
     fig.add_trace(go.Scatter(x=df.index, y=df[f"SMA{n}"], name=f"SMA {n}"), row=1,col=1)
 for n in ema_vals:
-    fig.add_trace(go.Scatter(x=df.index, y=df[f"EMA{n}"], name=f"EMA {n}"), row=1,col=1)
+    fig.add_trace(go.Scatter(
+    x=df.index, y=df[f"EMA{ema_len}"],
+    name=f"EMA {ema_len}", line=dict(dash="dot")  # “continuous” line
+), row=1, col=1)
 
 if pivot_on:
     col_map={"P":"blue","R1":"green","R2":"lightgreen","R3":"lime",
