@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from pathlib import Path
 from tqdm import tqdm
 
-DB_PATH = "stocks.db"
+DB_PATH = "nse.db"
 
 # 1) Build an engine (SQLite URL = "sqlite:///path")
 engine = sa.create_engine(f"sqlite:///{DB_PATH}", echo=False, future=True)
