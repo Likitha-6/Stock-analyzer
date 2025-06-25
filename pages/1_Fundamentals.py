@@ -2,7 +2,9 @@
 import streamlit as st
 import pandas as pd
 
-from common.data    import load_master, load_name_lookup
+from common.sql import load_master          # ← now pulls from SQLite
+from common.data import load_name_lookup    # (if you still need the CSV helper)
+
 from common.display import display_metrics, compare_stocks
 
 # ─────────────────────────────
