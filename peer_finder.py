@@ -13,7 +13,7 @@ def _vectorizer_and_matrix(desc_series: pd.Series):
         min_df=2,
         ngram_range=(1, 2)
     )
-    matrix = tfidf.fit_transform(desc_series.fillna(""))
+    matrix = tfidf.fit_transform(desc_series)
     return tfidf, matrix
 
 def top_peers(symbol: str, df: pd.DataFrame, k: int = 5) -> pd.DataFrame:
@@ -21,7 +21,8 @@ def top_peers(symbol: str, df: pd.DataFrame, k: int = 5) -> pd.DataFrame:
     Return the top-k peer symbols for *symbol* based on description similarity.
     df must contain columns ["Symbol", "Description"].
     """
-    tfidf, matrix = _vectorizer_and_matrix(df["Description"])
+    descriptions = df_with_desc["Description"].fillna("").astype(str)
+    tfidf, matrix = _vectorizer_and_matrix(descriptions)
     symbol_idx = df.index[df["Symbol"] == symbol].tolist()
     if not symbol_idx:
         return pd.DataFrame()
