@@ -2,7 +2,6 @@
 # ──────────────────────────────────────────────────────────────
 import streamlit as st
 import pandas as pd
-
 from common.sql import load_master          # ← now pulls from SQLite
 from common.data import load_name_lookup    # (if you still need the CSV helper)
 
