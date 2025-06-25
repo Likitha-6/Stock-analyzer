@@ -1,156 +1,92 @@
+
+# pages/3_Technical_Analysis.py
 import streamlit as st
 import yfinance as yf
-import pandas as pd
-from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import pandas as pd
 
-st.set_page_config(page_title="📉 Technical Analysis", layout="wide")
-st.title("📉 Technical Analysis")
+st.set_page_config(page_title="📈 Technical Analysis", layout="wide")
+st.title("📈 Technical Analysis")
 
-# ──────────────────────────────────────────────────────────────────────
-# Sidebar options
-symbol = st.sidebar.text_input("NSE symbol", "RELIANCE").strip().upper()
-period = st.sidebar.selectbox("Period", ["1d", "30d", "3mo", "6mo", "1y", "2y", "5y", "max"], index=1)
-interval_label = st.sidebar.selectbox("Interval", ["1d", "1wk", "5 m", "15 m", "30 m", "1 hr", "4 hr"], index=0)
-indicator = st.sidebar.selectbox("Indicator", ["SMA", "EMA", "RSI", "Pivot Points"])
+symbol = st.text_input("Enter NSE Symbol (e.g., RELIANCE):", "RELIANCE").upper()
+interval = st.selectbox("Select Interval", ["5m", "15m", "30m", "1h", "4h", "1d", "30d"], index=5)
+period = st.selectbox("Select Period", ["1d", "5d", "1mo", "3mo", "6mo", "1y"], index=2)
 
-length = None
-if indicator in ("SMA", "EMA"):
-    length = st.sidebar.number_input("Length", 5, 200, 20)
-elif indicator == "RSI":
-    length = st.sidebar.number_input("RSI Length", 5, 50, 14)
+indicators = st.multiselect("Select Indicators", ["SMA", "EMA", "RSI", "Pivot Points"])
 
-# ──────────────────────────────────────────────────────────────────────
-# Map labels → yf intervals
-interval_map = {
-    "1d": "1d", "1wk": "1wk",
-    "5 m": "5m", "15 m": "15m", "30 m": "30m",
-    "1 hr": "60m", "4 hr": "60m"  # 4hr = resampled 60m
-}
-yf_interval = interval_map[interval_label]
+sma_len = ema_len = rsi_len = 14
+if "SMA" in indicators:
+    sma_len = st.slider("SMA Length", 5, 100, 20)
+if "EMA" in indicators:
+    ema_len = st.slider("EMA Length", 5, 100, 20)
+if "RSI" in indicators:
+    rsi_len = st.slider("RSI Length", 5, 50, 14)
 
-# Cap period for intraday data
-if yf_interval.endswith("m") and period not in ("1d", "5d", "7d", "10d", "30d"):
-    st.info("⏱️ Intraday data limited to 30 days – period set to 30d.")
-    period = "30d"
+pivot_levels = []
+if "Pivot Points" in indicators:
+    pivot_levels = st.multiselect("Select Pivot Levels", ["P", "R1", "R2", "S1", "S2"], default=["P", "R1", "S1"])
 
-if not symbol:
-    st.stop()
+try:
+    df = yf.download(f"{symbol}.NS", period=period, interval=interval, auto_adjust=True, progress=False)
 
-raw = yf.download(f"{symbol}.NS", period=period, interval=yf_interval, group_by="ticker")
-if raw.empty:
-    st.error("No data returned. Try another symbol, shorter period, or larger interval.")
-    st.stop()
+    if df.empty or "Close" not in df.columns:
+        st.error("⚠️ No valid data found for the given symbol.")
+    else:
+        df["SMA"] = df["Close"].rolling(sma_len).mean() if "SMA" in indicators else None
+        df["EMA"] = df["Close"].ewm(span=ema_len, adjust=False).mean() if "EMA" in indicators else None
 
-# ──────────────────────────────────────────────────────────────────────
-# Flatten multi-index
-df = raw.xs(f"{symbol}.NS", axis=1, level=0) if isinstance(raw.columns, pd.MultiIndex) else raw.copy()
-df = df.loc[:, ~df.columns.duplicated()]
+        if "RSI" in indicators:
+            delta = df["Close"].diff()
+            gain = (delta.where(delta > 0, 0)).rolling(rsi_len).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(rsi_len).mean()
+            rs = gain / loss
+            df["RSI"] = 100 - (100 / (1 + rs))
 
-# Add 'Close' if only 'Adj Close' exists
-if "Close" not in df and "Adj Close" in df:
-    df["Close"] = df["Adj Close"]
+        fig = go.Figure()
 
-needed = ["Open", "High", "Low", "Close"]
-if not set(needed).issubset(df.columns):
-    st.error("Missing OHLC columns.")
-    st.stop()
+        # Candlestick
+        fig.add_trace(go.Candlestick(
+            x=df.index,
+            open=df["Open"],
+            high=df["High"],
+            low=df["Low"],
+            close=df["Close"],
+            name="Candlesticks"
+        ))
 
-# Resample to 4H if selected
-if interval_label == "4 hr":
-    df = df.resample("4H").agg({
-        "Open": "first",
-        "High": "max",
-        "Low": "min",
-        "Close": "last",
-        "Volume": "sum"
-    }).dropna()
+        if "SMA" in indicators:
+            fig.add_trace(go.Scatter(x=df.index, y=df["SMA"], mode="lines", name=f"SMA{sma_len}"))
+        if "EMA" in indicators:
+            fig.add_trace(go.Scatter(x=df.index, y=df["EMA"], mode="lines", name=f"EMA{ema_len}"))
 
-# ──────────────────────────────────────────────────────────────────────
-# Indicator Calculation
-if indicator == "SMA":
-    df[f"SMA{length}"] = df["Close"].rolling(length).mean()
-elif indicator == "EMA":
-    df[f"EMA{length}"] = df["Close"].ewm(span=length, adjust=False).mean()
-elif indicator == "RSI":
-    delta = df["Close"].diff()
-    gain = delta.clip(lower=0).rolling(length).mean()
-    loss = (-delta.clip(upper=0)).rolling(length).mean()
-    rs = gain / loss
-    df[f"RSI{length}"] = 100 - (100 / (1 + rs))
-elif indicator == "Pivot Points":
-    last = df.iloc[-2] if len(df) > 1 else df.iloc[-1]
-    P = (last["High"] + last["Low"] + last["Close"]) / 3
-    pivots = {
-        "P": P,
-        "R1": 2 * P - last["Low"],
-        "S1": 2 * P - last["High"],
-        "R2": P + (last["High"] - last["Low"]),
-        "S2": P - (last["High"] - last["Low"]),
-        "R3": last["High"] + 2 * (P - last["Low"]),
-        "S3": last["Low"] - 2 * (last["High"] - P)
-    }
+        if "Pivot Points" in indicators and not df.empty:
+            hlc = df.iloc[-1]
+            pivot = (hlc["High"] + hlc["Low"] + hlc["Close"]) / 3
+            r1 = 2 * pivot - hlc["Low"]
+            s1 = 2 * pivot - hlc["High"]
+            r2 = pivot + (hlc["High"] - hlc["Low"])
+            s2 = pivot - (hlc["High"] - hlc["Low"])
+            pivot_dict = {"P": pivot, "R1": r1, "R2": r2, "S1": s1, "S2": s2}
+            for level in pivot_levels:
+                fig.add_hline(y=pivot_dict[level], line_dash="solid", annotation_text=level)
 
-# ──────────────────────────────────────────────────────────────────────
-# Chart layout
-rows = 2 if indicator == "RSI" else 1
-fig = make_subplots(rows=rows, cols=1, shared_xaxes=True,
-                    specs=[[{}]] * rows,
-                    row_heights=[0.75, 0.25] if rows == 2 else [1],
-                    vertical_spacing=0.06)
-
-fig.add_trace(go.Candlestick(
-    x=df.index,
-    open=df["Open"], high=df["High"],
-    low=df["Low"], close=df["Close"],
-    name="Price",
-    increasing_line_color="#26a69a",
-    decreasing_line_color="#ef5350"
-), row=1, col=1)
-
-if indicator in ["SMA", "EMA"]:
-    fig.add_trace(go.Scatter(
-        x=df.index,
-        y=df[f"{indicator}{length}"],
-        name=f"{indicator} {length}"
-    ), row=1, col=1)
-
-elif indicator == "RSI":
-    fig.add_trace(go.Scatter(
-        x=df.index,
-        y=df[f"RSI{length}"],
-        name=f"RSI {length}",
-        line_color="orange"
-    ), row=2, col=1)
-    fig.update_yaxes(range=[0, 100], row=2, col=1)
-
-elif indicator == "Pivot Points":
-    colors = {
-        "P": "blue", "R1": "green", "S1": "red",
-        "R2": "lightgreen", "S2": "salmon",
-        "R3": "lime", "S3": "orangered"
-    }
-    for name, y in pivots.items():
-        fig.add_hline(
-            y=y,
-            line_color=colors.get(name, "gray"),
-            annotation_text=name,
-            annotation_position="top left"
+        fig.update_layout(
+            title=f"{symbol} – Technical Chart",
+            xaxis_rangeslider_visible=False,
+            template="plotly_white",
+            xaxis=dict(showgrid=False),
+            yaxis=dict(showgrid=False),
+            height=600
         )
 
-low, high = df["Low"].min(), df["High"].max()
-pad = (high - low) * 0.03
-fig.update_yaxes(range=[low - pad, high + pad], row=1, col=1)
+        st.plotly_chart(fig, use_container_width=True)
 
-# Remove grids
-fig.update_xaxes(showgrid=False)
-fig.update_yaxes(showgrid=False)
+        if "RSI" in indicators:
+            rsi_fig = go.Figure()
+            rsi_fig.add_trace(go.Scatter(x=df.index, y=df["RSI"], mode="lines", name=f"RSI{rsi_len}"))
+            rsi_fig.update_layout(title="RSI Indicator", height=300, template="plotly_white", yaxis=dict(showgrid=False))
+            st.plotly_chart(rsi_fig, use_container_width=True)
 
-fig.update_layout(
-    height=800 if rows == 2 else 600,
-    title=f"{symbol}.NS – {indicator} ({interval_label})",
-    xaxis_rangeslider_visible=True,
-    legend=dict(orientation="h", y=1.02)
-)
-
-st.plotly_chart(fig, use_container_width=True)
+except Exception as e:
+    st.error(f"An error occurred: {e}")
