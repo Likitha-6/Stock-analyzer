@@ -16,12 +16,13 @@ if symbol:
         st.warning("⚠️ No data available for this symbol.")
     else:
         expected_cols = ["Open", "High", "Low", "Close", "Volume"]
-        missing = [col for col in expected_cols if col not in df.columns]
+        missing_cols = [col for col in expected_cols if col not in df.columns]
 
-        if missing:
-            st.error(f"Missing columns in data: {missing}")
-        else:
-            df = df.dropna(subset=expected_cols)
+        if missing_cols:
+            st.error(f"❌ Missing columns in data: {missing_cols}")
+            st.stop()
+
+        df = df.dropna(subset=expected_cols)
 
             # Compute SMA for demo
             df["SMA20"] = df["Close"].rolling(window=20).mean()
