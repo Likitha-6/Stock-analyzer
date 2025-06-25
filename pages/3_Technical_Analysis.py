@@ -10,8 +10,8 @@ st.set_page_config(page_title="📉 Technical Analysis", layout="wide")
 st.title("📉 Technical Analysis")
 
 # ────────── Sidebar controls ──────────
-ticker = st.sidebar.text_input("NSE symbol", "RELIANCE").strip().upper()
-symbol = f"{ticker}.NS" if not ticker.endswith(".NS") else ticker
+tickers = raw.columns.get_level_values(0).unique()
+symbol = st.selectbox("Select Symbol", tickers)
 
 interval_map = {"5m":"5m","15m":"15m","30m":"30m","1 h":"60m","4 h":"60m","1 d":"1d"}
 interval_key = st.sidebar.selectbox("Interval", list(interval_map.keys()), index=5)
