@@ -1,3 +1,10 @@
+# common/peer_finder.py
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+from common.sql import load_master
+
 def top_peers(symbol: str, df: pd.DataFrame = None, k=10, filter_sector: bool = False) -> pd.DataFrame:
     if df is None:
         df = load_master()
