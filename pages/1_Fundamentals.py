@@ -25,12 +25,7 @@ symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
 # ─────────────────────────────
 default_sym   = st.session_state.get("compare_symbol")
 default_peers = st.session_state.get("qual_peers", [])
-sel_symbol = st.session_state.get("compare_symbol")
 
-if not sel_symbol:
-    st.warning("No symbol selected. Please choose a company from Sector Analysis page.")
-    st.stop()
-peer_df = top_peers(sel_symbol, master_df, k=5)
 
 st.markdown("### 🧑‍🤝‍🧑 Top 5 Peers (by business description)")
 st.table(peer_df.style.format({"Similarity": "{:.2f}"}))
