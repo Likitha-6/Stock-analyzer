@@ -109,11 +109,11 @@ def display_metrics(symbol: str, master_df: pd.DataFrame, name_df: pd.DataFrame)
     # ── Peer dropdown (hidden when navigated from Sector Analysis) ──
     peer_sym = None
     if not coming_from_sector:
-        peer_syms = similar_description_peers(symbol, master_df, k=10)
-        sym2name  = dict(zip(name_df["Symbol"], name_df["Company Name"]))
-        peer_labels = [f"{sym2name.get(s, 'Unknown')} ({s})" for s in peer_syms]
-        chosen = st.selectbox("🔄 Compare with peer", ["--"] + peer_labels, key=f"peer_{symbol}")
-        peer_sym = chosen.split("(")[-1].rstrip(")") if chosen != "--" else None
+        peer_df = top_peers(symbol, master_df, k=10)
+        if not peer_df.empty:
+            peer_labels = [f"{row['Company Name']} ({row['Symbol']})" for _, row in peer_df.iterrows()]
+            chosen = st.selectbox("🔄 Compare with peer", ["--"] + peer_labels, key=f"peer_{symbol}")
+            peer_sym = chosen.split("(")[-1].rstrip(")") if chosen != "--" else None
 
     if peer_sym:
         compare_stocks(symbol, peer_sym, master_df)
