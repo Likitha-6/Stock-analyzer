@@ -4,6 +4,7 @@ import pandas as pd
 
 from common.data    import load_master, load_name_lookup
 from common.display import display_metrics, compare_stocks
+from common.peer_finder import top_peers
 
 # ─────────────────────────────
 # Page config
@@ -24,6 +25,10 @@ symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
 # ─────────────────────────────
 default_sym   = st.session_state.get("compare_symbol")
 default_peers = st.session_state.get("qual_peers", [])
+peer_df = top_peers(sel_symbol, master_df, k=5)
+
+st.markdown("### 🧑‍🤝‍🧑 Top 5 Peers (by business description)")
+st.table(peer_df.style.format({"Similarity": "{:.2f}"}))
 
 # ─────────────────────────────
 # Symbol selection UI
