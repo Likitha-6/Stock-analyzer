@@ -28,7 +28,8 @@ if isinstance(df.columns, pd.MultiIndex):
 df = df.loc[:, ~df.columns.duplicated()]        # drop duplicate col names
 
 # We need at least "Close"
-if "Close" not in df.columns:
+if "Close" not in df.columns and "Adj Close" in df.columns:
+    df["Close"] = df["Adj Close"]
     st.error("⚠️ Data has no 'Close' column. Unable to plot line chart.")
     st.table(df.head())                         # show for debugging
     st.stop()
