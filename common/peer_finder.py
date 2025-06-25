@@ -6,7 +6,6 @@ import yfinance as yf
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Cache for fetched descriptions
 _description_cache: dict[str, str] = {}
 
 def _get_description(sym: str) -> str:
@@ -35,22 +34,35 @@ def _vectorizer_and_matrix(desc_series: pd.Series):
     return tfidf, matrix
 
 def top_peers(symbol: str, df: pd.DataFrame, k: int = 5) -> pd.DataFrame:
-    df = _ensure_descriptions(df)
-    desc_series = df["Description"].fillna("").astype(str)
+    if "Industry" not in df.columns:
+        return pd.DataFrame(columns=["Symbol", "Company Name", "Similarity"])
+
+    # Get industry of the selected symbol
+    try:
+        industry = df.loc[df["Symbol"] == symbol, "Industry"].values[0]
+    except IndexError:
+        return pd.DataFrame(columns=["Symbol", "Company Name", "Similarity"])
+
+    # Filter only companies in the same industry
+    industry_df = df[df["Industry"] == industry]
+    industry_df = _ensure_descriptions(industry_df)
+
+    desc_series = industry_df["Description"].fillna("").astype(str)
     tfidf, matrix = _vectorizer_and_matrix(desc_series)
 
     try:
-        idx = df.index[df["Symbol"] == symbol][0]
+        idx = industry_df.index[industry_df["Symbol"] == symbol][0]
     except IndexError:
         return pd.DataFrame(columns=["Symbol", "Company Name", "Similarity"])
 
     sims = cosine_similarity(matrix[idx], matrix).flatten()
 
     peers = (
-        df.assign(Similarity=sims)
+        industry_df.assign(Similarity=sims)
         .query("Symbol != @symbol")
         .sort_values("Similarity", ascending=False)
         .head(k)[["Symbol", "Company Name", "Similarity"]]
         .reset_index(drop=True)
     )
     return peers
+
