@@ -27,8 +27,6 @@ default_sym   = st.session_state.get("compare_symbol")
 default_peers = st.session_state.get("qual_peers", [])
 
 
-st.markdown("### 🧑‍🤝‍🧑 Top 5 Peers (by business description)")
-st.table(peer_df.style.format({"Similarity": "{:.2f}"}))
 
 # ─────────────────────────────
 # Symbol selection UI
