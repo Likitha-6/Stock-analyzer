@@ -146,14 +146,26 @@ st.dataframe(pd.DataFrame(rows).reset_index(drop=True), use_container_width=True
 # 5⃣  Qualified (green) companies → Fundamentals navigation
 # ────────────────────────────────────────────────────────────
 if qualified:
+    qual_df = pd.DataFrame(qualified).reset_index(drop=True)          # ← NEW
     st.markdown("---")
     st.subheader(f"🌟 Companies with ≥{interp_cutoff} Green Checks")
-    for r in qualified:
-        if st.button(f"Compare {r['Company']} ({r['Symbol']}) on Fundamentals"):
-            st.session_state.compare_symbol  = r["Symbol"]
-            st.session_state.qual_peers      = [row["Symbol"] for row in qualified if row["Symbol"] != r["Symbol"]]
-            st.session_state.from_sector_nav = True
-            st.switch_page("pages/1_Fundamentals.py")
+
+    # Show the qualified table                                          ← NEW
+    st.dataframe(qual_df, use_container_width=True)                    # ← NEW
+
+    # (Optional) download button for CSV                                ← NEW
+    csv = qual_df.to_csv(index=False).encode()
+    st.download_button("⬇️ Download list as CSV", csv, f"green_stocks_{ind_sel}.csv")  # ← NEW
+
+    # Render “View Fundamentals” link-buttons                           ← NEW
+    for _, r in qual_df.iterrows():                                    # ← NEW
+        if st.button(f"View Fundamentals →  {r['Company']} ({r['Symbol']})",
+                     key=f"q_{r['Symbol']}"):                          # ← NEW
+            st.session_state.compare_symbol  = r["Symbol"]             # ← NEW
+            st.session_state.qual_peers      = qual_df["Symbol"].\
+                                                  drop(r.name).tolist()# ← NEW
+            st.session_state.from_sector_nav = True                    # ← NEW
+            st.switch_page("pages/1_Fundamentals.py")                  # ← NEW
 else:
     st.info("No company meets the selected green criteria.")
 
