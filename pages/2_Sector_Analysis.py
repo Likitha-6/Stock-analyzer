@@ -163,9 +163,16 @@ if qualified:
     st.subheader(f"🌟 Companies with ≥{interp_cutoff} Green Checks")
     for r in qualified:
         if st.button(f"Compare {r['Company']} ({r['Symbol']}) on Fundamentals"):
+    from common.peer_finder import top_peers
+    peer_df = top_peers(r["Symbol"], df, k=5)
+    st.session_state.qual_peers = peer_df["Symbol"].tolist()
+    st.session_state.compare_symbol = r["Symbol"]
+    st.session_state.from_sector_nav = True
+    st.switch_page("pages/1_Fundamentals.py")
             st.session_state.compare_symbol  = r["Symbol"]
             st.session_state.qual_peers      = [row["Symbol"] for row in qualified if row["Symbol"] != r["Symbol"]]
             st.session_state.from_sector_nav = True
             st.switch_page("pages/1_Fundamentals.py")
 else:
     st.info("No company meets the selected green criteria.")
+
