@@ -3,7 +3,9 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 
-from common.data import load_master, load_name_lookup
+from common.sql import load_master          # ← now pulls from SQLite
+from common.data import load_name_lookup    # (if you still need the CSV helper)
+
 from common.finance import human_market_cap
 
 import streamlit as st
