@@ -3,8 +3,10 @@ import pandas as pd
 import sqlalchemy as sa
 from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parent.parent / "nse.db"   # -> project_root/nse.db
-ENGINE = sa.create_engine("sqlite:///nse.db")  # 👈 Is this the same?
+import os
+db_path = os.path.join(os.path.dirname(__file__), "..", "nse.db")
+ENGINE = sa.create_engine(f"sqlite:///{os.path.abspath(db_path)}")
+
 
 
 # --- 1. Quick loaders -------------------------------------------------
