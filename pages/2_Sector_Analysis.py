@@ -56,7 +56,10 @@ def fetch_metrics(sym: str) -> dict:
             "EPS":           info.get("trailingEps"),
             "ROE":           info.get("returnOnEquity"),
             "Market Cap":    info.get("marketCap"),
-            "Profit Margin": None if pm_raw is None else pm_raw * 100,
+            "Profit Margin": (
+                None if pm_raw is None else
+                min(pm_raw * 100, 100) if pm_raw < 1.5 else None  # discard weird values
+            ),
             "Debt to Equity":None if d2e_raw is None else d2e_raw / 100,
         }
     except Exception:
