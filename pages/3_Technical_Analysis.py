@@ -1,48 +1,58 @@
 # pages/3_Technical_Analysis.py
+# -------------------------------------------------------------------
+# Lightweight Technical-Analysis page (line chart + SMAs)
+# -------------------------------------------------------------------
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import numpy as np
 
-st.set_page_config(page_title="📈 Technical Analysis – Lite", layout="wide")
-st.title("📈 Technical Analysis (Line-chart version)")
+# ── Page config ────────────────────────────────────────────────────
+st.set_page_config(page_title="📈 Technical Analysis", page_icon="📈", layout="wide")
+st.title("📈 Technical Analysis – Line chart (Close | SMA20 | SMA50)")
 
-# ── User inputs ───────────────────────────────────────────────
-symbol = st.text_input("Enter NSE symbol", "RELIANCE").strip().upper()
-period = st.selectbox("Period", ["3mo", "6mo", "1y", "2y", "5y", "max"], index=1)
+# ── Sidebar controls ───────────────────────────────────────────────
+symbol = st.sidebar.text_input("NSE Symbol", "RELIANCE").strip().upper()
+period = st.sidebar.selectbox("Period", ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"], index=2)
+interval = st.sidebar.selectbox("Interval", ["1d", "1wk", "1mo"], index=0)
 
 if not symbol:
     st.stop()
 
-# ── Download data ─────────────────────────────────────────────
-df = yf.download(f"{symbol}.NS", period=period, interval="1d")
+# ── Download historical data ───────────────────────────────────────
+df = yf.download(f"{symbol}.NS", period=period, interval=interval)
 
 if df.empty:
-    st.error("⚠️ No data returned. Try another symbol or a longer period.")
+    st.error("⚠️ No data returned. Check symbol or increase period.")
     st.stop()
 
-# 🔧 Flatten MultiIndex columns & drop duplicates --------------
+# Flatten MultiIndex columns (if present) and drop duplicate labels
 if isinstance(df.columns, pd.MultiIndex):
     df.columns = df.columns.get_level_values(-1)
+df = df.loc[:, ~df.columns.duplicated()]
 
-df = df.loc[:, ~df.columns.duplicated()]        # drop duplicate col names
+# Fallback: use 'Adj Close' if 'Close' missing
+if "Close" not in df.columns:
+    if "Adj Close" in df.columns:
+        df["Close"] = df["Adj Close"]
+        st.info("ℹ️ Using 'Adj Close' because 'Close' not provided.")
+    else:
+        st.error("⚠️ Neither 'Close' nor 'Adj Close' present in data.")
+        st.write("Columns returned:", list(df.columns))
+        st.stop()
 
-# We need at least "Close"
-if "Close" not in df.columns and "Adj Close" in df.columns:
-    df["Close"] = df["Adj Close"]
-    st.error("⚠️ Data has no 'Close' column. Unable to plot line chart.")
-    st.table(df.head())                         # show for debugging
-    st.stop()
-
-# ── Compute moving averages ──────────────────────────────────
+# ── Compute indicators ─────────────────────────────────────────────
 df["SMA20"] = df["Close"].rolling(20).mean()
 df["SMA50"] = df["Close"].rolling(50).mean()
 
-# ── Build line-chart friendly DataFrame ----------------------
 chart_df = df[["Close", "SMA20", "SMA50"]].dropna()
 
-# ── Display line chart ───────────────────────────────────────
+if chart_df.empty:
+    st.error("⚠️ Not enough data to compute SMAs for this period.")
+    st.stop()
+
+# ── Render line chart ──────────────────────────────────────────────
 st.line_chart(chart_df, use_container_width=True)
 
-# Optional: show last few rows for quick reference
-st.write("Latest values", chart_df.tail())
+# Optional: show data preview
+with st.expander("🔍 Raw data preview"):
+    st.dataframe(chart_df.tail())
