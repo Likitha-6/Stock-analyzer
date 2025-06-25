@@ -126,9 +126,9 @@ for n in sma_vals:
     fig.add_trace(go.Scatter(x=df.index, y=df[f"SMA{n}"], name=f"SMA {n}"), row=1,col=1)
 for n in ema_vals:
     fig.add_trace(go.Scatter(
-    x=df.index, y=df[f"EMA{ema_len}"],
-    name=f"EMA {ema_len}", line=dict(dash="dot")  # “continuous” line
-), row=1, col=1)
+        x=df.index, y=df[f"EMA{ema_len}"],
+        name=f"EMA {ema_len}", line=dict(dash="dot")  # “continuous” line
+    ), row=1, col=1)
 
 if pivot_on:
     col_map={"P":"blue","R1":"green","R2":"lightgreen","R3":"lime",
