@@ -85,8 +85,9 @@ if not avg_df.empty:
     numeric_cols = ["PE Ratio", "EPS", "ROE", "Profit Margin", "Debt to Equity", "Market Cap"]
     for col in numeric_cols:
         avg_df[col] = pd.to_numeric(avg_df[col], errors="coerce")
-    
-    avg_vals = avg_df[numeric_cols].mean()
+    # Remove inf, -inf, or NaN
+    clean_df = avg_df.replace([np.inf, -np.inf], np.nan).dropna(subset=["PE Ratio"])
+    avg_vals = clean_df[numeric_cols].mean()
     cols = st.columns(6)
     cols[0].metric("Avg PE", f"{avg_vals.get('PE Ratio', float('nan')):.2f}")
     cols[1].metric("Avg EPS", f"{avg_vals.get('EPS', float('nan')):.2f}")
