@@ -4,7 +4,8 @@ import sqlalchemy as sa
 from pathlib import Path
 
 DB_PATH = Path(__file__).resolve().parent.parent / "nse.db"   # -> project_root/nse.db
-ENGINE  = sa.create_engine(f"sqlite:///{DB_PATH}", future=True)
+ENGINE = sa.create_engine("sqlite:///nse.db")  # 👈 Is this the same?
+
 
 # --- 1. Quick loaders -------------------------------------------------
 
