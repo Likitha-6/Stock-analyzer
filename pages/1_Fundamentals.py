@@ -4,7 +4,6 @@ import pandas as pd
 
 from common.data    import load_master, load_name_lookup
 from common.display import display_metrics, compare_stocks
-from common.peer_finder import top_peers
 
 # ─────────────────────────────
 # Page config
@@ -25,8 +24,6 @@ symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
 # ─────────────────────────────
 default_sym   = st.session_state.get("compare_symbol")
 default_peers = st.session_state.get("qual_peers", [])
-
-
 
 # ─────────────────────────────
 # Symbol selection UI
@@ -80,25 +77,4 @@ if default_peers:
         compare_stocks(chosen_sym, peer_sym, master_df)
     else:
         st.info("No peer list passed from Sector Analysis.")
-
-
-
-# ─────────────────────────────────────────────────────
-# Peer Finder Section (Global)
-# ─────────────────────────────────────────────────────
-st.markdown("---")
-st.subheader("🧑‍🤝‍🧑 Top 5 Similar Peers (All Industries)")
-
-peer_df = top_peers(sel_symbol, master_df, k=5)
-
-if not peer_df.empty:
-    st.dataframe(peer_df.style.format({"Similarity": "{:.2f}"}), use_container_width=True)
-
-    if st.button("Compare these peers"):
-        st.session_state.qual_peers = peer_df["Symbol"].tolist()
-        st.session_state.from_sector_nav = False
-        st.switch_page("pages/2_Sector_Analysis.py")
-else:
-    st.info("No similar peers found.")
-
 
