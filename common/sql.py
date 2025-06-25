@@ -1,32 +1,27 @@
 # common/sql.py
+
 import pandas as pd
 import sqlalchemy as sa
 from pathlib import Path
 
-import os
-db_path = os.path.join(os.path.dirname(__file__), "..", "nse.db")
-ENGINE = sa.create_engine(f"sqlite:///{os.path.abspath(db_path)}")
+# Path to your local SQLite DB
+DB_PATH = Path("nse.db")
 
+# Create SQLAlchemy engine
+ENGINE = sa.create_engine(f"sqlite:///{DB_PATH}", future=True)
 
-
-# --- 1. Quick loaders -------------------------------------------------
-
-def load_company_info() -> pd.DataFrame:
-    """Entire company_info table (≈ 2 MB)."""
-    return pd.read_sql("SELECT * FROM company_info", ENGINE)
-
-def load_industry_info() -> pd.DataFrame:
-    """Entire industry_info table."""
-    return pd.read_sql("SELECT * FROM industry_info", ENGINE)
 def load_master() -> pd.DataFrame:
-    """Join DimCompany and FactFundamentals on Symbol."""
+    """
+    Join DimCompany with FactFundamentals on Symbol.
+    Returns the full master DataFrame used by the app.
+    """
     sql = """
         SELECT
             d.Symbol,
             d.CompanyName AS "Company Name",
-            d.Sector      AS "Big Sectors",
+            d.Sector AS "Big Sectors",
             d.Industry,
-            f.PERatio     AS "PE Ratio",
+            f.PERatio AS "PE Ratio",
             f.EPS,
             f.ROE,
             f.ProfitMargin,
@@ -37,17 +32,10 @@ def load_master() -> pd.DataFrame:
     """
     return pd.read_sql(sql, ENGINE)
 
-
-
-
-
-# --- 2. Ad-hoc helpers -------------------------------------------------
-
-def get_fundamentals(symbol: str) -> pd.Series:
-    """Example: pull one row of fundamentals (extend once you add that table)."""
-    sql = "SELECT * FROM company_info WHERE Symbol = :sym"
-    return pd.read_sql(sql, ENGINE, params={"sym": symbol}).squeeze()
-
-# --- 3. Utility to run raw SQL (optional) ------------------------------
-def run_query(query: str, **params) -> pd.DataFrame:
-    return pd.read_sql(sa.text(query), ENGINE, params=params)
+def test_connection() -> list[str]:
+    """
+    Optional: Returns list of table names in the DB for verification.
+    """
+    with ENGINE.connect() as conn:
+        result = conn.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table';"))
+        return [row[0] for row in result]
