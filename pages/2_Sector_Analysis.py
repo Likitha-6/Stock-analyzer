@@ -139,12 +139,13 @@ for sym in sel_syms:
         return "✅" if v <= a else "🟡" if v <= 1.5 else "🔴"
 
     icons = {
-        "PE":  icon_lo(m["PE Ratio"],      avg_vals["PE Ratio"]),
-        "EPS": icon_hi(m["EPS"],           avg_vals["EPS"]),
-        "ROE": icon_hi(m["ROE"],           avg_vals["ROE"]),
-        "PM":  icon_hi(m["Profit Margin"], avg_vals["Profit Margin"]),
-        "D/E": icon_d2e(m["Debt to Equity"], avg_vals["Debt to Equity"]),
-    }
+        "PE":  icon_lo(m["PE Ratio"], avg_vals.get("PE Ratio")),
+        "EPS": icon_hi(m["EPS"], avg_vals.get("EPS")),
+        "ROE": icon_hi(m["ROE"], avg_vals.get("ROE")),
+        "PM":  icon_hi(m["Profit Margin"], avg_vals.get("Profit Margin")),
+        "D/E": icon_d2e(m["Debt to Equity"], avg_vals.get("Debt to Equity")),
+        }
+
     row["Interpretation"] = " | ".join([f"{k} {v}" for k, v in icons.items()])
     rows.append(row)
 
