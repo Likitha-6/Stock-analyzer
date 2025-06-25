@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 from typing import List
-import functools
 import pandas as pd
 import yfinance as yf
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -31,20 +30,19 @@ def _ensure_descriptions(df: pd.DataFrame) -> pd.DataFrame:
         )
     return df
 
-@functools.lru_cache(maxsize=1)
 def _vectorizer_and_matrix(desc_series: pd.Series):
     tfidf = TfidfVectorizer(
         stop_words="english",
         ngram_range=(1, 2),
         min_df=2,
     )
+    desc_series = desc_series.fillna("").astype(str)
     matrix = tfidf.fit_transform(desc_series)
     return tfidf, matrix
 
 def top_peers(symbol: str, df: pd.DataFrame, k: int = 5) -> pd.DataFrame:
     df_with_desc = _ensure_descriptions(df)
-
-    descriptions = df_with_desc["Description"].fillna("").astype(str)
+    descriptions = df_with_desc["Description"]
     tfidf, matrix = _vectorizer_and_matrix(descriptions)
 
     try:
