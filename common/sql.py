@@ -18,8 +18,7 @@ def load_company_info() -> pd.DataFrame:
 def load_industry_info() -> pd.DataFrame:
     """Entire industry_info table."""
     return pd.read_sql("SELECT * FROM industry_info", ENGINE)
-
- def load_master() -> pd.DataFrame:
+def load_master() -> pd.DataFrame:
     """Join DimCompany and FactFundamentals on Symbol."""
     sql = """
         SELECT
