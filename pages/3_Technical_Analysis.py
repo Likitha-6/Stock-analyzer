@@ -25,38 +25,38 @@ if symbol:
         df = df.dropna(subset=expected_cols)
 
             # Compute SMA for demo
-            df["SMA20"] = df["Close"].rolling(window=20).mean()
+        df["SMA20"] = df["Close"].rolling(window=20).mean()
 
             # Create figure with candlesticks and volume
-            fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
+        fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
                                 specs=[[{"secondary_y": False}],
                                        [{"secondary_y": False}]],
                                 row_heights=[0.7, 0.3],
                                 vertical_spacing=0.05)
 
-            fig.add_trace(go.Candlestick(
-                x=df.index,
-                open=df["Open"],
-                high=df["High"],
-                low=df["Low"],
-                close=df["Close"],
-                name="Candlesticks"
-            ), row=1, col=1)
+        fig.add_trace(go.Candlestick(
+            x=df.index,
+            open=df["Open"],
+            high=df["High"],
+            low=df["Low"],
+            close=df["Close"],
+            name="Candlesticks"
+        ), row=1, col=1)
 
-            fig.add_trace(go.Scatter(
-                x=df.index,
-                y=df["SMA20"],
-                mode="lines",
-                name="SMA 20",
-                line=dict(width=1.5, dash="dot")
-            ), row=1, col=1)
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df["SMA20"],
+            mode="lines",
+            name="SMA 20",
+            line=dict(width=1.5, dash="dot")
+        ), row=1, col=1)
 
-            fig.add_trace(go.Bar(
-                x=df.index,
-                y=df["Volume"],
-                name="Volume",
-                marker=dict(color="lightgray")
-            ), row=2, col=1)
+        fig.add_trace(go.Bar(
+            x=df.index,
+            y=df["Volume"],
+            name="Volume",
+            marker=dict(color="lightgray")
+        ), row=2, col=1)
 
-            fig.update_layout(height=700, title=f"{symbol.upper()} Technical Chart", xaxis_rangeslider_visible=False)
-            st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(height=700, title=f"{symbol.upper()} Technical Chart", xaxis_rangeslider_visible=False)
+        st.plotly_chart(fig, use_container_width=True)
