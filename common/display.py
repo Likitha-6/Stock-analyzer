@@ -15,8 +15,7 @@ from common.finance import (
     human_market_cap,
 )
 from common.charts import _price_chart, _rev_pm_fcf_frames
-from common.peer_finder import top_peers
-
+from similar_peers import similar_description_peers
 
 # ────────────────────────────────────────────────────────────────
 # 1️⃣  Two‑stock comparison block
@@ -110,7 +109,7 @@ def display_metrics(symbol: str, master_df: pd.DataFrame, name_df: pd.DataFrame)
     # ── Peer dropdown (hidden when navigated from Sector Analysis) ──
     peer_sym = None
     if not coming_from_sector:
-        peer_syms = top_peers(symbol, master_df, k=10)
+        peer_syms = similar_description_peers(symbol, master_df, k=10)
         sym2name  = dict(zip(name_df["Symbol"], name_df["Company Name"]))
         peer_labels = [f"{sym2name.get(s, 'Unknown')} ({s})" for s in peer_syms]
         chosen = st.selectbox("🔄 Compare with peer", ["--"] + peer_labels, key=f"peer_{symbol}")
