@@ -175,4 +175,3 @@ if qualified:
             st.switch_page("pages/1_Fundamentals.py")
 else:
     st.info("No company meets the selected green criteria.")
-
