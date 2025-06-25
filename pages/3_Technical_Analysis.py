@@ -24,7 +24,14 @@ SYMBOLS = all_symbols()
 st.set_page_config(page_title="📉 Technical Analysis", layout="wide")
 st.title("📉 Technical Analysis")
 
-symbol = st.sidebar.selectbox("NSE Symbol", SYMBOLS, index=SYMBOLS.index("RELIANCE.NS") if "RELIANCE.NS" in SYMBOLS else 0)
+#symbol = st.sidebar.selectbox("NSE Symbol", SYMBOLS, index=SYMBOLS.index("RELIANCE.NS") if "RELIANCE.NS" in SYMBOLS else 0)
+query = st.sidebar.text_input("🔍 Search symbol", "").upper()
+matches = [s for s in SYMBOLS if query in s]
+if not matches:
+    st.sidebar.info("Type to search NSE tickers…")
+    st.stop()
+
+symbol = st.sidebar.selectbox("Select", matches)
 
 interval_map = {"5 m":"5m","15 m":"15m","30 m":"30m","1 h":"60m","4 h":"60m","1 d":"1d"}
 interval_label = st.sidebar.selectbox("Interval", list(interval_map.keys()), 5)
