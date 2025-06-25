@@ -20,17 +20,24 @@ def load_industry_info() -> pd.DataFrame:
     return pd.read_sql("SELECT * FROM industry_info", ENGINE)
 
 def load_master() -> pd.DataFrame:
-    """Join company_info and industry_info on Symbol."""
+    """Join dimension and fact tables from SQLite DB."""
     sql = """
         SELECT
-            c.Symbol,
-            c."Company Name",
-            i."Big Sectors",
-            i.Industry
-        FROM company_info AS c
-        LEFT JOIN industry_info AS i ON c.Symbol = i.Symbol
+            d.Symbol,
+            d.CompanyName AS "Company Name",
+            d.Sector AS "Big Sectors",
+            d.Industry,
+            f.PERatio AS "PE Ratio",
+            f.EPS,
+            f.ROE,
+            f.ProfitMargin,
+            f.DebtToEquity,
+            f.MarketCap
+        FROM DimCompany AS d
+        LEFT JOIN FactFundamentals AS f ON d.Symbol = f.Symbol
     """
     return pd.read_sql(sql, ENGINE)
+
 
 
 
