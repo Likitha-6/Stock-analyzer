@@ -43,29 +43,35 @@ def _build_tfidf(desc_series: pd.Series):
     return vec, mat
 
 
-def top_peers(symbol: str, master_df: pd.DataFrame, k: int = 10) -> pd.DataFrame:
-    """
-    Compute top-k peers for *symbol* among ALL companies with valid descriptions.
+def top_peers(symbol: str, df: pd.DataFrame = None, k=10) -> pd.DataFrame:
+    if df is None:
+        df = load_master()
 
-    Returns a DataFrame with columns:
-        Symbol | Company Name | Similarity
-    """
-    corpus_df = _prepare_corpus(master_df)
+    # Clean descriptions
+    df = df.dropna(subset=["Symbol", "Description"])
+    df = df[df["Description"].str.len() > 30]  # filter very short descriptions
 
-    # Bail if target symbol is missing after filtering
-    if symbol not in corpus_df["Symbol"].values:
-        return pd.DataFrame(columns=["Symbol", "Company Name", "Similarity"])
+    if symbol not in df["Symbol"].values:
+        return pd.DataFrame()
 
-    _, matrix = _build_tfidf(corpus_df["Description"])
-
-    idx_target = corpus_df.index[corpus_df["Symbol"] == symbol][0]
-    sims = cosine_similarity(matrix[idx_target], matrix).flatten()
-
-    peers = (
-        corpus_df.assign(Similarity=sims)
-        .query("Symbol != @symbol")
-        .sort_values("Similarity", ascending=False)
-        .head(k)[["Symbol", "Company Name", "Similarity"]]
-        .reset_index(drop=True)
+    descriptions = df.set_index("Symbol")["Description"]
+    tfidf = TfidfVectorizer(
+        stop_words="english",
+        ngram_range=(1, 2),  # bigrams
+        min_df=2,
+        max_df=0.9
     )
-    return peers
+    tfidf_matrix = tfidf.fit_transform(descriptions)
+
+    # Compute similarity scores
+    index = descriptions.index.tolist().index(symbol)
+    sim_scores = cosine_similarity(tfidf_matrix[index], tfidf_matrix).flatten()
+
+    # Create similarity DataFrame
+    sim_df = pd.DataFrame({
+        "Symbol": descriptions.index,
+        "Score": sim_scores
+    }).sort_values(by="Score", ascending=False)
+
+    sim_df = sim_df[sim_df["Symbol"] != symbol].head(k)
+    return df.set_index("Symbol").loc[sim_df["Symbol"]].reset_index()
