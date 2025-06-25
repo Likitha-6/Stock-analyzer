@@ -6,14 +6,14 @@ import yfinance as yf
 from common.data import load_master, load_name_lookup
 from common.finance import human_market_cap
 
-st.set_page_config(
-    page_title="Sector Analysis",
-    page_icon="📂",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+import streamlit as st
+
+st.set_page_config(page_title="Sector Analysis", layout="wide")
 
 st.title("📂 Sector & Industry Analysis")
+
+st.write("If you're seeing this, your file is loading correctly.")
+
 
 # Helper functions
 def _to_float(x):
