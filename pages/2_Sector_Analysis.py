@@ -8,7 +8,7 @@ from common.finance import human_market_cap
 
 import streamlit as st
 
-t.set_page_config(
+st.set_page_config(
     page_title="📂 Sector Analysis",
     page_icon="📂",
     layout="wide",
