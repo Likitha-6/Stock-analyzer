@@ -129,4 +129,29 @@ for sym in sel_syms:
         "ROE": icon_hi(m["ROE"], avg_vals.get("ROE")),
         "PM": icon_hi(m["Profit Margin"], avg_vals.get("Profit Margin")),
     }
+    row["Interpretation"] = " | ".join([f"{k} {v}" for k, v in icons.items()])
+    rows.append(row)
+
+    if sum(v == "✅" for v in icons.values()) >= interp_cutoff:
+        qualified.append(row)
+
+st.markdown("---")
+st.subheader(header_lbl)
+st.dataframe(pd.DataFrame(rows).reset_index(drop=True), use_container_width=True)
+
+# ────────────────────────────────────────────────────────────
+# 5⃣  Qualified (green) companies → Fundamentals navigation
+# ────────────────────────────────────────────────────────────
+if qualified:
+    st.markdown("---")
+    st.subheader(f"🌟 Companies with ≥{interp_cutoff} Green Checks")
+    for r in qualified:
+        if st.button(f"Compare {r['Company']} ({r['Symbol']}) on Fundamentals"):
+            st.session_state.compare_symbol  = r["Symbol"]
+            st.session_state.qual_peers      = [row["Symbol"] for row in qualified if row["Symbol"] != r["Symbol"]]
+            st.session_state.from_sector_nav = True
+            st.switch_page("pages/1_Fundamentals.py")
+else:
+    st.info("No company meets the selected green criteria.")
+
 
