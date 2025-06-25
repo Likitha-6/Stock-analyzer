@@ -84,12 +84,12 @@ st.markdown(f"**Total companies in industry:** {len(scoped_df)}")
 if not avg_df.empty:
     avg_vals = avg_df.mean(numeric_only=True)
     cols = st.columns(6)
-    cols[0].metric("Avg PE", f"{avg_vals['PE Ratio']:.2f}")
-    cols[1].metric("Avg EPS", f"{avg_vals['EPS']:.2f}")
-    cols[2].metric("Avg ROE", f"{avg_vals['ROE']*100:.2f}%")
-    cols[3].metric("Avg P. Margin", f"{avg_vals['Profit Margin']:.2f}%")
-    cols[4].metric("Avg D/E", f"{avg_vals['Debt to Equity']:.2f}")
-    cols[5].metric("Avg MCap", fmt_cap(avg_vals["Market Cap"]))
+    cols[0].metric("Avg PE", f"{avg_vals.get('PE Ratio', float('nan')):.2f}")
+    cols[1].metric("Avg EPS", f"{avg_vals.get('EPS', float('nan')):.2f}")
+    cols[2].metric("Avg ROE", f"{avg_vals.get('ROE', float('nan')) * 100:.2f}%")
+    cols[3].metric("Avg P. Margin", f"{avg_vals.get('Profit Margin', float('nan')):.2f}%")
+    cols[4].metric("Avg D/E", f"{avg_vals.get('Debt to Equity', float('nan')):.2f}")
+    cols[5].metric("Avg MCap", fmt_cap(avg_vals.get("Market Cap", None)))
 else:
     st.info("No financial data available.")
 
