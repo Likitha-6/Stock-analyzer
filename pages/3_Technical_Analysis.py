@@ -50,14 +50,13 @@ with tabs[0]:
     from ta.trend import MACD
     
     # Clean Close prices
-    df['Close'] = pd.to_numeric(df['Close'], errors='coerce')
+    close_prices = pd.Series(pd.to_numeric(df['Close'].values, errors='coerce'), index=df.index)
+    df['Close'] = close_prices
     df.dropna(subset=['Close'], inplace=True)
+
     
     # Calculate indicators
-    rsi = RSIIndicator(close=df['Close']).rsi()
-    macd = MACD(close=df['Close'])
-
-
+    
     st.subheader("RSI and MACD")
     #rsi = ta.momentum.RSIIndicator(df['Close']).rsi()
     #macd = ta.trend.MACD(df['Close'])
