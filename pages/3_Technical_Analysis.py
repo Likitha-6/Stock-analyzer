@@ -46,9 +46,24 @@ with tabs[0]:
     fig.update_layout(xaxis_rangeslider_visible=False)
     st.plotly_chart(fig, use_container_width=True)
 
+    from ta.momentum import RSIIndicator
+    from ta.trend import MACD
+    
+    # Clean Close prices
+    df['Close'] = pd.to_numeric(df['Close'], errors='coerce')
+    df.dropna(subset=['Close'], inplace=True)
+    
+    # Calculate indicators
+    rsi = RSIIndicator(close=df['Close']).rsi()
+    macd = MACD(close=df['Close'])
+
+
     st.subheader("RSI and MACD")
-    rsi = ta.momentum.RSIIndicator(df['Close']).rsi()
-    macd = ta.trend.MACD(df['Close'])
+    #rsi = ta.momentum.RSIIndicator(df['Close']).rsi()
+    #macd = ta.trend.MACD(df['Close'])
+    rsi = RSIIndicator(close=df['Close']).rsi()
+    macd = MACD(close=df['Close'])
+
 
     st.line_chart(rsi.rename("RSI"))
     st.line_chart(macd.macd_diff().rename("MACD Histogram"))
