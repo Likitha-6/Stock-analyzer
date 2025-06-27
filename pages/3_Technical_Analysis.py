@@ -30,17 +30,21 @@ df = df.loc[close_series.index]
 df['Close'] = close_series  # replace with cleaned version
 
 # --- Compute Indicators ---
-df['MA20'] = df['Close'].rolling(window=20).mean()
-df['EMA50'] = df['Close'].ewm(span=50, adjust=False).mean()
 
-bb = BollingerBands(close=df['Close'], window=20, window_dev=2)
-df['bb_bbm'] = bb.bollinger_mavg()
-df['bb_bbh'] = bb.bollinger_hband()
-df['bb_bbl'] = bb.bollinger_lband()
 
+# --- Compute Indicators Safely ---
 rsi = RSIIndicator(close=close_series).rsi()
 macd = MACD(close=close_series)
 
+# Moving Averages
+df['MA20'] = close_series.rolling(window=20).mean()
+df['EMA50'] = close_series.ewm(span=50, adjust=False).mean()
+
+# Bollinger Bands (use aligned index)
+bb = BollingerBands(close=close_series, window=20, window_dev=2)
+df['bb_bbm'] = bb.bollinger_mavg()
+df['bb_bbh'] = bb.bollinger_hband()
+df['bb_bbl'] = bb.bollinger_lband()
 # --- Tabs Layout ---
 tabs = st.tabs(["📊 Chart & Indicators", "🧠 Insights", "💹 TradingView"])
 
