@@ -23,11 +23,16 @@ def load_data(ticker):
 df = load_data(ticker)
 
 # --- Clean 'Close' Column ---
-close_series = pd.Series(df['Close'].values.flatten(), index=df.index)
-close_series = pd.to_numeric(close_series, errors='coerce')
-close_series.dropna(inplace=True)
-df = df.loc[close_series.index]
-df['Close'] = close_series  # replace with cleaned version
+# Clean the entire DataFrame based on Close prices
+df['Close'] = pd.to_numeric(df['Close'], errors='coerce')
+df.dropna(subset=['Open', 'High', 'Low', 'Close'], inplace=True)
+
+# Ensure index is sorted and datetime
+df = df.sort_index()
+df.index = pd.to_datetime(df.index)
+
+# Use cleaned Close series
+close_series = df['Close']
 
 # --- Compute Indicators ---
 
