@@ -22,19 +22,30 @@ def load_data(ticker):
 df = load_data(ticker)
 
 # --- Validate & Clean Data ---
-if df is None or df.empty or 'Close' not in df.columns:
-    st.error("Failed to fetch valid stock data. Please check the ticker symbol.")
+if df is None or df.empty:
+    st.error("Failed to fetch data. Please check the ticker symbol.")
     st.stop()
 
-# Clean numeric columns
-for col in ['Open', 'High', 'Low', 'Close']:
-    df[col] = pd.to_numeric(df[col], errors='coerce')
+required_cols = ['Open', 'High', 'Low', 'Close']
+missing_cols = [col for col in required_cols if col not in df.columns]
+if missing_cols:
+    st.error(f"Missing columns in data: {missing_cols}")
+    st.stop()
 
-df.dropna(subset=['Open', 'High', 'Low', 'Close'], inplace=True)
+for col in required_cols:
+    st.write(f"Type of df['{col}']: ", type(df[col]))
+    st.write(f"Sample values in df['{col}']: ", df[col].head())
+    # Convert only if it's a Series or array-like
+    if hasattr(df[col], '__iter__'):
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    else:
+        st.error(f"Column {col} is not iterable and cannot be converted.")
+        st.stop()
+
+df.dropna(subset=required_cols, inplace=True)
 df = df.sort_index()
 df.index = pd.to_datetime(df.index)
 
-# Extract clean close series
 close_series = df['Close']
 
 # --- Compute Indicators ---
