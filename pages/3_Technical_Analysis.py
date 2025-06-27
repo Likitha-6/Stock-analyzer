@@ -17,39 +17,38 @@ ticker = st.text_input("Enter Stock Ticker (e.g., RELIANCE.NS):", "RELIANCE.NS")
 @st.cache_data
 def load_data(ticker):
     df = yf.download(ticker, period="6mo", interval="1d")
-    df.dropna(inplace=True)
     return df
 
 df = load_data(ticker)
 
-# --- Clean 'Close' Column ---
-# Clean the entire DataFrame based on Close prices
-df['Close'] = pd.to_numeric(df['Close'], errors='coerce')
-df.dropna(subset=['Open', 'High', 'Low', 'Close'], inplace=True)
+# --- Validate & Clean Data ---
+if df is None or df.empty or 'Close' not in df.columns:
+    st.error("Failed to fetch valid stock data. Please check the ticker symbol.")
+    st.stop()
 
-# Ensure index is sorted and datetime
+# Clean numeric columns
+for col in ['Open', 'High', 'Low', 'Close']:
+    df[col] = pd.to_numeric(df[col], errors='coerce')
+
+df.dropna(subset=['Open', 'High', 'Low', 'Close'], inplace=True)
 df = df.sort_index()
 df.index = pd.to_datetime(df.index)
 
-# Use cleaned Close series
+# Extract clean close series
 close_series = df['Close']
 
 # --- Compute Indicators ---
-
-
-# --- Compute Indicators Safely ---
-rsi = RSIIndicator(close=close_series).rsi()
-macd = MACD(close=close_series)
-
-# Moving Averages
 df['MA20'] = close_series.rolling(window=20).mean()
 df['EMA50'] = close_series.ewm(span=50, adjust=False).mean()
 
-# Bollinger Bands (use aligned index)
 bb = BollingerBands(close=close_series, window=20, window_dev=2)
 df['bb_bbm'] = bb.bollinger_mavg()
 df['bb_bbh'] = bb.bollinger_hband()
 df['bb_bbl'] = bb.bollinger_lband()
+
+rsi = RSIIndicator(close=close_series).rsi()
+macd = MACD(close=close_series)
+
 # --- Tabs Layout ---
 tabs = st.tabs(["📊 Chart & Indicators", "🧠 Insights", "💹 TradingView"])
 
@@ -108,7 +107,6 @@ with tabs[0]:
 with tabs[1]:
     st.subheader("📌 Indicator-Based Insights")
 
-    # RSI insight
     latest_rsi = rsi.iloc[-1]
     if latest_rsi > 70:
         rsi_msg = f"⚠️ RSI is {latest_rsi:.2f} — stock may be overbought."
@@ -118,7 +116,6 @@ with tabs[1]:
         rsi_msg = f"✅ RSI is {latest_rsi:.2f} — stock is in a neutral range."
     st.markdown(f"**RSI Insight:** {rsi_msg}")
 
-    # MACD insight
     recent_macd_cross = macd.macd_diff().diff().iloc[-1]
     if recent_macd_cross > 0:
         macd_msg = "🟢 MACD crossover detected — potential bullish momentum."
