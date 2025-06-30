@@ -62,6 +62,33 @@ else:
     st.stop()
 
 # ─────────────────────────────
+# Manual comparison with a second stock
+# ─────────────────────────────
+st.markdown("---")
+st.subheader("📘 Compare with a manually selected stock")
+
+query2 = st.text_input("Search second stock by symbol or name", key="second_query").strip()
+second_sym = None
+if query2:
+    mask2 = (
+        name_df["Symbol"].str.contains(query2, case=False, na=False) |
+        name_df["Company Name"].str.contains(query2, case=False, na=False)
+    )
+    matches2 = name_df[mask2]
+    if matches2.empty:
+        st.warning("No match found.")
+    else:
+        opts2 = matches2.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
+        chosen2 = st.selectbox("Select second company", opts2.tolist(), key="second_select")
+        second_sym = chosen2.split(" – ")[0]
+
+if second_sym and second_sym != chosen_sym:
+    st.markdown("### Side-by-Side Manual Comparison")
+    compare_stocks(chosen_sym, second_sym, master_df)
+elif second_sym == chosen_sym:
+    st.info("Please select a different stock for comparison.")
+
+# ─────────────────────────────
 # Peer comparison dropdown
 # (only if peers were handed off)
 # ─────────────────────────────
@@ -79,4 +106,3 @@ if default_peers:
         compare_stocks(chosen_sym, peer_sym, master_df)
     else:
         st.info("No peer list passed from Sector Analysis.")
-
