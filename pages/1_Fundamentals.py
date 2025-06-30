@@ -1,8 +1,8 @@
-# pages/1_Fundamentals.py
 import streamlit as st
 import pandas as pd
 
-from common.data    import load_master, load_name_lookup
+from common.sql import load_master
+from common.data import load_name_lookup
 from common.display import display_metrics
 
 # ─────────────────────────────
@@ -12,14 +12,19 @@ st.set_page_config(page_title="🔍 Fundamentals", page_icon="📈", layout="wid
 st.title("🔍 Fundamentals – Single-Stock Analysis")
 
 # ─────────────────────────────
-# Data
+# Load and merge data
 # ─────────────────────────────
 master_df = load_master()
 name_df   = load_name_lookup()
+
+# Ensure Description is included for peer comparison
+if "Description" not in master_df.columns:
+    master_df = pd.merge(master_df, name_df[["Symbol", "Description"]], on="Symbol", how="left")
+
 symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
 
 # ─────────────────────────────
-# Sector navigation logic
+# Sector navigation handoff
 # ─────────────────────────────
 default_sym = st.session_state.get("compare_symbol")
 
@@ -27,9 +32,8 @@ if default_sym and not st.session_state.get("already_loaded_from_sector"):
     st.success(f"Auto-loaded **{default_sym}** from Sector Analysis")
     chosen_sym = default_sym
     st.session_state["already_loaded_from_sector"] = True
-    st.session_state["from_sector_nav"] = True
 else:
-    # Regular manual search UI
+    # Regular search
     query = st.text_input("Search by symbol or company name").strip()
     chosen_sym = None
     if query:
@@ -49,7 +53,7 @@ if not chosen_sym:
     st.stop()
 
 # ─────────────────────────────
-# Display core metrics + peer logic
+# Display fundamentals + similar peers
 # ─────────────────────────────
 if chosen_sym in master_df["Symbol"].values:
     display_metrics(chosen_sym, master_df, name_df)
