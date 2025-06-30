@@ -37,6 +37,11 @@ compare_mode = st.checkbox("🔁 Compare two stocks manually")
 # ─────────────────────────────
 chosen_sym = None
 query = st.text_input("Search by symbol or company name").strip()
+if compare_mode:
+    st.subheader("📘 Compare with a second stock")
+
+    second_sym = None
+    query2 = st.text_input("Search second stock by symbol or name", key="second_query").strip()
 
 if query:
     mask = (
@@ -73,10 +78,10 @@ else:
 # ─────────────────────────────
 if compare_mode:
     st.markdown("---")
-    st.subheader("📘 Compare with a second stock")
+    #st.subheader("📘 Compare with a second stock")
 
-    second_sym = None
-    query2 = st.text_input("Search second stock by symbol or name", key="second_query").strip()
+    #second_sym = None
+    #query2 = st.text_input("Search second stock by symbol or name", key="second_query").strip()
 
     if query2:
         mask2 = (
