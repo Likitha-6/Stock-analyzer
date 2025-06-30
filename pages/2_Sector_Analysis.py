@@ -59,13 +59,16 @@ def clean_profit_margin(val):
 scoped_df["ProfitMarginCleaned"] = scoped_df[cols_to_use["Profit Margin"]].apply(clean_profit_margin)
 
 # Average values
-# Replace inf/-inf with NaN to clean data
-scoped_df[existing_cols] = scoped_df[existing_cols].replace([np.inf, -np.inf], np.nan)
-scoped_df = scoped_df[scoped_df["PE Ratio"] < 200]  # Optional: remove extreme PE
+# Make a copy for median calculation only
+filtered_df = scoped_df[scoped_df["PE Ratio"] < 200]
 
-# Use median instead of mean
-avg_vals = scoped_df[existing_cols].median()
-profit_margin_avg = scoped_df["ProfitMarginCleaned"].median()
+# Replace infs just in this filtered copy
+filtered_df[existing_cols] = filtered_df[existing_cols].replace([np.inf, -np.inf], np.nan)
+
+# Median from filtered copy
+avg_vals = filtered_df[existing_cols].median()
+profit_margin_avg = filtered_df["ProfitMarginCleaned"].median()
+
 
 
 def fmt_cap(val):
