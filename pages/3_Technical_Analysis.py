@@ -6,22 +6,22 @@ from plotly.subplots import make_subplots
 
 from common.data import load_name_lookup
 
-# ─────────────────────────────
+# ────────────────────────────────────────
 # Page config
-# ─────────────────────────────
-st.set_page_config(page_title="📉 Technical Analysis", page_icon="📊", layout="wide")
+# ────────────────────────────────────────
+st.set_page_config(page_title="📉 Technical Analysis", page_icon="📈", layout="wide")
 st.title("📉 Technical Analysis – Candlestick Chart")
 
-# ─────────────────────────────
+# ────────────────────────────────────────
 # Load stock names
-# ─────────────────────────────
+# ────────────────────────────────────────
 name_df = load_name_lookup()
 symbols = name_df["Symbol"].dropna().unique()
 symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
 
-# ─────────────────────────────
+# ────────────────────────────────────────
 # Symbol search
-# ─────────────────────────────
+# ────────────────────────────────────────
 query = st.text_input("Search by symbol or company name").strip()
 chosen_sym = None
 
@@ -41,11 +41,11 @@ if query:
 if not chosen_sym:
     st.stop()
 
-# ─────────────────────────────
+# ────────────────────────────────────────
 # Load and plot data
-# ─────────────────────────────
+# ────────────────────────────────────────
 st.markdown("---")
-st.subheader(f"🕯️ Candlestick Chart – {chosen_sym}")
+st.subheader(f"🔧 Candlestick Chart – {chosen_sym}")
 
 symbol = chosen_sym.strip().upper()
 yf_symbol = f"{symbol}.NS"
@@ -58,11 +58,14 @@ try:
         st.stop()
 
     df.reset_index(inplace=True)
+    df['Date'] = pd.to_datetime(df['Date'])
 
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                        vertical_spacing=0.02,
-                        row_heights=[0.7, 0.3],
-                        subplot_titles=("Price Candlesticks", "Volume"))
+    fig = make_subplots(
+        rows=2, cols=1, shared_xaxes=True,
+        vertical_spacing=0.03,
+        row_heights=[0.7, 0.3],
+        subplot_titles=("Price Candlesticks", "Volume")
+    )
 
     fig.add_trace(go.Candlestick(
         x=df['Date'],
@@ -73,25 +76,25 @@ try:
         name='Candles',
         increasing_line_color='green',
         decreasing_line_color='red',
-        showlegend=False
+        line_width=1
     ), row=1, col=1)
 
     fig.add_trace(go.Bar(
         x=df['Date'],
         y=df['Volume'],
-        marker_color='lightblue',
-        name='Volume',
-        showlegend=False
+        marker_color='rgba(0, 100, 255, 0.4)',
+        name='Volume'
     ), row=2, col=1)
 
     fig.update_layout(
         height=700,
         xaxis_rangeslider_visible=False,
-        xaxis=dict(showline=False, showgrid=True),
-        yaxis=dict(showgrid=True),
-        plot_bgcolor='white',
+        plot_bgcolor='#f5f5f5',
+        paper_bgcolor='#f5f5f5',
         hovermode='x unified',
-        margin=dict(l=20, r=20, t=30, b=30)
+        xaxis=dict(showgrid=True, gridcolor='lightgray'),
+        yaxis=dict(showgrid=True, gridcolor='lightgray'),
+        margin=dict(l=20, r=20, t=40, b=30)
     )
 
     st.plotly_chart(fig, use_container_width=True)
