@@ -61,12 +61,12 @@ scoped_df["ProfitMarginCleaned"] = scoped_df[cols_to_use["Profit Margin"]].apply
 # Average values
 # Replace inf/-inf with NaN to clean data
 scoped_df[existing_cols] = scoped_df[existing_cols].replace([np.inf, -np.inf], np.nan)
+scoped_df = scoped_df[scoped_df["PE Ratio"] < 200]  # Optional: remove extreme PE
 
-# Optional: filter out extremely high PE values that skew average
-scoped_df = scoped_df[scoped_df["PE Ratio"] < 200]
+# Use median instead of mean
+avg_vals = scoped_df[existing_cols].median()
+profit_margin_avg = scoped_df["ProfitMarginCleaned"].median()
 
-avg_vals = scoped_df[existing_cols].mean()
-profit_margin_avg = scoped_df["ProfitMarginCleaned"].mean()
 
 def fmt_cap(val):
     if val is None or pd.isna(val): return "N/A"
