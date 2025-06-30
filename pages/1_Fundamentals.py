@@ -1,5 +1,3 @@
-# pages/1_Fundamentals.py
-
 import streamlit as st
 import pandas as pd
 
@@ -17,39 +15,58 @@ st.title("🔍 Fundamentals – Single-Stock Analysis")
 # Load data
 # ─────────────────────────────
 master_df = load_master()
-name_df   = load_name_lookup()
+name_df = load_name_lookup()
 symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
 
 # ─────────────────────────────
 # Session hand-off from Sector Analysis
-# (do NOT pop – keep for full rerun)
+# (Auto-load once only)
 # ─────────────────────────────
-default_sym   = st.session_state.get("compare_symbol")
+default_sym = st.session_state.pop("compare_symbol", None)
 default_peers = st.session_state.get("qual_peers", [])
 
 # ─────────────────────────────
-# Symbol selection UI
+# User Option: Compare Two Stocks?
 # ─────────────────────────────
-chosen_sym = default_sym  # fallback if no search happens
+compare_mode = st.checkbox("🔄 Compare Two Stocks")
 
+# ─────────────────────────────
+# Stock Selection UI
+# ─────────────────────────────
+def stock_search(label, key_prefix=""):
+    query = st.text_input(f"{label} – Search by symbol or company name", key=f"{key_prefix}_query").strip()
+    if query:
+        mask = (
+            name_df["Symbol"].str.contains(query, case=False, na=False) |
+            name_df["Company Name"].str.contains(query, case=False, na=False)
+        )
+        matches = name_df[mask]
+        if matches.empty:
+            st.warning("No match found.")
+            return None
+        else:
+            opts = matches.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
+            selected = st.selectbox(f"{label} – Select company", opts.tolist(), key=f"{key_prefix}_select")
+            return selected.split(" – ")[0]
+    return None
+
+if compare_mode:
+    sym1 = stock_search("Stock 1", "s1")
+    sym2 = stock_search("Stock 2", "s2")
+
+    if sym1 and sym2:
+        st.markdown("### 📊 Side-by-Side Comparison")
+        compare_stocks(sym1, sym2, master_df)
+    st.stop()  # skip everything else when in compare mode
+
+# Fallback: auto-load or manual single stock selection
+chosen_sym = default_sym
 if default_sym:
     st.success(f"Auto-loaded **{default_sym}** from Sector Analysis")
 
-# 🔍 Always show the search bar
-query = st.text_input("Search by symbol or company name").strip()
-
-if query:
-    mask = (
-        name_df["Symbol"].str.contains(query, case=False, na=False) |
-        name_df["Company Name"].str.contains(query, case=False, na=False)
-    )
-    matches = name_df[mask]
-    if matches.empty:
-        st.warning("No match found.")
-    else:
-        opts = matches.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
-        chosen = st.selectbox("Select company", opts.tolist())
-        chosen_sym = chosen.split(" – ")[0]
+manual_sym = stock_search("🔍 Choose a Stock")
+if manual_sym:
+    chosen_sym = manual_sym
 
 if not chosen_sym:
     st.stop()
@@ -76,7 +93,6 @@ if default_peers:
         peer_choice = st.selectbox("Select peer", peer_labels, key="peer_choice")
         peer_sym = peer_pool[peer_labels.index(peer_choice)]
 
-        # Render side-by-side comparison
         st.markdown("### Side-by-Side Comparison")
         compare_stocks(chosen_sym, peer_sym, master_df)
     else:
