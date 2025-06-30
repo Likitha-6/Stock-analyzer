@@ -49,23 +49,25 @@ symbol = chosen_sym.strip().upper()
 yf_symbol = f"{symbol}.NS"
 
 try:
-    df = yf.download(yf_symbol, period="6mo", interval="1d")
+    df = yf.download(yf_symbol, period="6mo", interval="1d", auto_adjust=False)
 
     if df.empty or df.isna().all().all():
         st.warning("No price data available or symbol not valid on Yahoo Finance.")
         st.stop()
 
     # Prepare data for lightweight chart
-    candles = [
-        {
-            "time": row.name.strftime("%Y-%m-%d"),
-            "open": float(row["Open"]),
-            "high": float(row["High"]),
-            "low": float(row["Low"]),
-            "close": float(row["Close"])
-        }
-        for _, row in df.iterrows()
-    ]
+    candles = []
+    for _, row in df.iterrows():
+        try:
+            candles.append({
+                "time": row.name.strftime("%Y-%m-%d"),
+                "open": float(row["Open"].item()),
+                "high": float(row["High"].item()),
+                "low": float(row["Low"].item()),
+                "close": float(row["Close"].item())
+            })
+        except Exception:
+            continue
 
     # Render chart with correct syntax
     chart = Chart()
@@ -74,4 +76,5 @@ try:
 
 except Exception as e:
     st.error(f"Failed to fetch or display data: {e}")
+
 
