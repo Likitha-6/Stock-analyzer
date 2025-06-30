@@ -7,20 +7,23 @@ from common.data import load_name_lookup    # (if you still need the CSV helper)
 
 from common.display import display_metrics, compare_stocks
 if "compare_symbol" in st.session_state:
-    if "last_symbol" not in st.session_state:
-        st.session_state.last_symbol = None
+    current_symbol = st.session_state.compare_symbol
+    last_symbol = st.session_state.get("last_symbol", None)
 
-    if st.session_state.compare_symbol != st.session_state.last_symbol:
-        # symbol has changed — reset peers
-        st.session_state.last_symbol = st.session_state.compare_symbol
-        st.session_state.qual_peers = []
-        st.experimental_rerun()
+    if current_symbol != last_symbol:
+        st.session_state.last_symbol = current_symbol
+        # Clear peer list (prevents showing stale comparisons)
+        if "qual_peers" in st.session_state:
+            del st.session_state["qual_peers"]
+        # Instead of calling rerun here, set a marker flag
+        st.session_state.needs_rerun = True
 # ─────────────────────────────
 # Page config
 # ─────────────────────────────
 st.set_page_config(page_title="🔍 Fundamentals", page_icon="📈", layout="wide")
 st.title("🔍 Fundamentals – Single-Stock Analysis")
-if st.session_state.pop("_needs_rerun", False):
+if st.session_state.get("needs_rerun"):
+    del st.session_state["needs_rerun"]
     st.experimental_rerun()
 
 
