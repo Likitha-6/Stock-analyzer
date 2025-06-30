@@ -55,19 +55,25 @@ try:
         st.warning("No price data available or symbol not valid on Yahoo Finance.")
         st.stop()
 
+    df = df.dropna(subset=["Open", "High", "Low", "Close"]).copy()
+
     # Prepare data for lightweight chart
     candles = []
-    for _, row in df.iterrows():
+    for idx, row in df.iterrows():
         try:
             candles.append({
-                "time": row.name.strftime("%Y-%m-%d"),
-                "open": float(row["Open"].item()),
-                "high": float(row["High"].item()),
-                "low": float(row["Low"].item()),
-                "close": float(row["Close"].item())
+                "time": idx.strftime("%Y-%m-%d"),
+                "open": float(row["Open"]),
+                "high": float(row["High"]),
+                "low": float(row["Low"]),
+                "close": float(row["Close"])
             })
         except Exception:
             continue
+
+    if not candles:
+        st.warning("No valid candlestick data available to display.")
+        st.stop()
 
     # Render chart with correct syntax
     chart = Chart()
@@ -76,5 +82,6 @@ try:
 
 except Exception as e:
     st.error(f"Failed to fetch or display data: {e}")
+
 
 
