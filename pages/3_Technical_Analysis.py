@@ -51,11 +51,16 @@ yf_symbol = f"{symbol}.NS"
 try:
     df = yf.download(yf_symbol, period="6mo", interval="1d", auto_adjust=False)
 
-    if df.empty or df.isna().all().all():
+    required_cols = ["Open", "High", "Low", "Close"]
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    if missing_cols:
+        raise ValueError(f"Missing expected columns from data: {missing_cols}")
+
+    if df.empty or df[required_cols].isna().all().all():
         st.warning("No price data available or symbol not valid on Yahoo Finance.")
         st.stop()
 
-    df = df.dropna(subset=["Open", "High", "Low", "Close"]).copy()
+    df = df.dropna(subset=required_cols).copy()
 
     # Prepare data for lightweight chart
     candles = []
@@ -82,6 +87,3 @@ try:
 
 except Exception as e:
     st.error(f"Failed to fetch or display data: {e}")
-
-
-
