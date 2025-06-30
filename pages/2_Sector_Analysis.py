@@ -14,6 +14,7 @@ st.set_page_config(
 )
 
 st.title("📂 Sector & Industry Analysis")
+
 # Load data
 master_df = load_master()
 name_df = load_name_lookup()
@@ -34,104 +35,111 @@ interp_cutoff = {"All ✅": 5, "≥4 ✅": 4, "≥3 ✅": 3, "≥2 ✅": 2}[inte
 # Scope the data
 # ─────────────────────────────
 scoped_df = df[(df["Big Sectors"] == sec_sel) & (df["Industry"] == ind_sel)].copy()
-st.write("Available columns in scoped_df:", scoped_df.columns.tolist())
 
 st.subheader(f"📊 Summary – {ind_sel}")
 st.markdown(f"**Total companies in industry:** {len(scoped_df)}")
 
-if not scoped_df.empty:
-    cols_to_use = ["PE", "EPS", "ROE", "Profit Margin", "Debt to Equity", "Market Cap"]
-    scoped_df[cols_to_use] = scoped_df[cols_to_use].apply(pd.to_numeric, errors="coerce")
-    scoped_df = scoped_df.replace([np.inf, -np.inf], np.nan)
-    avg_vals = scoped_df[cols_to_use].mean()
+# Correct column name mapping
+cols_to_use = {
+    "PE": "PE Ratio",
+    "EPS": "EPS",
+    "ROE": "ROE",
+    "Profit Margin": "ProfitMargin",
+    "Debt to Equity": "DebtToEquity",
+    "Market Cap": "MarketCap"
+}
 
-    def fmt_cap(val):
-        if val is None or pd.isna(val): return "N/A"
-        return f"{val/1e9:.2f}B" if val >= 1e9 else f"{val/1e6:.2f}M" if val >= 1e6 else f"{val:.0f}"
+existing_cols = [v for v in cols_to_use.values() if v in scoped_df.columns]
+scoped_df[existing_cols] = scoped_df[existing_cols].apply(pd.to_numeric, errors="coerce")
+avg_vals = scoped_df[existing_cols].mean()
 
-    def icon_hi(v, a):
-        if pd.isna(v) or pd.isna(a): return "❓"
-        return "✅" if v >= a else "🟡" if v >= a * 0.8 else "🔴"
+def fmt_cap(val):
+    if val is None or pd.isna(val): return "N/A"
+    return f"{val/1e9:.2f}B" if val >= 1e9 else f"{val/1e6:.2f}M" if val >= 1e6 else f"{val:.0f}"
 
-    def icon_lo(v, a):
-        if pd.isna(v) or pd.isna(a): return "❓"
-        return "✅" if v <= a else "🟡" if v <= a * 1.1 else "🔴"
+def icon_hi(v, a):
+    if pd.isna(v) or pd.isna(a): return "❓"
+    return "✅" if v >= a else "🟡" if v >= a * 0.8 else "🔴"
 
-    def icon_d2e(v, a):
-        if pd.isna(v) or pd.isna(a): return "❓"
-        return "✅" if v <= a else "🟡" if v <= 1.5 else "🔴"
+def icon_lo(v, a):
+    if pd.isna(v) or pd.isna(a): return "❓"
+    return "✅" if v <= a else "🟡" if v <= a * 1.1 else "🔴"
 
-    cols = st.columns(6)
-    cols[0].metric("Avg PE", f"{avg_vals.get('PE', np.nan):.2f}")
-    cols[1].metric("Avg EPS", f"{avg_vals.get('EPS', np.nan):.2f}")
-    cols[2].metric("Avg ROE", f"{avg_vals.get('ROE', np.nan) * 100:.2f}%")
-    cols[3].metric("Avg P. Margin", f"{avg_vals.get('Profit Margin', np.nan):.2f}%")
-    cols[4].metric("Avg D/E", f"{avg_vals.get('Debt to Equity', np.nan):.2f}")
-    cols[5].metric("Avg MCap", fmt_cap(avg_vals.get("Market Cap")))
+def icon_d2e(v, a):
+    if pd.isna(v) or pd.isna(a): return "❓"
+    return "✅" if v <= a else "🟡" if v <= 1.5 else "🔴"
 
-    # ─────────────────────────────
-    # Rank and interpret companies
-    # ─────────────────────────────
-    sort_key = {"Market Cap": "Market Cap", "EPS": "EPS", "ROE": "ROE"}[rank_by]
-    scoped_df = scoped_df.sort_values(by=sort_key, ascending=False)
-    sel_df = scoped_df if show_all else scoped_df.head(10)
+# Industry-level metrics
+cols = st.columns(6)
+cols[0].metric("Avg PE", f"{avg_vals.get(cols_to_use['PE'], np.nan):.2f}")
+cols[1].metric("Avg EPS", f"{avg_vals.get(cols_to_use['EPS'], np.nan):.2f}")
+cols[2].metric("Avg ROE", f"{avg_vals.get(cols_to_use['ROE'], np.nan) * 100:.2f}%")
+cols[3].metric("Avg P. Margin", f"{avg_vals.get(cols_to_use['Profit Margin'], np.nan):.2f}%")
+cols[4].metric("Avg D/E", f"{avg_vals.get(cols_to_use['Debt to Equity'], np.nan):.2f}")
+cols[5].metric("Avg MCap", fmt_cap(avg_vals.get(cols_to_use["Market Cap"])))
 
-    rows, qualified = [], []
-    name_lookup = name_df.set_index("Symbol")["Company Name"].to_dict()
+# ─────────────────────────────
+# Rank and interpret companies
+# ─────────────────────────────
+sort_map = {
+    "Market Cap": cols_to_use["Market Cap"],
+    "EPS": cols_to_use["EPS"],
+    "ROE": cols_to_use["ROE"]
+}
+sort_key = sort_map[rank_by]
+scoped_df = scoped_df.sort_values(by=sort_key, ascending=False)
+sel_df = scoped_df if show_all else scoped_df.head(10)
 
-    for _, row in sel_df.iterrows():
-        sym = row["Symbol"]
-        r = {
-            "Symbol": sym,
-            "Company": name_lookup.get(sym, ""),
-            "PE": row["PE"],
-            "EPS": row["EPS"],
-            "ROE %": None if pd.isna(row["ROE"]) else row["ROE"] * 100,
-            "P. Margin %": row["Profit Margin"],
-            "D/E": row["Debt to Equity"],
-            "MCap": fmt_cap(row["Market Cap"]),
-        }
-        icons = {
-            "PE": icon_lo(row["PE"], avg_vals.get("PE")),
-            "EPS": icon_hi(row["EPS"], avg_vals.get("EPS")),
-            "ROE": icon_hi(row["ROE"], avg_vals.get("ROE")),
-            "PM": icon_hi(row["Profit Margin"], avg_vals.get("Profit Margin")),
-            "D/E": icon_d2e(row["Debt to Equity"], avg_vals.get("Debt to Equity")),
-        }
-        r["Interpretation"] = " | ".join([f"{k} {v}" for k, v in icons.items()])
-        rows.append(r)
+rows, qualified = [], []
+name_lookup = name_df.set_index("Symbol")["Company Name"].to_dict()
 
-        if sum(v == "✅" for v in icons.values()) >= interp_cutoff:
-            qualified.append(r)
+for _, row in sel_df.iterrows():
+    sym = row["Symbol"]
+    r = {
+        "Symbol": sym,
+        "Company": name_lookup.get(sym, ""),
+        "PE": row[cols_to_use["PE"]],
+        "EPS": row[cols_to_use["EPS"]],
+        "ROE %": None if pd.isna(row[cols_to_use["ROE"]]) else row[cols_to_use["ROE"]] * 100,
+        "P. Margin %": row[cols_to_use["Profit Margin"]],
+        "D/E": row[cols_to_use["Debt to Equity"]],
+        "MCap": fmt_cap(row[cols_to_use["Market Cap"]]),
+    }
+    icons = {
+        "PE": icon_lo(row[cols_to_use["PE"]], avg_vals.get(cols_to_use["PE"])),
+        "EPS": icon_hi(row[cols_to_use["EPS"]], avg_vals.get(cols_to_use["EPS"])),
+        "ROE": icon_hi(row[cols_to_use["ROE"]], avg_vals.get(cols_to_use["ROE"])),
+        "PM": icon_hi(row[cols_to_use["Profit Margin"]], avg_vals.get(cols_to_use["Profit Margin"])),
+        "D/E": icon_d2e(row[cols_to_use["Debt to Equity"]], avg_vals.get(cols_to_use["Debt to Equity"])),
+    }
+    r["Interpretation"] = " | ".join([f"{k} {v}" for k, v in icons.items()])
+    rows.append(r)
 
+    if sum(v == "✅" for v in icons.values()) >= interp_cutoff:
+        qualified.append(r)
+
+st.markdown("---")
+header_lbl = "📋 All Companies" if show_all else f"🔢 Top-10 – {rank_by}"
+st.subheader(header_lbl)
+st.dataframe(pd.DataFrame(rows), use_container_width=True)
+
+# ─────────────────────────────
+# Qualified companies navigation
+# ─────────────────────────────
+if qualified:
+    qual_df = pd.DataFrame(qualified).reset_index(drop=True)
     st.markdown("---")
-    header_lbl = "📋 All Companies" if show_all else f"🔢 Top-10 – {rank_by}"
-    st.subheader(header_lbl)
-    st.dataframe(pd.DataFrame(rows), use_container_width=True)
+    st.subheader(f"🌟 Companies with ≥{interp_cutoff} Green Checks")
+    st.dataframe(qual_df, use_container_width=True)
 
-    # ─────────────────────────────
-    # Qualified companies (green)
-    # ─────────────────────────────
-    if qualified:
-        qual_df = pd.DataFrame(qualified).reset_index(drop=True)
-        st.markdown("---")
-        st.subheader(f"🌟 Companies with ≥{interp_cutoff} Green Checks")
-        st.dataframe(qual_df, use_container_width=True)
+    csv = qual_df.to_csv(index=False).encode()
+    st.download_button("⬇️ Download list as CSV", csv, f"green_stocks_{ind_sel}.csv")
 
-        csv = qual_df.to_csv(index=False).encode()
-        st.download_button("⬇️ Download list as CSV", csv, f"green_stocks_{ind_sel}.csv")
-
-        for _, r in qual_df.iterrows():
-            if st.button(f"View Fundamentals →  {r['Company']} ({r['Symbol']})", key=f"q_{r['Symbol']}"):
-                st.session_state.compare_symbol = r["Symbol"]
-                st.session_state.qual_peers = qual_df["Symbol"].drop(r.name).tolist()
-                st.session_state.from_sector_nav = True
-                st.switch_page("pages/1_Fundamentals.py")
-    else:
-        st.info("No company meets the selected green criteria.")
-
+    for _, r in qual_df.iterrows():
+        if st.button(f"View Fundamentals →  {r['Company']} ({r['Symbol']})", key=f"q_{r['Symbol']}"):
+            st.session_state.compare_symbol = r["Symbol"]
+            st.session_state.qual_peers = qual_df["Symbol"].drop(r.name).tolist()
+            st.session_state.from_sector_nav = True
+            st.switch_page("pages/1_Fundamentals.py")
 else:
-    st.warning("No data available for selected industry.")
-
-
-
+    st.info("No company meets the selected green criteria.")
