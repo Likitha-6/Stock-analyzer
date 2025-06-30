@@ -3,12 +3,12 @@
 import streamlit as st
 import pandas as pd
 
-from common.sql import load_master          # ← pulls from SQLite
+from common.sql import load_master          # ← now pulls from SQLite
 from common.data import load_name_lookup
 from common.display import display_metrics, compare_stocks
 
 # ─────────────────────────────
-# Rerun logic to refresh on symbol change
+# Safe refresh if new stock is selected
 # ─────────────────────────────
 if "compare_symbol" in st.session_state:
     current_symbol = st.session_state.compare_symbol
@@ -16,11 +16,13 @@ if "compare_symbol" in st.session_state:
 
     if current_symbol != last_symbol:
         st.session_state.last_symbol = current_symbol
+        # Clear old peers and sector navigation flags
         if "qual_peers" in st.session_state:
             del st.session_state["qual_peers"]
         if "from_sector_nav" in st.session_state:
             del st.session_state["from_sector_nav"]
-        st.session_state.needs_rerun = True
+        # Set flag to rerun after safe render
+        st.session_state._defer_rerun = True
 
 # ─────────────────────────────
 # Page config
@@ -28,8 +30,8 @@ if "compare_symbol" in st.session_state:
 st.set_page_config(page_title="🔍 Fundamentals", page_icon="📈", layout="wide")
 st.title("🔍 Fundamentals – Single-Stock Analysis")
 
-# Trigger rerun after safe initialization
-if st.session_state.pop("needs_rerun", False):
+# ✅ Safe rerun after render
+if st.session_state.pop("_defer_rerun", False):
     st.experimental_rerun()
 
 # ─────────────────────────────
