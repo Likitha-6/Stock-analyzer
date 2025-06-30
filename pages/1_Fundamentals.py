@@ -1,3 +1,5 @@
+# pages/1_Fundamentals.py
+
 import streamlit as st
 import pandas as pd
 
@@ -12,7 +14,7 @@ st.set_page_config(page_title="🔍 Fundamentals", page_icon="📈", layout="wid
 st.title("🔍 Fundamentals – Single-Stock Analysis")
 
 # ─────────────────────────────
-# Data
+# Load data
 # ─────────────────────────────
 master_df = load_master()
 name_df   = load_name_lookup()
@@ -28,24 +30,26 @@ default_peers = st.session_state.get("qual_peers", [])
 # ─────────────────────────────
 # Symbol selection UI
 # ─────────────────────────────
+chosen_sym = default_sym  # fallback if no search happens
+
 if default_sym:
     st.success(f"Auto-loaded **{default_sym}** from Sector Analysis")
-    chosen_sym = default_sym
-else:
-    query = st.text_input("Search by symbol or company name").strip()
-    chosen_sym = None
-    if query:
-        mask = (
-            name_df["Symbol"].str.contains(query, case=False, na=False) |
-            name_df["Company Name"].str.contains(query, case=False, na=False)
-        )
-        matches = name_df[mask]
-        if matches.empty:
-            st.warning("No match found.")
-        else:
-            opts = matches.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
-            chosen = st.selectbox("Select company", opts.tolist())
-            chosen_sym = chosen.split(" – ")[0]
+
+# 🔍 Always show the search bar
+query = st.text_input("Search by symbol or company name").strip()
+
+if query:
+    mask = (
+        name_df["Symbol"].str.contains(query, case=False, na=False) |
+        name_df["Company Name"].str.contains(query, case=False, na=False)
+    )
+    matches = name_df[mask]
+    if matches.empty:
+        st.warning("No match found.")
+    else:
+        opts = matches.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
+        chosen = st.selectbox("Select company", opts.tolist())
+        chosen_sym = chosen.split(" – ")[0]
 
 if not chosen_sym:
     st.stop()
