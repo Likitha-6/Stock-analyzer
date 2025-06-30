@@ -59,18 +59,19 @@ try:
     candles = [
         {
             "time": row.name.strftime("%Y-%m-%d"),
-            "open": row["Open"],
-            "high": row["High"],
-            "low": row["Low"],
-            "close": row["Close"]
+            "open": float(row["Open"]),
+            "high": float(row["High"]),
+            "low": float(row["Low"]),
+            "close": float(row["Close"])
         }
         for _, row in df.iterrows()
     ]
 
-    # Render chart
+    # Render chart with correct syntax
     chart = Chart()
-    chart.set(candlestick_data=[{"data": candles}])
+    chart.set(candlestick=candles)
     chart.render()
 
 except Exception as e:
     st.error(f"Failed to fetch or display data: {e}")
+s
