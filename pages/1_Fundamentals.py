@@ -3,7 +3,7 @@
 import streamlit as st
 import pandas as pd
 
-from common.sql import load_master          # ← now pulls from SQLite
+from common.sql import load_master          # ← pulls from SQLite
 from common.data import load_name_lookup
 from common.display import display_metrics, compare_stocks
 
@@ -11,18 +11,17 @@ from common.display import display_metrics, compare_stocks
 # Safe refresh if new stock is selected
 # ─────────────────────────────
 if "compare_symbol" in st.session_state:
-    current_symbol = st.session_state.compare_symbol
+    new_symbol = st.session_state.compare_symbol
     last_symbol = st.session_state.get("last_symbol", None)
 
-    if current_symbol != last_symbol:
-        st.session_state.last_symbol = current_symbol
-        # Clear old peers and sector navigation flags
-        if "qual_peers" in st.session_state:
-            del st.session_state["qual_peers"]
-        if "from_sector_nav" in st.session_state:
-            del st.session_state["from_sector_nav"]
-        # Set flag to rerun after safe render
-        st.session_state._defer_rerun = True
+    if new_symbol != last_symbol:
+        # Store new symbol
+        st.session_state.last_symbol = new_symbol
+
+        # Clear stale peer state and set flag to rerun
+        st.session_state.pop("qual_peers", None)
+        st.session_state.pop("from_sector_nav", None)
+        st.session_state["trigger_rerun"] = True
 
 # ─────────────────────────────
 # Page config
@@ -30,8 +29,8 @@ if "compare_symbol" in st.session_state:
 st.set_page_config(page_title="🔍 Fundamentals", page_icon="📈", layout="wide")
 st.title("🔍 Fundamentals – Single-Stock Analysis")
 
-# ✅ Safe rerun after render
-if st.session_state.pop("_defer_rerun", False):
+# ✅ Safe rerun after layout initialized
+if st.session_state.pop("trigger_rerun", False):
     st.experimental_rerun()
 
 # ─────────────────────────────
@@ -97,8 +96,6 @@ if st.session_state.get("from_sector_nav"):
             # Render side-by-side comparison
             st.markdown("### Side-by-Side Comparison")
             compare_stocks(chosen_sym, peer_sym, master_df)
-        else:
-            st.info("No peer list passed from Sector Analysis.")
+    # Always clear the flag after use
+    st.session_state.pop("from_sector_nav", None)
 
-    # Clear after use
-    del st.session_state["from_sector_nav"]
