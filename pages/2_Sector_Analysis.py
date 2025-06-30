@@ -14,8 +14,6 @@ st.set_page_config(
 )
 
 st.title("📂 Sector & Industry Analysis")
-st.write("Available columns in scoped_df:", scoped_df.columns.tolist())
-
 # Load data
 master_df = load_master()
 name_df = load_name_lookup()
@@ -36,6 +34,7 @@ interp_cutoff = {"All ✅": 5, "≥4 ✅": 4, "≥3 ✅": 3, "≥2 ✅": 2}[inte
 # Scope the data
 # ─────────────────────────────
 scoped_df = df[(df["Big Sectors"] == sec_sel) & (df["Industry"] == ind_sel)].copy()
+st.write("Available columns in scoped_df:", scoped_df.columns.tolist())
 
 st.subheader(f"📊 Summary – {ind_sel}")
 st.markdown(f"**Total companies in industry:** {len(scoped_df)}")
