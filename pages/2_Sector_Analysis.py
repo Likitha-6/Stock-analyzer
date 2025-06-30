@@ -74,7 +74,7 @@ cols = st.columns(6)
 cols[0].metric("Avg PE", f"{avg_vals.get(cols_to_use['PE'], np.nan):.2f}")
 cols[1].metric("Avg EPS", f"{avg_vals.get(cols_to_use['EPS'], np.nan):.2f}")
 cols[2].metric("Avg ROE", f"{avg_vals.get(cols_to_use['ROE'], np.nan) * 100:.2f}%")
-cols[3].metric("Avg P. Margin", f"{avg_vals.get(cols_to_use['Profit Margin'], np.nan):.2f}%")
+cols[3].metric("Avg P. Margin", f"{avg_vals.get(cols_to_use['Profit Margin'], np.nan) * 100:.2f}%")
 cols[4].metric("Avg D/E", f"{avg_vals.get(cols_to_use['Debt to Equity'], np.nan):.2f}")
 cols[5].metric("Avg MCap", fmt_cap(avg_vals.get(cols_to_use["Market Cap"])))
 
@@ -101,7 +101,7 @@ for _, row in sel_df.iterrows():
         "PE": row[cols_to_use["PE"]],
         "EPS": row[cols_to_use["EPS"]],
         "ROE %": None if pd.isna(row[cols_to_use["ROE"]]) else row[cols_to_use["ROE"]] * 100,
-        "P. Margin %": row[cols_to_use["Profit Margin"]],
+        "P. Margin %": row[cols_to_use["Profit Margin"]] * 100 if pd.notna(row[cols_to_use["Profit Margin"]]) else None,
         "D/E": row[cols_to_use["Debt to Equity"]],
         "MCap": fmt_cap(row[cols_to_use["Market Cap"]]),
     }
