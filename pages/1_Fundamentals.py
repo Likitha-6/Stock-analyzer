@@ -11,7 +11,9 @@ if "compare_symbol" in st.session_state:
         st.session_state.last_symbol = None
 
     if st.session_state.compare_symbol != st.session_state.last_symbol:
+        # symbol has changed — reset peers
         st.session_state.last_symbol = st.session_state.compare_symbol
+        st.session_state.qual_peers = []
         st.experimental_rerun()
 # ─────────────────────────────
 # Page config
