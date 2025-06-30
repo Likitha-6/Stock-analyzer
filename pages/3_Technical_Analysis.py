@@ -1,58 +1,78 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import plotly.graph_objects as go
 
-# Load data
-@st.cache_data
-def load_data(ticker):
-    try:
-        df = yf.download(ticker, period="6mo", interval="1d")
-        return df
-    except Exception as e:
-        st.error(f"Error downloading data: {e}")
-        return None
+from common.data import load_name_lookup
 
-df = load_data(ticker)
+# ─────────────────────────────
+# Page config
+# ─────────────────────────────
+st.set_page_config(page_title="📉 Technical Analysis", page_icon="📊", layout="wide")
+st.title("📉 Technical Analysis – Candlestick Chart")
 
-# Check if df is valid DataFrame
-if df is None:
-    st.error("Failed to download data.")
+# ─────────────────────────────
+# Load stock names
+# ─────────────────────────────
+name_df = load_name_lookup()
+symbols = name_df["Symbol"].dropna().unique()
+symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
+
+# ─────────────────────────────
+# Symbol search
+# ─────────────────────────────
+query = st.text_input("Search by symbol or company name").strip()
+chosen_sym = None
+
+if query:
+    mask = (
+        name_df["Symbol"].str.contains(query, case=False, na=False) |
+        name_df["Company Name"].str.contains(query, case=False, na=False)
+    )
+    matches = name_df[mask]
+    if matches.empty:
+        st.warning("No match found.")
+    else:
+        opts = matches.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
+        chosen = st.selectbox("Select company", opts.tolist())
+        chosen_sym = chosen.split(" – ")[0]
+
+if not chosen_sym:
     st.stop()
 
-st.write(f"Type of df: {type(df)}")
-st.write(f"Columns in df: {df.columns}")
+# ─────────────────────────────
+# Load and plot data
+# ─────────────────────────────
+st.markdown("---")
+st.subheader(f"🕯️ Candlestick Chart – {chosen_sym}")
 
-# If df.columns is a MultiIndex, flatten it or extract the 'Adj Close' or 'Close'
-if isinstance(df.columns, pd.MultiIndex):
-    st.warning("MultiIndex columns detected - flattening or selecting 'Close' column.")
-    # Flatten columns
-    df.columns = ['_'.join(col).strip() for col in df.columns.values]
-    st.write(f"Flattened columns: {df.columns}")
+try:
+    df = yf.download(f"{chosen_sym}.NS", period="6mo", interval="1d")
 
-# Now check for 'Close' column explicitly
-if 'Close' not in df.columns:
-    st.error("'Close' column not found in data. Columns available: " + ", ".join(df.columns))
-    st.stop()
-
-# Convert columns to numeric safely
-price_cols = ['Open', 'High', 'Low', 'Close']
-missing_cols = [col for col in price_cols if col not in df.columns]
-if missing_cols:
-    st.error(f"Missing price columns: {missing_cols}")
-    st.stop()
-
-for col in price_cols:
-    try:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
-    except Exception as e:
-        st.error(f"Failed to convert column {col} to numeric: {e}")
+    if df.empty:
+        st.warning("No price data available for this stock.")
         st.stop()
 
-df.dropna(subset=price_cols, inplace=True)
-df = df.sort_index()
-df.index = pd.to_datetime(df.index)
+    fig = go.Figure(data=[
+        go.Candlestick(
+            x=df.index,
+            open=df['Open'],
+            high=df['High'],
+            low=df['Low'],
+            close=df['Close'],
+            name="Price"
+        )
+    ])
 
-close_series = df['Close']
+    fig.update_layout(
+        xaxis_title="Date",
+        yaxis_title="Price (INR)",
+        xaxis_rangeslider_visible=False,
+        height=600
+    )
 
-st.write("Data loaded and cleaned successfully.")
-st.write(df.head())
+    st.plotly_chart(fig, use_container_width=True)
+
+except Exception as e:
+    st.error(f"Failed to fetch or display data: {e}")
+
