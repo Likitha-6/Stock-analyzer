@@ -17,7 +17,7 @@ st.title("🔍 Fundamentals – Single-Stock Analysis")
 master_df = load_master()
 name_df = load_name_lookup()
 symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
-symbol2industry = dict(zip(name_df["Symbol"], name_df["Industry"]))
+symbol2industry = dict(zip(master_df["Symbol"], master_df["Industry"]))
 
 # ─────────────────────────────
 # User Option: Compare Two Stocks?
@@ -71,8 +71,8 @@ else:
 # ─────────────────────────────
 industry = symbol2industry.get(chosen_sym)
 if industry:
-    peers = name_df[name_df["Industry"] == industry]["Symbol"].tolist()
-    peer_pool = [s for s in peers if s != chosen_sym and s in master_df["Symbol"].values]
+    peers = master_df[master_df["Industry"] == industry]["Symbol"].tolist()
+    peer_pool = [s for s in peers if s != chosen_sym]
 
     if peer_pool:
         st.markdown("---")
@@ -87,4 +87,3 @@ if industry:
         st.info("No valid peers found in the same industry.")
 else:
     st.info("Industry not available for this stock.")
-
