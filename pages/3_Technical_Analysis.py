@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_lightweight_charts import renderLightweightChart
+from streamlit_lightweight_charts import Chart
 import yfinance as yf
 import pandas as pd
 
@@ -68,11 +68,9 @@ try:
     ]
 
     # Render chart
-    renderLightweightChart(
-        series=[{"type": "candlestick", "data": candles}],
-        options={"height": 600}
-    )
+    chart = Chart()
+    chart.set(candlestick_data=[{"data": candles}])
+    chart.render()
 
 except Exception as e:
     st.error(f"Failed to fetch or display data: {e}")
-
