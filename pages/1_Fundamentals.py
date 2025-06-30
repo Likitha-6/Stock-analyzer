@@ -20,6 +20,9 @@ if "compare_symbol" in st.session_state:
 # ─────────────────────────────
 st.set_page_config(page_title="🔍 Fundamentals", page_icon="📈", layout="wide")
 st.title("🔍 Fundamentals – Single-Stock Analysis")
+if st.session_state.pop("_needs_rerun", False):
+    st.experimental_rerun()
+
 
 # ─────────────────────────────
 # Data
