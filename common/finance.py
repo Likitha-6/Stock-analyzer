@@ -115,10 +115,9 @@ def get_industry_averages(
                 buckets[m].append(float(v))
 
     return {
-        m: (None if not vals else round(float(np.mean(vals)), 2))
+        m: (None if not vals else round(float(np.median(vals)), 2))
         for m, vals in buckets.items()
     }
-
 
 # ────────────────────────────────────────────────────────────────────
 # 3.  Utility helpers used by UI code
