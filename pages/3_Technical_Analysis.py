@@ -46,12 +46,17 @@ if not chosen_sym:
 st.markdown("---")
 st.subheader(f"🕯️ Candlestick Chart – {chosen_sym}")
 
-try:
-    df = yf.download(f"{chosen_sym}.NS", period="6mo", interval="1d")
+symbol = chosen_sym.strip().upper()
+yf_symbol = f"{symbol}.NS"
 
-    if df.empty:
-        st.warning("No price data available for this stock.")
+try:
+    df = yf.download(yf_symbol, period="6mo", interval="1d")
+
+    if df.empty or df.isna().all().all():
+        st.warning("No price data available or symbol not valid on Yahoo Finance.")
         st.stop()
+
+    st.dataframe(df.head())  # Debugging: show raw data
 
     fig = go.Figure(data=[
         go.Candlestick(
@@ -75,4 +80,3 @@ try:
 
 except Exception as e:
     st.error(f"Failed to fetch or display data: {e}")
-
