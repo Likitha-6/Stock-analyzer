@@ -47,6 +47,8 @@ cols_to_use = {
 
 existing_cols = [v for v in cols_to_use.values() if v in scoped_df.columns]
 scoped_df[existing_cols] = scoped_df[existing_cols].apply(pd.to_numeric, errors="coerce")
+scoped_df[cols_to_use["Debt to Equity"]] = scoped_df[cols_to_use["Debt to Equity"]] / 100  # <- ADD THIS LINE
+
 
 # Clean profit margin values
 def clean_profit_margin(val):
