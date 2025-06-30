@@ -137,7 +137,8 @@ if qualified:
     qual_df = pd.DataFrame(qualified).reset_index(drop=True)
     st.markdown("---")
     st.subheader(f"🌟 Companies with ≥{interp_cutoff} Green Checks")
-    st.dataframe(qual_df.reset_index(drop=True), use_container_width=True)
+    qual_df.index = qual_df.index + 1
+    st.dataframe(qual_df, use_container_width=True)
 
     csv = qual_df.to_csv(index=False).encode()
     st.download_button("⬇️ Download list as CSV", csv, f"green_stocks_{ind_sel}.csv")
