@@ -14,6 +14,7 @@ st.set_page_config(
 )
 
 st.title("📂 Sector & Industry Analysis")
+st.write("Available columns in scoped_df:", scoped_df.columns.tolist())
 
 # Load data
 master_df = load_master()
