@@ -130,14 +130,14 @@ for _, row in sel_df.iterrows():
 st.markdown("---")
 header_lbl = "📋 All Companies" if show_all else f"🔢 Top-10 – {rank_by}"
 st.subheader(header_lbl)
-st.dataframe(pd.DataFrame(rows), use_container_width=True)
+st.dataframe(pd.DataFrame(rows).reset_index(drop=True), use_container_width=True)
 
 # Qualified companies navigation
 if qualified:
     qual_df = pd.DataFrame(qualified).reset_index(drop=True)
     st.markdown("---")
     st.subheader(f"🌟 Companies with ≥{interp_cutoff} Green Checks")
-    st.dataframe(qual_df, use_container_width=True)
+    st.dataframe(qual_df.reset_index(drop=True), use_container_width=True)
 
     csv = qual_df.to_csv(index=False).encode()
     st.download_button("⬇️ Download list as CSV", csv, f"green_stocks_{ind_sel}.csv")
