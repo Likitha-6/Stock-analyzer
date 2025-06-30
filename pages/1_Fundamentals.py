@@ -21,13 +21,6 @@ name_df   = load_name_lookup()
 symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
 
 # ─────────────────────────────
-# Session hand-off from Sector Analysis
-# (do NOT pop – keep for full rerun)
-# ─────────────────────────────
-default_sym   = st.session_state.get("compare_symbol")
-default_peers = st.session_state.get("qual_peers", [])
-
-# ─────────────────────────────
 # Checkbox to enable manual comparison
 # ─────────────────────────────
 compare_mode = st.checkbox("🔁 Compare two stocks manually")
@@ -37,11 +30,6 @@ compare_mode = st.checkbox("🔁 Compare two stocks manually")
 # ─────────────────────────────
 chosen_sym = None
 query = st.text_input("Search by symbol or company name").strip()
-if compare_mode:
-    st.subheader("📘 Compare with a second stock")
-
-    second_sym = None
-    query2 = st.text_input("Search second stock by symbol or name", key="second_query").strip()
 
 if query:
     mask = (
@@ -57,31 +45,24 @@ if query:
         chosen_sym = chosen.split(" – ")[0]
 
 # Fallback from Sector Analysis
-if not chosen_sym and default_sym:
-    st.success(f"Auto-loaded **{default_sym}** from Sector Analysis")
-    chosen_sym = default_sym
+if not chosen_sym and not compare_mode:
+    default_sym = st.session_state.get("compare_symbol")
+    if default_sym:
+        st.success(f"Auto-loaded **{default_sym}** from Sector Analysis")
+        chosen_sym = default_sym
 
 if not chosen_sym:
     st.stop()
 
 # ─────────────────────────────
-# Display main fundamentals
-# ─────────────────────────────
-if chosen_sym in master_df["Symbol"].values:
-    display_metrics(chosen_sym, master_df, name_df)
-else:
-    st.error("Symbol not found in master dataset.")
-    st.stop()
-
-# ─────────────────────────────
-# Manual comparison logic
+# Display either single or comparison
 # ─────────────────────────────
 if compare_mode:
     st.markdown("---")
-    #st.subheader("📘 Compare with a second stock")
+    st.subheader("📘 Compare with a second stock")
 
-    #second_sym = None
-    #query2 = st.text_input("Search second stock by symbol or name", key="second_query").strip()
+    second_sym = None
+    query2 = st.text_input("Search second stock by symbol or name", key="second_query").strip()
 
     if query2:
         mask2 = (
@@ -102,22 +83,33 @@ if compare_mode:
         else:
             st.markdown("### Side-by-Side Manual Comparison")
             compare_stocks(chosen_sym, second_sym, master_df)
+else:
+    # ─────────────────────────────
+    # Display main fundamentals
+    # ─────────────────────────────
+    if chosen_sym in master_df["Symbol"].values:
+        display_metrics(chosen_sym, master_df, name_df)
+    else:
+        st.error("Symbol not found in master dataset.")
+        st.stop()
 
 # ─────────────────────────────
 # Peer comparison dropdown
-# (only if peers were handed off)
+# (only if peers were handed off and not in compare mode)
 # ─────────────────────────────
-if default_peers:
-    peer_pool = [s for s in default_peers if s != chosen_sym]
-    if peer_pool:
-        st.markdown("---")
-        st.subheader("⚔️ Compare with another qualified peer")
-        peer_labels = [f"{symbol2name.get(s, s)} ({s})" for s in peer_pool]
-        peer_choice = st.selectbox("Select peer", peer_labels, key="peer_choice")
-        peer_sym = peer_pool[peer_labels.index(peer_choice)]
+if not compare_mode:
+    default_peers = st.session_state.get("qual_peers", [])
+    if default_peers:
+        peer_pool = [s for s in default_peers if s != chosen_sym]
+        if peer_pool:
+            st.markdown("---")
+            st.subheader("⚔️ Compare with another qualified peer")
+            peer_labels = [f"{symbol2name.get(s, s)} ({s})" for s in peer_pool]
+            peer_choice = st.selectbox("Select peer", peer_labels, key="peer_choice")
+            peer_sym = peer_pool[peer_labels.index(peer_choice)]
 
-        # Render side-by-side comparison
-        st.markdown("### Side-by-Side Comparison")
-        compare_stocks(chosen_sym, peer_sym, master_df)
-    else:
-        st.info("No peer list passed from Sector Analysis.")
+            # Render side-by-side comparison
+            st.markdown("### Side-by-Side Comparison")
+            compare_stocks(chosen_sym, peer_sym, master_df)
+        else:
+            st.info("No peer list passed from Sector Analysis.")
