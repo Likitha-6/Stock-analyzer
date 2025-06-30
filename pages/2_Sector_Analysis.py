@@ -112,7 +112,7 @@ for _, row in sel_df.iterrows():
         "P. Margin %": profit_margin_clean,
         "D/E": row[cols_to_use["Debt to Equity"]],
         "MCap": fmt_cap(row[cols_to_use["Market Cap"]]),
-        "Notes": "⚠️ Margin > 100%" if profit_margin_clean and profit_margin_clean > 100 else ""
+        #"Notes": "⚠️ Margin > 100%" if profit_margin_clean and profit_margin_clean > 100 else ""
     }
     icons = {
         "PE": icon_lo(row[cols_to_use["PE"]], avg_vals.get(cols_to_use["PE"])),
