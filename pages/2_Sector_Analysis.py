@@ -130,7 +130,10 @@ for _, row in sel_df.iterrows():
 st.markdown("---")
 header_lbl = "📋 All Companies" if show_all else f"🔢 Top-10 – {rank_by}"
 st.subheader(header_lbl)
-st.dataframe(pd.DataFrame(rows).reset_index(drop=True), use_container_width=True)
+df = pd.DataFrame(rows)
+df.index = df.index + 1  # Start index from 1
+st.dataframe(df, use_container_width=True)
+
 
 # Qualified companies navigation
 if qualified:
