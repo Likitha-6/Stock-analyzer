@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from common.data import load_name_lookup
 
@@ -56,24 +57,41 @@ try:
         st.warning("No price data available or symbol not valid on Yahoo Finance.")
         st.stop()
 
-    st.dataframe(df.head())  # Debugging: show raw data
+    df.reset_index(inplace=True)
 
-    fig = go.Figure(data=[
-        go.Candlestick(
-            x=df.index,
-            open=df['Open'],
-            high=df['High'],
-            low=df['Low'],
-            close=df['Close'],
-            name="Price"
-        )
-    ])
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
+                        vertical_spacing=0.02,
+                        row_heights=[0.7, 0.3],
+                        subplot_titles=("Price Candlesticks", "Volume"))
+
+    fig.add_trace(go.Candlestick(
+        x=df['Date'],
+        open=df['Open'],
+        high=df['High'],
+        low=df['Low'],
+        close=df['Close'],
+        name='Candles',
+        increasing_line_color='green',
+        decreasing_line_color='red',
+        showlegend=False
+    ), row=1, col=1)
+
+    fig.add_trace(go.Bar(
+        x=df['Date'],
+        y=df['Volume'],
+        marker_color='lightblue',
+        name='Volume',
+        showlegend=False
+    ), row=2, col=1)
 
     fig.update_layout(
-        xaxis_title="Date",
-        yaxis_title="Price (INR)",
+        height=700,
         xaxis_rangeslider_visible=False,
-        height=600
+        xaxis=dict(showline=False, showgrid=True),
+        yaxis=dict(showgrid=True),
+        plot_bgcolor='white',
+        hovermode='x unified',
+        margin=dict(l=20, r=20, t=30, b=30)
     )
 
     st.plotly_chart(fig, use_container_width=True)
