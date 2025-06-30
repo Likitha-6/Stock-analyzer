@@ -59,6 +59,12 @@ def clean_profit_margin(val):
 scoped_df["ProfitMarginCleaned"] = scoped_df[cols_to_use["Profit Margin"]].apply(clean_profit_margin)
 
 # Average values
+# Replace inf/-inf with NaN to clean data
+scoped_df[existing_cols] = scoped_df[existing_cols].replace([np.inf, -np.inf], np.nan)
+
+# Optional: filter out extremely high PE values that skew average
+scoped_df = scoped_df[scoped_df["PE Ratio"] < 200]
+
 avg_vals = scoped_df[existing_cols].mean()
 profit_margin_avg = scoped_df["ProfitMarginCleaned"].mean()
 
