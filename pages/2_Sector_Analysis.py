@@ -49,14 +49,12 @@ existing_cols = [v for v in cols_to_use.values() if v in scoped_df.columns]
 scoped_df[existing_cols] = scoped_df[existing_cols].apply(pd.to_numeric, errors="coerce")
 
 # Clean profit margin values
-def clean_profit_margin(row):
-    pm = row.get("ProfitMargin")
-    rev = row.get("Revenue") or 1  # fallback if revenue not present
-    if pd.isna(pm) or rev < 1e7:  # Less than ₹1 Cr revenue
-        return np.nan
-    return pm * 100 if pm < 1 else pm
+def clean_profit_margin(val):
+    if pd.isna(val):
+        return None
+    return val * 100 if val < 1 else val
 
-scoped_df["ProfitMarginCleaned"] = scoped_df.apply(clean_profit_margin, axis=1)
+scoped_df["ProfitMarginCleaned"] = scoped_df[cols_to_use["Profit Margin"]].apply(clean_profit_margin)
 
 # Average values
 avg_vals = scoped_df[existing_cols].mean()
@@ -102,7 +100,7 @@ name_lookup = name_df.set_index("Symbol")["Company Name"].to_dict()
 
 for _, row in sel_df.iterrows():
     sym = row["Symbol"]
-    profit_margin_clean = clean_profit_margin(row)
+    profit_margin_clean = row["ProfitMarginCleaned"]
     r = {
         "Symbol": sym,
         "Company": name_lookup.get(sym, ""),
@@ -150,3 +148,4 @@ if qualified:
             st.switch_page("pages/1_Fundamentals.py")
 else:
     st.info("No company meets the selected green criteria.")
+
