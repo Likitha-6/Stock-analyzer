@@ -19,6 +19,12 @@ st.title("🔍 Fundamentals – Single-Stock Analysis")
 master_df = load_master()
 name_df   = load_name_lookup()
 symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
+if "last_symbol" not in st.session_state:
+    st.session_state.last_symbol = None
+
+if st.session_state.get("compare_symbol") != st.session_state.last_symbol:
+    st.session_state.last_symbol = st.session_state.get("compare_symbol")
+    st.experimental_rerun()
 
 # ─────────────────────────────
 # Checkbox to enable manual comparison
