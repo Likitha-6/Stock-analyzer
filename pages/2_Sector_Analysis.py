@@ -20,9 +20,7 @@ master_df = load_master()
 name_df = load_name_lookup()
 df = pd.merge(master_df, name_df, on="Symbol", how="left")
 
-# ─────────────────────────────
 # Sidebar filters
-# ─────────────────────────────
 st.sidebar.header("🏍️ Filter by")
 sec_sel = st.sidebar.selectbox("Sector", sorted(df["Big Sectors"].dropna().unique()))
 ind_sel = st.sidebar.selectbox("Industry", sorted(df[df["Big Sectors"] == sec_sel]["Industry"].dropna().unique()))
@@ -31,10 +29,8 @@ show_all = st.sidebar.checkbox("Show **all** companies", value=False)
 interp_threshold = st.sidebar.selectbox("🎯 Green Criteria", ["All ✅", "≥4 ✅", "≥3 ✅", "≥2 ✅"], index=0)
 interp_cutoff = {"All ✅": 5, "≥4 ✅": 4, "≥3 ✅": 3, "≥2 ✅": 2}[interp_threshold]
 
-# ─────────────────────────────
 # Scope the data
-# ─────────────────────────────
-scoped_df = df[(df["Big Sectors"] == sec_sel) & (df["Industry"] == ind_sel)].copy()
+scoped_df = df[df["Industry"] == ind_sel].copy()
 
 st.subheader(f"📊 Summary – {ind_sel}")
 st.markdown(f"**Total companies in industry:** {len(scoped_df)}")
@@ -51,7 +47,20 @@ cols_to_use = {
 
 existing_cols = [v for v in cols_to_use.values() if v in scoped_df.columns]
 scoped_df[existing_cols] = scoped_df[existing_cols].apply(pd.to_numeric, errors="coerce")
+
+# Clean profit margin values
+def clean_profit_margin(row):
+    pm = row.get("ProfitMargin")
+    rev = row.get("Revenue") or 1  # fallback if revenue not present
+    if pd.isna(pm) or rev < 1e7:  # Less than ₹1 Cr revenue
+        return np.nan
+    return pm * 100 if pm < 1 else pm
+
+scoped_df["ProfitMarginCleaned"] = scoped_df.apply(clean_profit_margin, axis=1)
+
+# Average values
 avg_vals = scoped_df[existing_cols].mean()
+profit_margin_avg = scoped_df["ProfitMarginCleaned"].mean()
 
 def fmt_cap(val):
     if val is None or pd.isna(val): return "N/A"
@@ -74,13 +83,11 @@ cols = st.columns(6)
 cols[0].metric("Avg PE", f"{avg_vals.get(cols_to_use['PE'], np.nan):.2f}")
 cols[1].metric("Avg EPS", f"{avg_vals.get(cols_to_use['EPS'], np.nan):.2f}")
 cols[2].metric("Avg ROE", f"{avg_vals.get(cols_to_use['ROE'], np.nan) * 100:.2f}%")
-cols[3].metric("Avg P. Margin", f"{avg_vals.get(cols_to_use['Profit Margin'], np.nan) * 100:.2f}%")
+cols[3].metric("Avg P. Margin", f"{profit_margin_avg:.2f}%")
 cols[4].metric("Avg D/E", f"{avg_vals.get(cols_to_use['Debt to Equity'], np.nan):.2f}")
 cols[5].metric("Avg MCap", fmt_cap(avg_vals.get(cols_to_use["Market Cap"])))
 
-# ─────────────────────────────
 # Rank and interpret companies
-# ─────────────────────────────
 sort_map = {
     "Market Cap": cols_to_use["Market Cap"],
     "EPS": cols_to_use["EPS"],
@@ -95,21 +102,23 @@ name_lookup = name_df.set_index("Symbol")["Company Name"].to_dict()
 
 for _, row in sel_df.iterrows():
     sym = row["Symbol"]
+    profit_margin_clean = clean_profit_margin(row)
     r = {
         "Symbol": sym,
         "Company": name_lookup.get(sym, ""),
         "PE": row[cols_to_use["PE"]],
         "EPS": row[cols_to_use["EPS"]],
         "ROE %": None if pd.isna(row[cols_to_use["ROE"]]) else row[cols_to_use["ROE"]] * 100,
-        "P. Margin %": row[cols_to_use["Profit Margin"]] * 100 if pd.notna(row[cols_to_use["Profit Margin"]]) else None,
+        "P. Margin %": profit_margin_clean,
         "D/E": row[cols_to_use["Debt to Equity"]],
         "MCap": fmt_cap(row[cols_to_use["Market Cap"]]),
+        "Notes": "⚠️ Margin > 100%" if profit_margin_clean and profit_margin_clean > 100 else ""
     }
     icons = {
         "PE": icon_lo(row[cols_to_use["PE"]], avg_vals.get(cols_to_use["PE"])),
         "EPS": icon_hi(row[cols_to_use["EPS"]], avg_vals.get(cols_to_use["EPS"])),
         "ROE": icon_hi(row[cols_to_use["ROE"]], avg_vals.get(cols_to_use["ROE"])),
-        "PM": icon_hi(row[cols_to_use["Profit Margin"]], avg_vals.get(cols_to_use["Profit Margin"])),
+        "PM": icon_hi(profit_margin_clean, profit_margin_avg),
         "D/E": icon_d2e(row[cols_to_use["Debt to Equity"]], avg_vals.get(cols_to_use["Debt to Equity"])),
     }
     r["Interpretation"] = " | ".join([f"{k} {v}" for k, v in icons.items()])
@@ -123,9 +132,7 @@ header_lbl = "📋 All Companies" if show_all else f"🔢 Top-10 – {rank_by}"
 st.subheader(header_lbl)
 st.dataframe(pd.DataFrame(rows), use_container_width=True)
 
-# ─────────────────────────────
 # Qualified companies navigation
-# ─────────────────────────────
 if qualified:
     qual_df = pd.DataFrame(qualified).reset_index(drop=True)
     st.markdown("---")
