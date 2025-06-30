@@ -28,26 +28,33 @@ default_sym   = st.session_state.get("compare_symbol")
 default_peers = st.session_state.get("qual_peers", [])
 
 # ─────────────────────────────
-# Symbol selection UI
+# Checkbox to enable manual comparison
 # ─────────────────────────────
-if default_sym:
+compare_mode = st.checkbox("🔁 Compare two stocks manually")
+
+# ─────────────────────────────
+# Symbol selection UI (first stock)
+# ─────────────────────────────
+chosen_sym = None
+query = st.text_input("Search by symbol or company name").strip()
+
+if query:
+    mask = (
+        name_df["Symbol"].str.contains(query, case=False, na=False) |
+        name_df["Company Name"].str.contains(query, case=False, na=False)
+    )
+    matches = name_df[mask]
+    if matches.empty:
+        st.warning("No match found.")
+    else:
+        opts = matches.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
+        chosen = st.selectbox("Select company", opts.tolist())
+        chosen_sym = chosen.split(" – ")[0]
+
+# Fallback from Sector Analysis
+if not chosen_sym and default_sym:
     st.success(f"Auto-loaded **{default_sym}** from Sector Analysis")
     chosen_sym = default_sym
-else:
-    query = st.text_input("Search by symbol or company name").strip()
-    chosen_sym = None
-    if query:
-        mask = (
-            name_df["Symbol"].str.contains(query, case=False, na=False) |
-            name_df["Company Name"].str.contains(query, case=False, na=False)
-        )
-        matches = name_df[mask]
-        if matches.empty:
-            st.warning("No match found.")
-        else:
-            opts = matches.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
-            chosen = st.selectbox("Select company", opts.tolist())
-            chosen_sym = chosen.split(" – ")[0]
 
 if not chosen_sym:
     st.stop()
@@ -62,31 +69,34 @@ else:
     st.stop()
 
 # ─────────────────────────────
-# Manual comparison with a second stock
+# Manual comparison logic
 # ─────────────────────────────
-st.markdown("---")
-st.subheader("📘 Compare with a manually selected stock")
+if compare_mode:
+    st.markdown("---")
+    st.subheader("📘 Compare with a second stock")
 
-query2 = st.text_input("Search second stock by symbol or name", key="second_query").strip()
-second_sym = None
-if query2:
-    mask2 = (
-        name_df["Symbol"].str.contains(query2, case=False, na=False) |
-        name_df["Company Name"].str.contains(query2, case=False, na=False)
-    )
-    matches2 = name_df[mask2]
-    if matches2.empty:
-        st.warning("No match found.")
-    else:
-        opts2 = matches2.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
-        chosen2 = st.selectbox("Select second company", opts2.tolist(), key="second_select")
-        second_sym = chosen2.split(" – ")[0]
+    second_sym = None
+    query2 = st.text_input("Search second stock by symbol or name", key="second_query").strip()
 
-if second_sym and second_sym != chosen_sym:
-    st.markdown("### Side-by-Side Manual Comparison")
-    compare_stocks(chosen_sym, second_sym, master_df)
-elif second_sym == chosen_sym:
-    st.info("Please select a different stock for comparison.")
+    if query2:
+        mask2 = (
+            name_df["Symbol"].str.contains(query2, case=False, na=False) |
+            name_df["Company Name"].str.contains(query2, case=False, na=False)
+        )
+        matches2 = name_df[mask2]
+        if matches2.empty:
+            st.warning("No match found.")
+        else:
+            opts2 = matches2.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
+            chosen2 = st.selectbox("Select second company", opts2.tolist(), key="second_select")
+            second_sym = chosen2.split(" – ")[0]
+
+    if second_sym:
+        if second_sym == chosen_sym:
+            st.info("Please select a different stock for comparison.")
+        else:
+            st.markdown("### Side-by-Side Manual Comparison")
+            compare_stocks(chosen_sym, second_sym, master_df)
 
 # ─────────────────────────────
 # Peer comparison dropdown
