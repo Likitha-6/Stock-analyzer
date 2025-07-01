@@ -1,4 +1,6 @@
 from streamlit_lightweight_charts import renderLightweightCharts
+import streamlit as st
+
 
 # ...
 query = st.text_input("Search by symbol or company name").strip()
