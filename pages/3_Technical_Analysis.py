@@ -1,10 +1,23 @@
-from streamlit_lightweight_charts import renderLightweightCharts
 import streamlit as st
+from streamlit_lightweight_charts import renderLightweightCharts
+import yfinance as yf
+import pandas as pd
+from common.data import load_name_lookup  # Make sure this exists and returns a DataFrame with 'Symbol' and 'Company Name'
 
+st.set_page_config(page_title="📉 Technical Analysis", page_icon="📊", layout="wide")
+st.title("📉 Technical Analysis – TradingView-style Chart")
 
-# ...
+# ─────────────────────────────
+# Load stock list
+# ─────────────────────────────
+name_df = load_name_lookup()
+symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
+
+# ─────────────────────────────
+# Symbol search
+# ─────────────────────────────
 query = st.text_input("Search by symbol or company name").strip()
-chosen_sym = None  # ← Define this BEFORE any if-blocks
+chosen_sym = None
 
 if query:
     mask = (
@@ -19,8 +32,11 @@ if query:
             "Select Stock",
             matches["Symbol"] + " - " + matches["Company Name"]
         )
-        chosen_sym = chosen_option.split(" - ")[0]  # ← Assign chosen_sym properly
+        chosen_sym = chosen_option.split(" - ")[0]
 
+# ─────────────────────────────
+# Chart Rendering
+# ─────────────────────────────
 if chosen_sym:
     stock = yf.Ticker(chosen_sym + ".NS")
     df = stock.history(period="3mo", interval="1d")
@@ -31,7 +47,6 @@ if chosen_sym:
         df = df.reset_index()
         df["time"] = df["Date"].dt.strftime("%Y-%m-%d")
 
-        # Prepare candlestick data
         ohlc = [
             {
                 "time": row["time"],
@@ -43,7 +58,6 @@ if chosen_sym:
             for _, row in df.iterrows()
         ]
 
-        # Prepare volume data
         volume = [
             {
                 "time": row["time"],
