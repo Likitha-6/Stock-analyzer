@@ -1,6 +1,23 @@
 from streamlit_lightweight_charts import renderLightweightCharts
 
 # ...
+query = st.text_input("Search by symbol or company name").strip()
+chosen_sym = None  # ← Define this BEFORE any if-blocks
+
+if query:
+    mask = (
+        name_df["Symbol"].str.contains(query, case=False, na=False) |
+        name_df["Company Name"].str.contains(query, case=False, na=False)
+    )
+    matches = name_df[mask]
+    if matches.empty:
+        st.warning("No match found.")
+    else:
+        chosen_option = st.selectbox(
+            "Select Stock",
+            matches["Symbol"] + " - " + matches["Company Name"]
+        )
+        chosen_sym = chosen_option.split(" - ")[0]  # ← Assign chosen_sym properly
 
 if chosen_sym:
     stock = yf.Ticker(chosen_sym + ".NS")
