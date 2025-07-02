@@ -291,7 +291,7 @@ with tab2:
             df_insights["RSI"] = compute_rsi(df_insights)
 
             latest_rsi = df_insights["RSI"].iloc[-1]
-            st.metric("📊 RSI (14-day)", f"{latest_rsi:.2f}")
+            #st.metric("📊 RSI (14-day)", f"{latest_rsi:.2f}")
             
             if latest_rsi > 70:
                 st.warning("📈 RSI indicates **overbought** conditions – price might be extended.")
