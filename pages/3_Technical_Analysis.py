@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from common.data import load_name_lookup
 from indicators import apply_sma, apply_ema, get_pivot_lines
+from indicators import detect_cross_signals
 
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 
@@ -244,11 +245,15 @@ with tab2:
         st.markdown(f"**50-day SMA:** ₹{sma50:.2f}")
         st.markdown(f"**200-day SMA:** ₹{sma200:.2f}")
 
-        if sma50 > sma200:
-            st.success("Golden Cross detected – potentially bullish trend.")
+        if "SMA_50" in df.columns and "SMA_200" in df.columns:
+            cross_msg = detect_cross_signals(df)
+            if cross_msg:
+                st.markdown(f"**Insight:** {cross_msg}")
+            else:
+                st.markdown("No crossover signals detected at this time.")
         else:
-            st.warning("Death Cross detected – caution advised.")
-        
+            st.info("Please add both SMA 50 and SMA 200 under indicators to see momentum crossover insights.")
+
         if current_price > sma50:
             st.info("Price is above 50-day average – bullish strength.")
 
