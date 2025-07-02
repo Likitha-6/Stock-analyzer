@@ -1,7 +1,7 @@
 import yfinance as yf
 import pandas as pd
 
-def get_previous_day_ohlc(symbol: str) -> dict:
+def get_previous_period_ohlc(symbol: str) -> dict:
     """Get previous day's OHLC data for intraday pivot calculation."""
     ticker = yf.Ticker(symbol)
     df = ticker.history(period="5d", interval="1d")  # Fetch last 5 daily candles
