@@ -12,33 +12,35 @@ def apply_ema(df: pd.DataFrame, lengths: list) -> pd.DataFrame:
     for ema_len in lengths:
         df[f"EMA_{ema_len}"] = df["Close"].ewm(span=ema_len, adjust=False).mean()
     return df
+def compute_sma(df: pd.DataFrame, length: int) -> pd.Series:
+    """Compute a single SMA series without modifying original DataFrame."""
+    return df["Close"].rolling(window=length).mean()
+
 def detect_cross_signals(df: pd.DataFrame) -> str:
-    if "SMA_50" not in df.columns or "SMA_200" not in df.columns:
-        return ""
+    sma_50 = compute_sma(df, 50)
+    sma_200 = compute_sma(df, 200)
 
-    if len(df) < 2:
-        return ""
+    if sma_50.isna().sum() > len(sma_50) - 2 or sma_200.isna().sum() > len(sma_200) - 2:
+        return ""  # Not enough data to determine
 
-    latest_50 = df["SMA_50"].iloc[-1]
-    latest_200 = df["SMA_200"].iloc[-1]
-    prev_50 = df["SMA_50"].iloc[-2]
-    prev_200 = df["SMA_200"].iloc[-2]
+    latest_50 = sma_50.iloc[-1]
+    latest_200 = sma_200.iloc[-1]
+    prev_50 = sma_50.iloc[-2]
+    prev_200 = sma_200.iloc[-2]
 
-    if pd.notna(latest_50) and pd.notna(latest_200) and pd.notna(prev_50) and pd.notna(prev_200):
+    if pd.notna(latest_50) and pd.notna(latest_200):
         if latest_50 > latest_200:
             if prev_50 < prev_200:
                 return "📈 Golden Cross: Short-term momentum (50-day) is overtaking long-term momentum (200-day). Now might be a good time to buy."
             else:
-                return "✅ Bullish continuation: 50-day average remains above 200-day. Trend looks strong."
+                return "📈 Bullish continuation: 50-day average remains above 200-day. Trend looks strong."
         elif latest_50 < latest_200:
             if prev_50 > prev_200:
                 return "⚠️ Death Cross: Short-term momentum (50-day) is dropping below long-term trend (200-day). Caution is advised."
             else:
-                return "🔻 Bearish continuation: 50-day average remains below 200-day. Downtrend may persist."
-        else:
-            return "ℹ️ No crossover signals detected at this time."
-
+                return "⚠️ Bearish continuation: 50-day average remains below 200-day. Downtrend may persist."
     return ""
+
 
 
 
