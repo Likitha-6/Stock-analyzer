@@ -310,4 +310,80 @@ with tab2:
 
 
 with tab3:
-    st.write("🔍 Customize your view here for", chosen_sym or "selected stock")
+    st.subheader(f"📊 Market View for {chosen_sym or 'selected stock'}")
+
+    if chosen_sym:
+        try:
+            # Load stock and NIFTY50 data
+            stock_df = yf.Ticker(chosen_sym + ".NS").history(period="6mo", interval="1d")
+            nifty_df = yf.Ticker("^NSEI").history(period="6mo", interval="1d")  # NIFTY 50
+
+            if not stock_df.empty and not nifty_df.empty:
+                stock_df = stock_df.reset_index()
+                nifty_df = nifty_df.reset_index()
+
+                # Ensure both have the same date index
+                df_merged = pd.merge(
+                    stock_df[["Date", "Close", "Volume"]],
+                    nifty_df[["Date", "Close"]],
+                    on="Date",
+                    suffixes=("", "_NIFTY")
+                )
+
+                # Compute price returns
+                df_merged["Return"] = df_merged["Close"].pct_change()
+                df_merged["NIFTY_Return"] = df_merged["Close_NIFTY"].pct_change()
+
+                st.markdown("### 📈 Price Performance")
+                change_1d = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[-2] - 1) * 100
+                change_5d = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[-6] - 1) * 100
+                change_1mo = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[-22] - 1) * 100
+                change_ytd = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[0] - 1) * 100
+
+                st.metric("1 Day", f"{change_1d:.2f}%")
+                st.metric("5 Days", f"{change_5d:.2f}%")
+                st.metric("1 Month", f"{change_1mo:.2f}%")
+                st.metric("YTD", f"{change_ytd:.2f}%")
+
+                st.markdown("### 📊 Volume Analysis")
+                latest_vol = df_merged["Volume"].iloc[-1]
+                avg_vol = df_merged["Volume"].tail(21).mean()
+                st.write(f"Today's Volume: `{int(latest_vol):,}` | 21-Day Avg: `{int(avg_vol):,}`")
+                if latest_vol > 1.5 * avg_vol:
+                    st.warning("🔺 Significant spike in trading volume today.")
+                elif latest_vol < 0.5 * avg_vol:
+                    st.info("🔻 Unusually low volume today.")
+                else:
+                    st.success("🟢 Volume within normal range.")
+
+                st.markdown("### 🧱 Support & Resistance (20-day)")
+                support = df_merged["Close"].rolling(window=20).min().iloc[-1]
+                resistance = df_merged["Close"].rolling(window=20).max().iloc[-1]
+                current_price = df_merged["Close"].iloc[-1]
+
+                st.write(f"📉 Support: ₹{support:.2f}")
+                st.write(f"📈 Resistance: ₹{resistance:.2f}")
+
+                st.markdown("### 🤝 Correlation with NIFTY 50")
+                correlation = df_merged["Return"].corr(df_merged["NIFTY_Return"])
+                st.write(f"Correlation (last 6 months): `{correlation:.2f}`")
+                if correlation > 0.7:
+                    st.success("✅ Highly correlated with broader market.")
+                elif correlation < 0.3:
+                    st.warning("⚠️ Moves independently of the NIFTY index.")
+
+                st.markdown("### 📅 Earnings")
+                st.info("🗓️ Next Earnings: Not available via yFinance. Please check official filings.")
+
+                st.markdown("### 🧭 Most Traded Price Range")
+                price_bins = pd.cut(df_merged["Close"], bins=20)
+                most_traded = price_bins.value_counts().idxmax()
+                st.write(f"Most traded price range in last 6 months: **{most_traded}**")
+
+            else:
+                st.warning("Could not load complete data to compute View Tab insights.")
+
+        except Exception as e:
+            st.error(f"Error while generating view insights: {e}")
+    else:
+        st.info("Please select a stock to view details.")
