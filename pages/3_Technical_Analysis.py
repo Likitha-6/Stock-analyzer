@@ -269,6 +269,13 @@ with tab2:
 
             volatility = df_insights["Close"].rolling(window=14).std().iloc[-1]
             st.caption(f"📊 14-day rolling volatility: **{volatility:.2f}**")
+            if volatility > 50:
+                st.warning("⚠️ High volatility — expect bigger price swings.")
+            elif volatility < 10:
+                st.info("🔒 Low volatility — stable price action.")
+            else:
+                st.success("🔁 Moderate volatility — balanced risk/reward.")
+
             if abs(latest_price - high_52w) < 0.03 * high_52w:
                 st.info("🚀 Price is near its 52-week high — possible resistance level.")
             elif abs(latest_price - low_52w) < 0.03 * low_52w:
