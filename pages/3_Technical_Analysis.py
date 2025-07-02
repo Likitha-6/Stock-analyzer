@@ -6,54 +6,55 @@ st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 st.title("📈 Indian Stock – Technical Analysis")
 
 # ─────────────────────────────
-# Interval dropdown
+# Interval Dropdown
 # ─────────────────────────────
 interval_mapping = {
-    "5 minutes": "5m",
-    "15 minutes": "15m",
-    "1 hour": "60m",
-    "4 hours": "240m",
-    "1 day": "1d"
+    "5 minutes": ("5m", "1d"),
+    "15 minutes": ("15m", "5d"),
+    "1 hour": ("60m", "7d"),
+    "4 hours": ("240m", "10d"),
+    "1 day": ("1d", "3mo")
 }
 
-interval_label = st.selectbox("Select interval", list(interval_mapping.keys()), index=4)
-interval = interval_mapping[interval_label]
-
-symbol = st.text_input("Enter NSE symbol (e.g., INFY, RELIANCE):").upper().strip()
+label = st.selectbox("Select Interval", list(interval_mapping.keys()), index=4)
+interval, period = interval_mapping[label]
 
 # ─────────────────────────────
-# Load and plot data
+# Symbol Input
+# ─────────────────────────────
+symbol = st.text_input("Enter NSE Symbol (e.g., INFY, RELIANCE):").upper().strip()
+
+# ─────────────────────────────
+# Data Fetch & Chart Display
 # ─────────────────────────────
 if symbol:
-    stock = yf.Ticker(symbol + ".NS")
-
     try:
-        df = stock.history(period="7d" if "m" in interval else "3mo", interval=interval)
+        data = yf.Ticker(symbol + ".NS").history(interval=interval, period=period)
 
-        if df.empty:
-            st.error("No data available for this stock + interval combination.")
+        if data.empty:
+            st.error("No data found.")
         else:
             fig = go.Figure()
 
             fig.add_trace(go.Candlestick(
-                x=df.index,
-                open=df['Open'],
-                high=df['High'],
-                low=df['Low'],
-                close=df['Close'],
-                name="Candles"
+                x=data.index.astype(str),  # convert to string to prevent time gaps
+                open=data['Open'],
+                high=data['High'],
+                low=data['Low'],
+                close=data['Close'],
+                name="Price"
             ))
 
             fig.update_layout(
-                title=f"{symbol}.NS – {interval_label} Candlestick Chart",
-                xaxis_title="Date",
+                title=f"{symbol}.NS – {label} Chart",
+                xaxis_title="Time",
                 yaxis_title="Price",
                 xaxis_rangeslider_visible=False,
+                xaxis=dict(type="category"),  # removes time gaps
                 height=600
             )
 
             st.plotly_chart(fig, use_container_width=True)
 
     except Exception as e:
-        st.error(f"Failed to fetch data: {e}")
-
+        st.error(f"Error: {e}")
