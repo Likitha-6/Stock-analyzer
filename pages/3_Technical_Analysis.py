@@ -135,27 +135,56 @@ if chosen_sym:
         df = df.reset_index()
         # Compute classic pivot points from previous day's data
         pivot_levels = {}
-        if show_pivots and interval != "1d" and len(df) > 1:
-            # Filter to previous full day (use -2 row in case current day is partial)
-            prev_day = df.iloc[-2]
+
+        if show_pivots and len(df) > 10:
+            df_pivot = df.copy()
+            df_pivot = df_pivot.set_index(df[x_col])  # Already Date or Datetime
         
-            high = prev_day["High"]
-            low = prev_day["Low"]
-            close = prev_day["Close"]
+            if interval in ["5m", "15m", "60m", "240m"]:
+                # Intraday: use previous day's OHLC
+                df_daily = df_pivot.resample("1D").agg({
+                    "Open": "first",
+                    "High": "max",
+                    "Low": "min",
+                    "Close": "last"
+                }).dropna()
         
-            P = (high + low + close) / 3
-            R1 = 2 * P - low
-            S1 = 2 * P - high
-            R2 = P + (high - low)
-            S2 = P - (high - low)
-            R3 = high + 2 * (P - low)
-            S3 = low - 2 * (high - P)
+                if len(df_daily) >= 2:
+                    prev = df_daily.iloc[-2]
         
-            pivot_levels = {
-                "Pivot": P,
-                "R1": R1, "R2": R2, "R3": R3,
-                "S1": S1, "S2": S2, "S3": S3
-            }
+            elif interval == "1d":
+                # Daily chart: use previous week's OHLC
+                df_weekly = df_pivot.resample("W-MON").agg({
+                    "Open": "first",
+                    "High": "max",
+                    "Low": "min",
+                    "Close": "last"
+                }).dropna()
+        
+                if len(df_weekly) >= 2:
+                    prev = df_weekly.iloc[-2]
+        
+            else:
+                prev = None
+        
+            if 'prev' in locals() and prev is not None:
+                high = prev["High"]
+                low = prev["Low"]
+                close = prev["Close"]
+        
+                P = (high + low + close) / 3
+                R1 = 2 * P - low
+                S1 = 2 * P - high
+                R2 = P + (high - low)
+                S2 = P - (high - low)
+                R3 = high + 2 * (P - low)
+                S3 = low - 2 * (high - P)
+        
+                pivot_levels = {
+                    "Pivot": P,
+                    "R1": R1, "R2": R2, "R3": R3,
+                    "S1": S1, "S2": S2, "S3": S3
+                }
 
 
         if df.empty:
