@@ -273,8 +273,8 @@ with tab2:
                 latest_price = df_insights["Close"].iloc[-1]
                 vol_pct = (volatility / latest_price) * 100
             
-                st.subheader("📊 Volatility Insight")
-                st.write(f"14-day Price Std Dev: ₹{volatility:.2f} ({vol_pct:.2f}%)")
+                #st.subheader("📊 Volatility Insight")
+                #st.write(f"14-day Price Std Dev: ₹{volatility:.2f} ({vol_pct:.2f}%)")
             
                 if vol_pct > 5:
                     st.warning("⚠️ High volatility — expect bigger price swings.")
