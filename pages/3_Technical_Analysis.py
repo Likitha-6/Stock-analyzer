@@ -5,6 +5,7 @@ import pandas as pd
 from common.data import load_name_lookup
 from indicators import apply_sma, apply_ema, get_pivot_lines
 from indicators import detect_cross_signals
+from indicators import apply_smma
 
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 
@@ -250,7 +251,6 @@ with tab2:
             latest_price = df_insights["Close"].iloc[-1]
             latest_sma50 = df_insights["SMA_50"].iloc[-1]
             latest_sma200 = df_insights["SMA_200"].iloc[-1]
-
             st.metric("💰 Current Price", f"₹{latest_price:,.2f}")
             st.metric("📈 50-day SMA", f"₹{latest_sma50:,.2f}" if pd.notna(latest_sma50) else "Not Available")
             st.metric("📉 200-day SMA", f"₹{latest_sma200:,.2f}" if pd.notna(latest_sma200) else "Not Available")
