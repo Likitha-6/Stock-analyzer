@@ -167,13 +167,15 @@ with tab1:
                 if sma_lengths:
                     df = apply_sma(df, sma_lengths)
                     for sma_len in sma_lengths:
-                        fig.add_trace(go.Scatter(
-                            x=df["x_label"],
-                            y=df[f"SMA_{sma_len}"],
-                            mode="lines",
-                            line=dict(width=1.5),
-                            name=f"SMA ({sma_len})"
-                        ))
+                        valid_sma = df[f"SMA_{sma_len}"].notna()
+                        if valid_sma.sum() > 10:  # Only plot if >10 valid points
+                            fig.add_trace(go.Scatter(
+                                x=df["x_label"][valid_sma],
+                                y=df[f"SMA_{sma_len}"][valid_sma],
+                                mode="lines",
+                                line=dict(width=1.5),
+                                name=f"SMA ({sma_len})"
+                            ))
 
                 if ema_lengths:
                     df = apply_ema(df, ema_lengths)
