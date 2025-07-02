@@ -342,7 +342,7 @@ with tab3:
                     except:
                         return str(period_label)
                 
-                ratings_df["Month"] = ratings_df["Period"].apply(convert_to_month)
+                ratings_df["Month"] = ratings_df["period"].apply(convert_to_month)
                 
 
                 # Compute Buy, Hold, Sell categories
