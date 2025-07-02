@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
 import pandas as pd
+from common.data import load_name_lookup
 
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 st.title("📈 Indian Stock – Technical Analysis")
@@ -13,13 +14,12 @@ theme = st.selectbox("Chart Theme", ["Light", "Dark"], index=0)
 
 # Theme colors
 bg_color = "#FFFFFF" if theme == "Light" else "#0E1117"
-grid_color = "#CCCCCC" if theme == "Light" else "#333333"
 font_color = "#000000" if theme == "Light" else "#FFFFFF"
 increasing_color = "#00B26F" if theme == "Light" else "#26de81"
 decreasing_color = "#FF3C38" if theme == "Light" else "#eb3b5a"
 
 # ─────────────────────────────
-# Interval & Symbol Input
+# Interval Dropdown
 # ─────────────────────────────
 interval_mapping = {
     "5 minutes": "5m",
@@ -28,14 +28,36 @@ interval_mapping = {
     "4 hours": "240m",
     "1 day": "1d"
 }
-
 label = st.selectbox("Select Interval", list(interval_mapping.keys()), index=0)
 interval = interval_mapping[label]
 
-symbol = st.text_input("Enter NSE Symbol (e.g., INFY, RELIANCE):").upper().strip()
+# ─────────────────────────────
+# Search bar – symbol or company name
+# ─────────────────────────────
+name_df = load_name_lookup()
+symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
+
+search_query = st.text_input("Search by Symbol or Company Name").strip().lower()
+chosen_sym = None
+
+if search_query:
+    mask = (
+        name_df["Symbol"].str.lower().str.contains(search_query) |
+        name_df["Company Name"].str.lower().str.contains(search_query)
+    )
+    matches = name_df[mask]
+
+    if matches.empty:
+        st.warning("No matching stock found.")
+    else:
+        selected = st.selectbox(
+            "Select Stock",
+            matches["Symbol"] + " - " + matches["Company Name"]
+        )
+        chosen_sym = selected.split(" - ")[0]
 
 # ─────────────────────────────
-# Candle loader state
+# Load period state
 # ─────────────────────────────
 if "candle_days" not in st.session_state:
     st.session_state.candle_days = 1
@@ -45,18 +67,18 @@ if interval == "1d":
 else:
     period = f"{st.session_state.candle_days}d"
 
-if interval != "1d":
+# Load more candles button
+if interval != "1d" and chosen_sym:
     if st.button("🔁 Load older candles"):
         st.session_state.candle_days += 1
-
     st.caption(f"Showing: **{st.session_state.candle_days} day(s)** of data")
 
 # ─────────────────────────────
 # Load and render chart
 # ─────────────────────────────
-if symbol:
+if chosen_sym:
     try:
-        df = yf.Ticker(symbol + ".NS").history(interval=interval, period=period)
+        df = yf.Ticker(chosen_sym + ".NS").history(interval=interval, period=period)
 
         if df.empty:
             st.error("No data found.")
@@ -66,7 +88,6 @@ if symbol:
             df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M") if "m" in interval or "h" in interval else df[x_col].dt.strftime("%d/%m")
 
             fig = go.Figure()
-
             fig.add_trace(go.Candlestick(
                 x=df["x_label"],
                 open=df["Open"],
@@ -79,17 +100,17 @@ if symbol:
             ))
 
             fig.update_layout(
-                title=f"{symbol}.NS – {label} Chart ({period})",
+                title=f"{chosen_sym}.NS – {label} Chart ({period})",
                 xaxis_title="Date/Time",
                 yaxis_title="Price",
                 xaxis=dict(
                     type="category",
                     tickangle=-45,
-                    #showgrid=(theme == "Dark"),
+                    showgrid=False,
                     tickfont=dict(color=font_color)
                 ),
                 yaxis=dict(
-                    #showgrid=(theme == "Dark"),
+                    showgrid=False,
                     tickfont=dict(color="#000000" if theme == "Light" else font_color)
                 ),
                 plot_bgcolor=bg_color,
@@ -99,8 +120,8 @@ if symbol:
                 height=600
             )
 
-
             st.plotly_chart(fig, use_container_width=True)
 
     except Exception as e:
         st.error(f"Error: {e}")
+
