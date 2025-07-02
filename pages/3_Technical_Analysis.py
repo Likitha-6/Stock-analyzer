@@ -84,6 +84,8 @@ symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
 
 search_query = st.text_input("Search by Symbol or Company Name").strip().lower()
 chosen_sym = None
+show_pivots = st.checkbox("📌 Show Pivot Levels", value=True)
+pivot_levels = {}
 
 if search_query:
     mask = (
