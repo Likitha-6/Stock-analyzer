@@ -164,7 +164,7 @@ if chosen_sym:
                     x=df["x_label"],
                     y=df[f"EMA_{ema_len}"],
                     mode="lines",
-                    line=dict(width=1.5, dash="dot"),
+                    line=dict(width=1.5, dash="solid"),
                     name=f"EMA ({ema_len})"
                 ))
 
