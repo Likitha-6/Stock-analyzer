@@ -218,3 +218,4 @@ if chosen_sym:
     except Exception as e:
         st.error(f"Error: {e}")
 
+
