@@ -3,7 +3,7 @@ import yfinance as yf
 import plotly.graph_objects as go
 import pandas as pd
 from common.data import load_name_lookup
-from pivot_utils import get_previous_day_ohlc, calculate_classic_pivots
+from pivot_utils import get_previous_period_ohlc, calculate_classic_pivots
 
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 
