@@ -1,51 +1,22 @@
 import yfinance as yf
 import pandas as pd
 
-def get_previous_period_ohlc(symbol: str, interval: str) -> dict:
-    """Returns OHLC based on standard pivot logic:
-    - Intraday intervals: previous day
-    - 1D interval: previous week
-    """
-    # Load historical daily data
+def get_previous_day_ohlc(symbol: str) -> dict:
+    """Get previous day's OHLC data for intraday pivot calculation."""
     ticker = yf.Ticker(symbol)
-    hist = ticker.history(interval="1d", period="2mo")
-    hist = hist[~hist.index.duplicated()]
+    df = ticker.history(period="5d", interval="1d")  # Fetch last 5 daily candles
 
-    # Ensure timezone handling
-    if hist.index.tz is None:
-        hist.index = hist.index.tz_localize("UTC")
-    hist.index = hist.index.tz_convert("Asia/Kolkata")
+    if df.empty or len(df) < 2:
+        return {}
 
-    hist = hist.sort_index()
-
-    if interval in ["5m", "15m", "60m", "240m"]:
-        # Use previous DAY’s OHLC
-        last_date = hist.index[-1].date()
-        prev_day_data = hist[hist.index.date < last_date]
-        prev_day = prev_day_data.groupby(prev_day_data.index.date).last().index[-1]
-
-        df_day = hist[hist.index.date == prev_day]
-    elif interval == "1d":
-        # Use previous WEEK’s OHLC
-        hist["Week"] = hist.index.to_period("W-MON")
-        last_week = hist["Week"].iloc[-1]
-        prev_week = last_week - 1
-
-        df_day = hist[hist["Week"] == prev_week]
-    else:
-        return None
-
-    if df_day.empty:
-        return None
-
+    # Get the second last row (i.e., yesterday)
+    prev_day = df.iloc[-2]
     return {
-        "high": df_day["High"].max(),
-        "low": df_day["Low"].min(),
-        "close": df_day["Close"].iloc[-1],
-        "open": df_day["Open"].iloc[0],
-        "date": df_day.index[0].strftime("%d-%b-%Y")
+        "high": prev_day["High"],
+        "low": prev_day["Low"],
+        "close": prev_day["Close"],
+        "date": prev_day.name.strftime("%Y-%m-%d")
     }
-
     if len(resampled) < 2:
         return None
 
