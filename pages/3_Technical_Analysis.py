@@ -339,11 +339,14 @@ with tab3:
                 change_5d = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[-6] - 1) * 100
                 change_1mo = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[-22] - 1) * 100
                 change_ytd = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[0] - 1) * 100
+                col1, col2, col3, col4 = st.columns(4)
 
-                st.metric("1 Day", f"{change_1d:.2f}%")
-                st.metric("5 Days", f"{change_5d:.2f}%")
-                st.metric("1 Month", f"{change_1mo:.2f}%")
-                st.metric("YTD", f"{change_ytd:.2f}%")
+                col1.metric("1 Day", f"{change_1d:.2f}%")
+                col2.metric("5 Days", f"{change_5d:.2f}%")
+                col3.metric("1 Month", f"{change_1mo:.2f}%")
+                col4.metric("YTD", f"{change_ytd:.2f}%")
+
+                
 
                 #st.markdown("### 📊 Volume Analysis")
                 latest_vol = df_merged["Volume"].iloc[-1]
