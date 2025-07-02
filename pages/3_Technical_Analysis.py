@@ -82,14 +82,23 @@ if symbol:
                 title=f"{symbol}.NS – {label} Chart ({period})",
                 xaxis_title="Date/Time",
                 yaxis_title="Price",
-                xaxis=dict(type="category", tickangle=-45, gridcolor=grid_color),
-                yaxis=dict(gridcolor=grid_color),
+                xaxis=dict(
+                    type="category",
+                    tickangle=-45,
+                    showgrid=(theme == "Dark"),
+                    tickfont=dict(color=font_color)
+                ),
+                yaxis=dict(
+                    showgrid=(theme == "Dark"),
+                    tickfont=dict(color="#000000" if theme == "Light" else font_color)
+                ),
                 plot_bgcolor=bg_color,
                 paper_bgcolor=bg_color,
                 font=dict(color=font_color),
                 xaxis_rangeslider_visible=False,
                 height=600
             )
+
 
             st.plotly_chart(fig, use_container_width=True)
 
