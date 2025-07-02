@@ -1,7 +1,6 @@
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
-import pandas as pd
 
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 st.title("📈 Indian Stock – Technical Analysis")
@@ -21,31 +20,37 @@ symbol = st.text_input("Enter NSE Symbol (e.g., INFY, RELIANCE):").upper().strip
 
 if symbol:
     try:
-        data = yf.Ticker(symbol + ".NS").history(interval=interval, period=period)
+        df = yf.Ticker(symbol + ".NS").history(interval=interval, period=period)
 
-        if data.empty:
+        if df.empty:
             st.error("No data found.")
         else:
-            # Format X-axis labels to DD/MM
-            data = data.reset_index()
-            data["label"] = data["Datetime" if "Datetime" in data.columns else "Date"].dt.strftime("%d/%m")
+            df = df.reset_index()
+            x_col = "Datetime" if "Datetime" in df.columns else "Date"
 
             fig = go.Figure()
 
             fig.add_trace(go.Candlestick(
-                x=data["label"],  # Shortened date format
-                open=data['Open'],
-                high=data['High'],
-                low=data['Low'],
-                close=data['Close'],
+                x=df[x_col],
+                open=df['Open'],
+                high=df['High'],
+                low=df['Low'],
+                close=df['Close'],
                 name="Price"
             ))
+
+            # Smart tick format: show date only
+            tick_format = "%d/%m" if interval == "1d" else "%d/%m\n%H:%M"
 
             fig.update_layout(
                 title=f"{symbol}.NS – {label} Chart",
                 xaxis_title="Date",
                 yaxis_title="Price",
                 xaxis_rangeslider_visible=False,
+                xaxis=dict(
+                    tickformat=tick_format,
+                    tickangle=-45
+                ),
                 height=600
             )
 
@@ -53,4 +58,3 @@ if symbol:
 
     except Exception as e:
         st.error(f"Error: {e}")
-
