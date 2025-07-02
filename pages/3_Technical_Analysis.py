@@ -372,8 +372,8 @@ with tab3:
                 elif correlation < 0.3:
                     st.warning("⚠️ Moves independently of the NIFTY index.")
 
-                st.markdown("### 📅 Earnings")
-                st.info("🗓️ Next Earnings: Not available via yFinance. Please check official filings.")
+                #st.markdown("### 📅 Earnings")
+                #st.info("🗓️ Next Earnings: Not available via yFinance. Please check official filings.")
 
                 #st.markdown("### 🧭 Most Traded Price Range")
                 price_bins = pd.cut(df_merged["Close"], bins=20)
