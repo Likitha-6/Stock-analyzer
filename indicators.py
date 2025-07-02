@@ -17,11 +17,8 @@ def compute_sma(df: pd.DataFrame, length: int) -> pd.Series:
     return df["Close"].rolling(window=length).mean()
 
 def detect_cross_signals(df: pd.DataFrame) -> str:
-    # Ensure SMA_50 and SMA_200 are available even if not in UI
-    if "SMA_50" not in df.columns:
-        df["SMA_50"] = df["Close"].rolling(window=50).mean()
-    if "SMA_200" not in df.columns:
-        df["SMA_200"] = df["Close"].rolling(window=200).mean()
+    if "SMA_50" not in df.columns or "SMA_200" not in df.columns:
+        return ""
 
     latest_50 = df["SMA_50"].iloc[-1]
     latest_200 = df["SMA_200"].iloc[-1]
@@ -29,18 +26,20 @@ def detect_cross_signals(df: pd.DataFrame) -> str:
     prev_200 = df["SMA_200"].iloc[-2]
 
     if pd.notna(latest_50) and pd.notna(latest_200):
-        if latest_50 > latest_200:
-            if prev_50 < prev_200:
-                return "📈 Golden Cross: Short-term momentum (50-day) is overtaking long-term momentum (200-day). Now might be a good time to buy."
-            else:
-                return "📈 Bullish continuation: 50-day average remains above 200-day. Trend looks strong."
+        # Golden Cross
+        if prev_50 < prev_200 and latest_50 >= latest_200:
+            return "✅ Short-term momentum (50-day) is overtaking long-term momentum (200-day). Now might be a good time to buy."
+        # Death Cross
+        elif prev_50 > prev_200 and latest_50 <= latest_200:
+            return "❌ Long-term momentum (200-day) is overtaking short-term momentum (50-day). This could indicate potential weakness. Consider waiting or reducing exposure."
+        # Ongoing trends
+        elif latest_50 > latest_200:
+            return "✅ Bullish continuation: 50-day average remains above 200-day. Trend looks strong."
         elif latest_50 < latest_200:
-            if prev_50 > prev_200:
-                return "⚠️ Death Cross: Short-term momentum (50-day) is dropping below long-term trend (200-day). Caution is advised."
-            else:
-                return "⚠️ Bearish continuation: 50-day average remains below 200-day. Downtrend may persist."
+            return "❌ Bearish continuation: 50-day average remains below 200-day. Downtrend may persist."
 
-    return "📉 No crossover momentum signal detected."
+    return "No crossover signals detected at this time."
+
 
 
 
