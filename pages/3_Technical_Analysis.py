@@ -267,16 +267,22 @@ with tab2:
             else:
                 st.warning("📉 20-day EMA is sloping downward — short-term trend may be weakening.")
 
-            volatility = df_insights["Close"].rolling(window=14).std().iloc[-1]
-            st.caption(f"📊 14-day rolling volatility: **{volatility:.2f}**")
-            vol_pct = (volatility / latest_price) * 100
+            if not df_insights["Close"].empty and len(df_insights["Close"]) >= 14:
+                recent_close = df_insights["Close"].tail(14)
+                volatility = recent_close.std()
+                latest_price = df_insights["Close"].iloc[-1]
+                vol_pct = (volatility / latest_price) * 100
+            
+                st.subheader("📊 Volatility Insight")
+                st.write(f"14-day Price Std Dev: ₹{volatility:.2f} ({vol_pct:.2f}%)")
+            
+                if vol_pct > 5:
+                    st.warning("⚠️ High volatility — expect bigger price swings.")
+                elif vol_pct < 2:
+                    st.info("🔒 Low volatility — stable price action.")
+                else:
+                    st.success("🔁 Moderate volatility — balanced risk/reward.")
 
-            if vol_pct > 5:
-                st.warning("⚠️ High volatility — expect bigger price swings.")
-            elif vol_pct < 2:
-                st.info("🔒 Low volatility — stable price action.")
-            else:
-                st.success("🔁 Moderate volatility — balanced risk/reward.")
 
             if abs(latest_price - high_52w) < 0.03 * high_52w:
                 st.info("🚀 Price is near its 52-week high — possible resistance level.")
