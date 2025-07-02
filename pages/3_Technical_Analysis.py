@@ -101,12 +101,7 @@ with tab1:
     
     # Adjust period to load enough candles
     if interval == "1d":
-        if max_len >= 200:
-            period = "1y"
-        elif max_len >= 100:
-            period = "6mo"
-        else:
-            period = "3mo"
+        period = "1y"
     elif interval == "240m":
         if max_len >= 200:
             period = "90d"
