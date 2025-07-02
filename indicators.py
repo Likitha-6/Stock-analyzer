@@ -36,6 +36,31 @@ def calculate_smma(series: pd.Series, length: int) -> pd.Series:
 def compute_sma(df: pd.DataFrame, length: int) -> pd.Series:
     """Compute a single SMA series without modifying original DataFrame."""
     return df["Close"].rolling(window=length).mean()
+def detect_crossovers(df, short_col="EMA_20", long_col="EMA_50"):
+    """
+    Detect crossover points between short-term and long-term EMAs or SMAs.
+
+    Returns:
+        dict with 'buy' and 'sell' indices
+    """
+    signals = {"buy": [], "sell": []}
+
+    if short_col not in df.columns or long_col not in df.columns:
+        return signals  # Gracefully skip if columns are missing
+
+    short = df[short_col]
+    long = df[long_col]
+
+    # Generate crossover signals
+    for i in range(1, len(df)):
+        if pd.notna(short[i]) and pd.notna(long[i]):
+            if short[i - 1] < long[i - 1] and short[i] > long[i]:
+                signals["buy"].append(i)
+            elif short[i - 1] > long[i - 1] and short[i] < long[i]:
+                signals["sell"].append(i)
+
+    return signals
+
 
 def detect_cross_signals(df: pd.DataFrame) -> str:
     if "SMA_50" not in df.columns or "SMA_200" not in df.columns:
