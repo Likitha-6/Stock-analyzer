@@ -198,7 +198,7 @@ if chosen_sym:
                     relevant_pivots = {
                         label: value
                         for label, value in pivots.items()
-                        if (y_min - y_range * 0.5) <= value <= (y_max + y_range * 0.5)
+                        if (y_min - y_range * 1) <= value <= (y_max + y_range * 1)
                     }
             
                     for label, value in relevant_pivots.items():
