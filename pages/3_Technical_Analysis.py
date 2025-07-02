@@ -140,8 +140,10 @@ with tab1:
 
             if df.empty:
                 st.error("No data found.")
+                st.session_state.df_stock = None
             else:
                 df = df.reset_index()
+                st.session_state.df_stock = df
                 x_col = "Datetime" if "Datetime" in df.columns else "Date"
                 df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M") if "m" in interval or "h" in interval else df[x_col].dt.strftime("%d/%m")
 
