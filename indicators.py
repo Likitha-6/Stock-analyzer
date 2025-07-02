@@ -17,16 +17,16 @@ def compute_sma(df: pd.DataFrame, length: int) -> pd.Series:
     return df["Close"].rolling(window=length).mean()
 
 def detect_cross_signals(df: pd.DataFrame) -> str:
-    sma_50 = compute_sma(df, 50)
-    sma_200 = compute_sma(df, 200)
+    # Ensure SMA_50 and SMA_200 are available even if not in UI
+    if "SMA_50" not in df.columns:
+        df["SMA_50"] = df["Close"].rolling(window=50).mean()
+    if "SMA_200" not in df.columns:
+        df["SMA_200"] = df["Close"].rolling(window=200).mean()
 
-    if sma_50.isna().sum() > len(sma_50) - 2 or sma_200.isna().sum() > len(sma_200) - 2:
-        return ""  # Not enough data to determine
-
-    latest_50 = sma_50.iloc[-1]
-    latest_200 = sma_200.iloc[-1]
-    prev_50 = sma_50.iloc[-2]
-    prev_200 = sma_200.iloc[-2]
+    latest_50 = df["SMA_50"].iloc[-1]
+    latest_200 = df["SMA_200"].iloc[-1]
+    prev_50 = df["SMA_50"].iloc[-2]
+    prev_200 = df["SMA_200"].iloc[-2]
 
     if pd.notna(latest_50) and pd.notna(latest_200):
         if latest_50 > latest_200:
@@ -39,7 +39,8 @@ def detect_cross_signals(df: pd.DataFrame) -> str:
                 return "⚠️ Death Cross: Short-term momentum (50-day) is dropping below long-term trend (200-day). Caution is advised."
             else:
                 return "⚠️ Bearish continuation: 50-day average remains below 200-day. Downtrend may persist."
-    return ""
+
+    return "📉 No crossover momentum signal detected."
 
 
 
