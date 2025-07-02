@@ -195,17 +195,19 @@ if chosen_sym:
                 yaxis=dict(
                     showgrid=False,
                     tickfont=dict(color="#000000" if theme == "Light" else font_color),
-                    fixedrange=False  # ✅ Allow zoom
+                    fixedrange=False
                 ),
                 plot_bgcolor=bg_color,
                 paper_bgcolor=bg_color,
                 font=dict(color=font_color),
+                legend=dict(font=dict(color=font_color)),  # ✅ Add this
                 xaxis_rangeslider_visible=False,
-                dragmode="pan",         # ✅ Pan by default
-                hovermode="x unified",  # ✅ Show unified tooltip
+                dragmode="pan",
+                hovermode="x unified",
                 height=600,
                 width=900
             )
+
             
 
             st.plotly_chart(
