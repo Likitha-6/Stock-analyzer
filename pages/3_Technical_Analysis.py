@@ -71,6 +71,28 @@ with tab1:
 
     if "candle_days" not in st.session_state:
         st.session_state.candle_days = 1
+    # Indicator selection
+    all_indicators = st.multiselect(
+        "Select Indicators",
+        ["SMA", "EMA", "Pivot Levels"],
+        default=[]
+    )
+
+    sma_lengths = []
+    ema_lengths = []
+    show_pivots = False
+
+    if "SMA" in all_indicators:
+        sma_input = st.text_input("SMA Lengths (comma-separated)", value="20")
+        sma_lengths = sorted(set(int(x.strip()) for x in sma_input.split(",") if x.strip().isdigit()))
+
+    if "EMA" in all_indicators:
+        ema_input = st.text_input("EMA Lengths (comma-separated)", value="20")
+        ema_lengths = sorted(set(int(x.strip()) for x in ema_input.split(",") if x.strip().isdigit()))
+
+    if "Pivot Levels" in all_indicators:
+        show_pivots = True
+
 
     # Calculate the maximum indicator length needed
     max_len = max(sma_lengths + ema_lengths + [0])
@@ -109,28 +131,7 @@ with tab1:
 
         st.caption(f"Showing: **{st.session_state.candle_days} day(s)** of data")
 
-    # Indicator selection
-    all_indicators = st.multiselect(
-        "Select Indicators",
-        ["SMA", "EMA", "Pivot Levels"],
-        default=[]
-    )
-
-    sma_lengths = []
-    ema_lengths = []
-    show_pivots = False
-
-    if "SMA" in all_indicators:
-        sma_input = st.text_input("SMA Lengths (comma-separated)", value="20")
-        sma_lengths = sorted(set(int(x.strip()) for x in sma_input.split(",") if x.strip().isdigit()))
-
-    if "EMA" in all_indicators:
-        ema_input = st.text_input("EMA Lengths (comma-separated)", value="20")
-        ema_lengths = sorted(set(int(x.strip()) for x in ema_input.split(",") if x.strip().isdigit()))
-
-    if "Pivot Levels" in all_indicators:
-        show_pivots = True
-
+    
     if chosen_sym:
         try:
             df = yf.Ticker(chosen_sym + ".NS").history(interval=interval, period=period)
