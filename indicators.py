@@ -12,6 +12,22 @@ def apply_ema(df: pd.DataFrame, lengths: list) -> pd.DataFrame:
     for ema_len in lengths:
         df[f"EMA_{ema_len}"] = df["Close"].ewm(span=ema_len, adjust=False).mean()
     return df
+def detect_cross_signals(df: pd.DataFrame) -> str:
+    if "SMA_50" not in df.columns or "SMA_200" not in df.columns:
+        return ""
+
+    latest_50 = df["SMA_50"].iloc[-1]
+    latest_200 = df["SMA_200"].iloc[-1]
+    prev_50 = df["SMA_50"].iloc[-2]
+    prev_200 = df["SMA_200"].iloc[-2]
+
+    if pd.notna(latest_50) and pd.notna(latest_200):
+        if prev_50 < prev_200 and latest_50 >= latest_200:
+            return "📈 Short-term momentum (50-day) is overtaking long-term momentum (200-day). Now might be a good time to buy."
+        elif prev_50 > prev_200 and latest_50 <= latest_200:
+            return "⚠️ Short-term momentum (50-day) is falling below long-term momentum (200-day). This could signal weakening price strength — caution is advised before buying."
+
+    return ""
 
 
 def get_pivot_lines(df: pd.DataFrame, symbol: str, interval: str):
