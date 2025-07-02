@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_lightweight_charts import Chart
+from streamlit_lightweight_charts import renderLightweightCharts
 import yfinance as yf
 import pandas as pd
 
@@ -18,23 +18,45 @@ if symbol:
         df = df.reset_index()
         df["time"] = df["Date"].dt.strftime("%Y-%m-%d")
 
-        chart = Chart()
-        chart.set(candlestick=[
+        ohlc_data = [
             {
                 "time": row["time"],
-                "open": row["Open"],
-                "high": row["High"],
-                "low": row["Low"],
-                "close": row["Close"]
+                "open": round(row["Open"], 2),
+                "high": round(row["High"], 2),
+                "low": round(row["Low"], 2),
+                "close": round(row["Close"], 2)
             }
             for _, row in df.iterrows()
-        ])
-        chart.set(volume=[
+        ]
+
+        volume_data = [
             {
                 "time": row["time"],
-                "value": row["Volume"],
+                "value": int(row["Volume"]),
                 "color": "green" if row["Close"] >= row["Open"] else "red"
             }
             for _, row in df.iterrows()
-        ])
-        st.components.v1.html(chart.render(), height=500)
+        ]
+
+        chart_config = [
+            {
+                "type": "Candlestick",
+                "data": ohlc_data
+            },
+            {
+                "type": "Histogram",
+                "data": volume_data,
+                "options": {
+                    "color": "rgba(76,175,80,0.5)",
+                    "priceFormat": {"type": "volume"},
+                    "priceScaleId": ""
+                },
+                "priceScale": {
+                    "scaleMargins": {"top": 0.8, "bottom": 0}
+                }
+            }
+        ]
+
+        with st.container():
+            renderLightweightCharts(chart_config)
+
