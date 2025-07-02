@@ -106,24 +106,36 @@ if chosen_sym:
                     type="category",
                     tickangle=-45,
                     showgrid=False,
-                    tickfont=dict(color=font_color)
+                    tickfont=dict(color=font_color),
+                    fixedrange=False  # ✅ Allow zoom
                 ),
                 yaxis=dict(
                     showgrid=False,
-                    tickfont=dict(color="#000000" if theme == "Light" else font_color)
+                    tickfont=dict(color="#000000" if theme == "Light" else font_color),
+                    fixedrange=False  # ✅ Allow zoom
                 ),
                 plot_bgcolor=bg_color,
                 paper_bgcolor=bg_color,
                 font=dict(color=font_color),
                 xaxis_rangeslider_visible=False,
+                dragmode="pan",         # ✅ Pan by default
+                hovermode="x unified",  # ✅ Show unified tooltip
                 height=600,
-                width=900,
-                dragmode="pan",            # ✅ Use pan instead of box select
-                hovermode="x unified"      # ✅ Show unified tooltip across chart
+                width=900
+            )
+            
+
+            st.plotly_chart(
+                fig,
+                use_container_width=False,
+                config={
+                    "scrollZoom": True,             # 🔍 Zoom with scroll wheel
+                    "displayModeBar": True,         # 🛠 Show toolbar for zoom/pan
+                    "modeBarButtonsToRemove": ["zoom2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d"],
+                    "displaylogo": False
+                }
             )
 
-
-            st.plotly_chart(fig, use_container_width=False)
 
 
     except Exception as e:
