@@ -1,46 +1,45 @@
 import yfinance as yf
 import pandas as pd
 
-def get_pivot_source_period(interval: str) -> str:
-    """Return period type to fetch pivot base data."""
-    if interval in ["5m", "15m", "60m", "240m"]:
-        return "1wk"  # Weekly OHLC for intraday
-    elif interval == "1d":
-        return "1mo"  # Monthly OHLC for daily candles
-    else:
-        return "1d"
-
 def get_previous_period_ohlc(symbol: str, interval: str) -> dict:
-    """Return OHLC for previous week or month based on interval."""
-    pivot_source_period = get_pivot_source_period(interval)
-    hist = yf.Ticker(symbol).history(interval="1d", period=pivot_source_period)
+    """Get previous week's or previous month's OHLC depending on the interval."""
+    ticker = yf.Ticker(symbol)
+    hist = ticker.history(interval="1d", period="2mo")  # longer period for safety
+    hist = hist[~hist.index.duplicated()]
+    hist.index = hist.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
 
     if interval in ["5m", "15m", "60m", "240m"]:
-        hist = hist.copy()
-        hist["Week"] = hist.index.to_series().dt.isocalendar().week
-        last_week = hist["Week"].max() - 1
-        df_period = hist[hist["Week"] == last_week]
+        resampled = hist.resample("W").agg({
+            "Open": "first",
+            "High": "max",
+            "Low": "min",
+            "Close": "last"
+        })
     elif interval == "1d":
-        hist = hist.copy()
-        hist["Month"] = hist.index.to_series().dt.month
-        last_month = hist["Month"].max() - 1
-        df_period = hist[hist["Month"] == last_month]
+        resampled = hist.resample("M").agg({
+            "Open": "first",
+            "High": "max",
+            "Low": "min",
+            "Close": "last"
+        })
     else:
-        df_period = hist.tail(1)
-
-    if df_period.empty:
         return None
 
+    if len(resampled) < 2:
+        return None  # not enough data
+
+    prev = resampled.iloc[-2]
+
     return {
-        "high": df_period["High"].max(),
-        "low": df_period["Low"].min(),
-        "close": df_period["Close"].iloc[-1],
-        "open": df_period["Open"].iloc[0],
-        "date": df_period.index[-1].strftime("%d-%b-%Y")
+        "high": prev["High"],
+        "low": prev["Low"],
+        "close": prev["Close"],
+        "open": prev["Open"],
+        "date": prev.name.strftime("%d-%b-%Y")
     }
 
 def calculate_classic_pivots(high: float, low: float, close: float) -> dict:
-    """Calculate Classic pivot levels."""
+    """Classic pivot formula (TradingView-style)."""
     P = (high + low + close) / 3
     return {
         "Pivot": P,
