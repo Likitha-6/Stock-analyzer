@@ -66,7 +66,6 @@ with tab1:
         "5 minutes": "5m",
         "15 minutes": "15m",
         "1 hour": "60m",
-        "4 hours": "240m",
         "1 day": "1d"
     }
     label = st.selectbox("Select Interval", list(interval_mapping.keys()), index=0)
@@ -103,17 +102,10 @@ with tab1:
     # Adjust period to load enough candles
     if interval == "1d":
         period = "1y"
-    elif interval == "240m":
-        if max_len >= 200:
-            period = "90d"
-        else:
-            period = "30d"
     elif interval == "60m":
-        required_days = (max_len // 6) + 5  # Roughly 6 candles/hour per day
-        period = f"{max(required_days, st.session_state.candle_days)}d"
+        period = "30d"
     else:
-        required_days = (max_len // 75) + 2  # Approx 75 candles/day for 5min interval
-        period = f"{max(required_days, st.session_state.candle_days)}d"
+        period = "15d"
 
 
     if interval != "1d" and chosen_sym:
