@@ -337,7 +337,7 @@ with tab3:
                 ratings_df = ticker.recommendations
                 #st.write(ratings_df)
                 # Create a month column (e.g., 'Jun', 'May')
-               from dateutil.relativedelta import relativedelta
+                from dateutil.relativedelta import relativedelta
 
                 def relative_month_label(offset_str):
                     try:
