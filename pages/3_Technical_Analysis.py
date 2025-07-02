@@ -198,7 +198,7 @@ with tab1:
                     st.caption(pivot_caption)
                 from indicators import detect_crossovers  # your own function
 
-                signals = detect_crossovers(df, short="EMA_20", long="EMA_50")
+                signals = detect_crossovers(df, short_col="EMA_20", long_col="EMA_50")
                 for idx in signals["buy"]:
                     fig.add_trace(go.Scatter(x=[df["x_label"][idx]], y=[df["Close"][idx]],
                                              mode='markers', marker=dict(color='green', size=10),
