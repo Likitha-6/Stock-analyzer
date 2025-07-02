@@ -218,7 +218,23 @@ with tab1:
             st.error(f"Error: {e}")
 
 with tab2:
-    st.write("📋 Coming soon: Insights for", chosen_sym or "selected stock")
+    if chosen_sym and not df.empty:
+        # Example: SMA Comparison
+        sma50 = df["Close"].rolling(50).mean().iloc[-1]
+        sma200 = df["Close"].rolling(200).mean().iloc[-1]
+        current_price = df["Close"].iloc[-1]
+
+        st.markdown(f"**Current Price:** ₹{current_price:.2f}")
+        st.markdown(f"**50-day SMA:** ₹{sma50:.2f}")
+        st.markdown(f"**200-day SMA:** ₹{sma200:.2f}")
+
+        if sma50 > sma200:
+            st.success("Golden Cross detected – potentially bullish trend.")
+        else:
+            st.warning("Death Cross detected – caution advised.")
+        
+        if current_price > sma50:
+            st.info("Price is above 50-day average – bullish strength.")
 
 with tab3:
     st.write("🔍 Customize your view here for", chosen_sym or "selected stock")
