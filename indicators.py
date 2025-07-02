@@ -66,7 +66,7 @@ def get_pivot_lines(df: pd.DataFrame, symbol: str, interval: str):
 
     # Only use previous day OHLC for intraday intervals
     if interval in ["5m", "15m", "60m", "240m"]:
-        base = get_previous_day_ohlc(symbol)
+        base = get_previous_period_ohlc(symbol)
     else:
         return [], "⏳ Pivot levels not supported for this interval."
 
