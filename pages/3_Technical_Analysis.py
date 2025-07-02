@@ -167,17 +167,19 @@ with tab1:
 
                 if sma_lengths:
                     df = apply_sma(df, sma_lengths)
-                    sma_col = f"SMA_{sma_lengths}"
-                    if sma_col in df.columns:
-                        valid_sma = df[sma_col].notna()
-                        if valid_sma.sum() > 10:
-                            fig.add_trace(go.Scatter(
-                                x=df["x_label"][valid_sma],
-                                y=df[sma_col][valid_sma],
-                                mode="lines",
-                                line=dict(width=1.5),
-                                name=f"SMA ({sma_len})"
-                            ))
+                    for sma_len in sma_lengths:
+                        sma_col = f"SMA_{sma_len}"
+                        if sma_col in df.columns:
+                            valid_sma = df[sma_col].notna()
+                            if valid_sma.sum() > 10:
+                                fig.add_trace(go.Scatter(
+                                    x=df["x_label"][valid_sma],
+                                    y=df[sma_col][valid_sma],
+                                    mode="lines",
+                                    line=dict(width=1.5),
+                                    name=f"SMA ({sma_len})"
+                                ))
+
 
 
                 if ema_lengths:
