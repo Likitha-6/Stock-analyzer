@@ -191,13 +191,27 @@ if chosen_sym:
                 if base:
                     pivots = calculate_classic_pivots(base["high"], base["low"], base["close"])
                     for label, value in pivots.items():
-                        fig.add_hline(
-                            y=value,
-                            line=dict(width=1, dash="dot"),
-                            annotation_text=label,
-                            annotation_position="right",
-                            line_color="#999999"
+                        fig.add_shape(
+                            type="line",
+                            x0=df["x_label"].iloc[0],
+                            x1=df["x_label"].iloc[-1],
+                            y0=value,
+                            y1=value,
+                            line=dict(color="#999999", width=1, dash="dot"),
+                            layer="below"  # 👈 doesn't stretch Y-axis
                         )
+                        fig.add_annotation(
+                            x=df["x_label"].iloc[-1],
+                            y=value,
+                            text=label,
+                            showarrow=False,
+                            xanchor="left",
+                            yanchor="middle",
+                            font=dict(color=font_color, size=10),
+                            bgcolor=bg_color,
+                            borderpad=2
+                        )
+
                     st.caption(f"📏 Pivot Source: {base['date']} – Classic")
             
             # Draw pivot levels as horizontal lines
