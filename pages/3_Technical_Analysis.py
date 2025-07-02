@@ -271,9 +271,9 @@ with tab2:
             st.caption(f"📊 14-day rolling volatility: **{volatility:.2f}**")
             vol_pct = (volatility / latest_price) * 100
 
-            if volatility > 5:
+            if vol_pct > 5:
                 st.warning("⚠️ High volatility — expect bigger price swings.")
-            elif volatility < 2:
+            elif vol_pct < 2:
                 st.info("🔒 Low volatility — stable price action.")
             else:
                 st.success("🔁 Moderate volatility — balanced risk/reward.")
