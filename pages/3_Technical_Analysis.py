@@ -10,7 +10,14 @@ st.title("📈 Indian Stock – Technical Analysis")
 # ─────────────────────────────
 # Theme selector
 # ─────────────────────────────
-theme = st.selectbox("Chart Theme", ["Light", "Dark"], index=0)
+col_title, col_theme = st.columns([6, 1])
+with col_title:
+    st.title("📈 Indian Stock – Technical Analysis")
+with col_theme:
+    dark_mode = st.checkbox("🌙 Dark Mode", value=False)
+
+theme = "Dark" if dark_mode else "Light"
+
 
 # Theme colors
 bg_color = "#FFFFFF" if theme == "Light" else "#0E1117"
