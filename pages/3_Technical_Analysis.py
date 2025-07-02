@@ -67,11 +67,20 @@ if interval == "1d":
 else:
     period = f"{st.session_state.candle_days}d"
 
-# Load more candles button
+
 if interval != "1d" and chosen_sym:
-    if st.button("🔁 Load older candles"):
-        st.session_state.candle_days += 1
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+        if st.button("🔁 Load older candles"):
+            st.session_state.candle_days += 1
+
+    with col2:
+        if st.button("♻️ Reset to 1 Day"):
+            st.session_state.candle_days = 1
+
     st.caption(f"Showing: **{st.session_state.candle_days} day(s)** of data")
+
 
 # ─────────────────────────────
 # Load and render chart
