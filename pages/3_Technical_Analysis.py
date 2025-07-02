@@ -25,19 +25,6 @@ increasing_color = "#00B26F" if theme == "Light" else "#26de81"
 decreasing_color = "#FF3C38" if theme == "Light" else "#eb3b5a"
 
 # ─────────────────────────────
-# Interval Dropdown
-# ─────────────────────────────
-interval_mapping = {
-    "5 minutes": "5m",
-    "15 minutes": "15m",
-    "1 hour": "60m",
-    "4 hours": "240m",
-    "1 day": "1d"
-}
-label = st.selectbox("Select Interval", list(interval_mapping.keys()), index=0)
-interval = interval_mapping[label]
-
-# ─────────────────────────────
 # Search bar (shared for all tabs)
 # ─────────────────────────────
 name_df = load_name_lookup()
@@ -69,6 +56,19 @@ tab1, tab2, tab3 = st.tabs(["📊 Chart", "📋 Insights", "🔍 View"])
 
 with tab1:
     # Load period state
+    # ─────────────────────────────
+    # Interval Dropdown
+    # ─────────────────────────────
+    interval_mapping = {
+        "5 minutes": "5m",
+        "15 minutes": "15m",
+        "1 hour": "60m",
+        "4 hours": "240m",
+        "1 day": "1d"
+    }
+    label = st.selectbox("Select Interval", list(interval_mapping.keys()), index=0)
+    interval = interval_mapping[label]
+
     if "candle_days" not in st.session_state:
         st.session_state.candle_days = 1
 
