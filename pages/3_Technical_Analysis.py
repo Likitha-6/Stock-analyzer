@@ -145,6 +145,16 @@ if chosen_sym:
             N = max(1, total_candles // max_ticks)
             tickvals = df["x_label"].iloc[::N].tolist()
             ticktext = df["x_label"].iloc[::N].tolist()
+            fig.add_shape(
+                type="line",
+                x0=df["x_label"].iloc[0],
+                x1=df["x_label"].iloc[-1],
+                y0=price_level,
+                y1=price_level,
+                line=dict(color="blue", width=1, dash="dash"),
+                name="Support"
+            )
+
 
             if sma_lengths:
                 df = apply_sma(df, sma_lengths)
