@@ -237,24 +237,28 @@ with tab1:
             st.error(f"Error: {e}")
 
 with tab2:
-    if chosen_sym and not df.empty:
-        # Ensure SMAs are calculated for insight display
-        if "SMA_50" not in df.columns:
-            df["SMA_50"] = df["Close"].rolling(window=50).mean()
-        if "SMA_200" not in df.columns:
-            df["SMA_200"] = df["Close"].rolling(window=200).mean()
+    if chosen_sym:
+        # Always fetch enough data for SMA 200
+        df_insights = yf.Ticker(chosen_sym + ".NS").history(interval="1d", period="12mo")
+        if not df_insights.empty:
+            df_insights = df_insights.reset_index()
+            df_insights["SMA_50"] = df_insights["Close"].rolling(window=50).mean()
+            df_insights["SMA_200"] = df_insights["Close"].rolling(window=200).mean()
 
-        latest_price = df["Close"].iloc[-1]
-        latest_sma50 = df["SMA_50"].iloc[-1]
-        latest_sma200 = df["SMA_200"].iloc[-1]
+            latest_price = df_insights["Close"].iloc[-1]
+            latest_sma50 = df_insights["SMA_50"].iloc[-1]
+            latest_sma200 = df_insights["SMA_200"].iloc[-1]
 
-        st.metric("💰 Current Price", f"₹{latest_price:,.2f}")
-        st.metric("📈 50-day SMA", f"₹{latest_sma50:,.2f}" if pd.notna(latest_sma50) else "Not Available")
-        st.metric("📉 200-day SMA", f"₹{latest_sma200:,.2f}" if pd.notna(latest_sma200) else "Not Available")
+            st.metric("💰 Current Price", f"₹{latest_price:,.2f}")
+            st.metric("📈 50-day SMA", f"₹{latest_sma50:,.2f}" if pd.notna(latest_sma50) else "Not Available")
+            st.metric("📉 200-day SMA", f"₹{latest_sma200:,.2f}" if pd.notna(latest_sma200) else "Not Available")
 
-        signal = detect_cross_signals(df)
-        if signal:
-            st.info(signal)
+            signal = detect_cross_signals(df_insights)
+            if signal:
+                st.info(signal)
+        else:
+            st.warning("Not enough data to compute insights.")
+
 
 
 with tab3:
