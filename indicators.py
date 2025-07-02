@@ -3,15 +3,15 @@ from pivot_utils import get_previous_period_ohlc, calculate_classic_pivots
 
 def apply_sma(df: pd.DataFrame, lengths: list) -> pd.DataFrame:
     for sma_len in sma_lengths:
-    col_name = f"SMA_{sma_len}"
-    if col_name in df.columns and df[col_name].notna().sum() > 10:  # only if sufficient data
-        fig.add_trace(go.Scatter(
-            x=df["x_label"],
-            y=df[col_name],
-            mode="lines",
-            line=dict(width=1.5),
-            name=f"SMA ({sma_len})"
-        ))
+        col_name = f"SMA_{sma_len}"
+        if col_name in df.columns and df[col_name].notna().sum() > 10:  # only if sufficient data
+            fig.add_trace(go.Scatter(
+                x=df["x_label"],
+                y=df[col_name],
+                mode="lines",
+                line=dict(width=1.5),
+                name=f"SMA ({sma_len})"
+            ))
 
     return df
 
