@@ -2,43 +2,15 @@ import streamlit as st
 from streamlit_lightweight_charts import renderLightweightCharts
 import yfinance as yf
 import pandas as pd
-from common.data import load_name_lookup  # Make sure this exists and returns a DataFrame with 'Symbol' and 'Company Name'
 
-st.set_page_config(page_title="📉 Technical Analysis", page_icon="📊", layout="wide")
-st.title("📉 Technical Analysis – TradingView-style Chart")
+# Dummy search for now — replace with your lookup if needed
+st.set_page_config(page_title="📉 Technical Analysis", layout="wide")
+st.title("📉 Technical Analysis – TradingView-style")
 
-# ─────────────────────────────
-# Load stock list
-# ─────────────────────────────
-name_df = load_name_lookup()
-symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
+symbol = st.text_input("Enter NSE Symbol (e.g., INFY, RELIANCE):").upper().strip()
 
-# ─────────────────────────────
-# Symbol search
-# ─────────────────────────────
-query = st.text_input("Search by symbol or company name").strip()
-chosen_sym = None
-
-if query:
-    mask = (
-        name_df["Symbol"].str.contains(query, case=False, na=False) |
-        name_df["Company Name"].str.contains(query, case=False, na=False)
-    )
-    matches = name_df[mask]
-    if matches.empty:
-        st.warning("No match found.")
-    else:
-        chosen_option = st.selectbox(
-            "Select Stock",
-            matches["Symbol"] + " - " + matches["Company Name"]
-        )
-        chosen_sym = chosen_option.split(" - ")[0]
-
-# ─────────────────────────────
-# Chart Rendering
-# ─────────────────────────────
-if chosen_sym:
-    stock = yf.Ticker(chosen_sym + ".NS")
+if symbol:
+    stock = yf.Ticker(symbol + ".NS")
     df = stock.history(period="3mo", interval="1d")
 
     if df.empty:
@@ -47,21 +19,21 @@ if chosen_sym:
         df = df.reset_index()
         df["time"] = df["Date"].dt.strftime("%Y-%m-%d")
 
-        ohlc = [
+        ohlc_data = [
             {
                 "time": row["time"],
-                "open": row["Open"],
-                "high": row["High"],
-                "low": row["Low"],
-                "close": row["Close"]
+                "open": round(row["Open"], 2),
+                "high": round(row["High"], 2),
+                "low": round(row["Low"], 2),
+                "close": round(row["Close"], 2)
             }
             for _, row in df.iterrows()
         ]
 
-        volume = [
+        volume_data = [
             {
                 "time": row["time"],
-                "value": row["Volume"],
+                "value": int(row["Volume"]),
                 "color": "green" if row["Close"] >= row["Open"] else "red"
             }
             for _, row in df.iterrows()
@@ -70,24 +42,20 @@ if chosen_sym:
         chart_config = [
             {
                 "type": "Candlestick",
-                "data": ohlc,
+                "data": ohlc_data
             },
             {
                 "type": "Histogram",
-                "data": volume,
+                "data": volume_data,
                 "options": {
-                    "color": "rgba(0,150,136,0.5)",
+                    "color": "rgba(76,175,80,0.5)",
                     "priceFormat": {"type": "volume"},
-                    "priceScaleId": "",
+                    "priceScaleId": ""
                 },
                 "priceScale": {
-                    "scaleMargins": {
-                        "top": 0.8,
-                        "bottom": 0,
-                    },
-                },
+                    "scaleMargins": {"top": 0.8, "bottom": 0}
+                }
             }
         ]
 
-        st.subheader(f"📊 {symbol2name.get(chosen_sym, chosen_sym)} – {chosen_sym}.NS")
         renderLightweightCharts(chart_config, height=500)
