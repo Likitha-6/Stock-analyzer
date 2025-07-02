@@ -169,7 +169,7 @@ if chosen_sym:
                     ))
 
             if show_pivots:
-                pivot_lines, pivot_caption = get_pivot_lines(df, chosen_sym + ".NS", interval, x_col, bg_color, font_color)
+                pivot_lines, pivot_caption = get_pivot_lines(df, chosen_sym + ".NS", interval)
                 for line in pivot_lines:
                     fig.add_shape(**line["shape"])
                     fig.add_annotation(**line["annotation"])
