@@ -22,12 +22,15 @@ def detect_cross_signals(df: pd.DataFrame) -> str:
     prev_200 = df["SMA_200"].iloc[-2]
 
     if pd.notna(latest_50) and pd.notna(latest_200):
+        # Golden Cross
         if prev_50 < prev_200 and latest_50 >= latest_200:
             return "📈 Short-term momentum (50-day) is overtaking long-term momentum (200-day). Now might be a good time to buy."
+        # Death Cross
         elif prev_50 > prev_200 and latest_50 <= latest_200:
-            return "⚠️ Short-term momentum (50-day) is falling below long-term momentum (200-day). This could signal weakening price strength — caution is advised before buying."
+            return "⚠️ Long-term momentum (200-day) is overtaking short-term momentum (50-day). This could indicate potential weakness. Consider waiting or reducing exposure."
 
     return ""
+
 
 
 def get_pivot_lines(df: pd.DataFrame, symbol: str, interval: str):
