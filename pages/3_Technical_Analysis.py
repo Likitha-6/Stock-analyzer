@@ -3,6 +3,8 @@ import yfinance as yf
 import plotly.graph_objects as go
 import pandas as pd
 from common.data import load_name_lookup
+from pivot_utils import get_previous_period_ohlc, calculate_classic_pivots
+
 
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 
@@ -57,7 +59,6 @@ if show_ema:
 else:
     ema_lengths = []
 
-show_pivots = st.checkbox("📏 Show Pivot Points (Daily)", value=False)
 
 
 
@@ -144,80 +145,6 @@ if chosen_sym:
             df = df.reset_index()
             x_col = "Datetime" if "Datetime" in df.columns else "Date"
             df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M") if "m" in interval or "h" in interval else df[x_col].dt.strftime("%d/%m")
-            # Compute classic pivot points from previous day's data
-            # ─────────────────────────────
-            # Pivot Points – TradingView-style (fixed from previous day/week)
-            # ─────────────────────────────
-            pivot_levels = {}
-            
-            if show_pivots:
-                # Get fixed daily or weekly OHLC regardless of current chart interval
-                pivot_base_data = yf.Ticker(chosen_sym + ".NS").history(interval="1d", period="7d").reset_index()
-            
-                if len(pivot_base_data) >= 2:
-                    prev_day = pivot_base_data.iloc[-2]  # Previous full day
-                    high = prev_day["High"]
-                    low = prev_day["Low"]
-                    close = prev_day["Close"]
-            
-                    # Choose the pivot type
-                    pivot_type = st.selectbox("Pivot Type", ["Classic", "Fibonacci", "Woodie", "Camarilla", "Demark"], index=0)
-            
-                    def calculate_pivots(high, low, close, pivot_type):
-                        if pivot_type == "Classic":
-                            P = (high + low + close) / 3
-                            R1 = 2 * P - low
-                            S1 = 2 * P - high
-                            R2 = P + (high - low)
-                            S2 = P - (high - low)
-                            R3 = high + 2 * (P - low)
-                            S3 = low - 2 * (high - P)
-                        elif pivot_type == "Fibonacci":
-                            P = (high + low + close) / 3
-                            R1 = P + 0.382 * (high - low)
-                            S1 = P - 0.382 * (high - low)
-                            R2 = P + 0.618 * (high - low)
-                            S2 = P - 0.618 * (high - low)
-                            R3 = P + 1.000 * (high - low)
-                            S3 = P - 1.000 * (high - low)
-                        elif pivot_type == "Woodie":
-                            P = (high + low + 2 * close) / 4
-                            R1 = 2 * P - low
-                            S1 = 2 * P - high
-                            R2 = P + (high - low)
-                            S2 = P - (high - low)
-                            R3 = high + 2 * (P - low)
-                            S3 = low - 2 * (high - P)
-                        elif pivot_type == "Camarilla":
-                            P = close
-                            range_ = high - low
-                            R1 = close + 0.0916 * range_
-                            S1 = close - 0.0916 * range_
-                            R2 = close + 0.183 * range_
-                            S2 = close - 0.183 * range_
-                            R3 = close + 0.275 * range_
-                            S3 = close - 0.275 * range_
-                        elif pivot_type == "Demark":
-                            open_ = prev_day["Open"]
-                            if close < open_:
-                                X = high + (2 * low) + close
-                            elif close > open_:
-                                X = (2 * high) + low + close
-                            else:
-                                X = high + low + (2 * close)
-                            P = X / 4
-                            R1 = X / 2 - low
-                            S1 = X / 2 - high
-                            R2 = R3 = S2 = S3 = None  # Not defined in Demark
-            
-                        return {
-                            "Pivot": P,
-                            "R1": R1, "R2": R2, "R3": R3,
-                            "S1": S1, "S2": S2, "S3": S3
-                        }
-            
-                    pivot_levels = calculate_pivots(high, low, close, pivot_type)
-            
 
             fig = go.Figure()
             fig.add_trace(go.Candlestick(
@@ -267,7 +194,20 @@ if chosen_sym:
                     annotation_position="right",
                     line_color="#999999"
                 )
-
+            if show_pivots and chosen_sym:
+                base = get_previous_period_ohlc(chosen_sym + ".NS", interval)
+                if base:
+                    pivots = calculate_classic_pivots(base["high"], base["low"], base["close"])
+                    for label, value in pivots.items():
+                        fig.add_hline(
+                            y=value,
+                            line=dict(width=1, dash="dot"),
+                            annotation_text=label,
+                            annotation_position="right",
+                            line_color="#999999"
+                        )
+                    st.caption(f"📏 Pivot Source: {base['date']} – Classic")
+            
 
             fig.update_layout(
                 title=f"{chosen_sym}.NS – {label} Chart ({period})",
