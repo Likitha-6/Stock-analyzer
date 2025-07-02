@@ -72,14 +72,29 @@ with tab1:
     if "candle_days" not in st.session_state:
         st.session_state.candle_days = 1
 
+    # Calculate the maximum indicator length needed
+    max_len = max(sma_lengths + ema_lengths + [0])
+    
+    # Adjust period to load enough candles
     if interval == "1d":
-        period = "3mo"
+        if max_len >= 200:
+            period = "12mo"
+        elif max_len >= 100:
+            period = "6mo"
+        else:
+            period = "3mo"
     elif interval == "240m":
-        period = "30d"
+        if max_len >= 200:
+            period = "90d"
+        else:
+            period = "30d"
     elif interval == "60m":
-        period = f"{max(st.session_state.candle_days, 5)}d"
+        required_days = (max_len // 6) + 5  # Roughly 6 candles/hour per day
+        period = f"{max(required_days, st.session_state.candle_days)}d"
     else:
-        period = f"{st.session_state.candle_days}d"
+        required_days = (max_len // 75) + 2  # Approx 75 candles/day for 5min interval
+        period = f"{max(required_days, st.session_state.candle_days)}d"
+
 
     if interval != "1d" and chosen_sym:
         col1, col2 = st.columns([1, 1])
