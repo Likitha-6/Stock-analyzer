@@ -6,9 +6,6 @@ import pandas as pd
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 st.title("📈 Indian Stock – Technical Analysis")
 
-# ─────────────────────────────
-# Interval & Symbol Input
-# ─────────────────────────────
 interval_mapping = {
     "5 minutes": "5m",
     "15 minutes": "15m",
@@ -22,26 +19,26 @@ interval = interval_mapping[label]
 
 symbol = st.text_input("Enter NSE Symbol (e.g., INFY, RELIANCE):").upper().strip()
 
-# ─────────────────────────────
-# Manage session state for loading older candles
-# ─────────────────────────────
+# Session state for period tracking
 if "candle_days" not in st.session_state:
-    st.session_state.candle_days = 1  # Start with 1 day for 5m/15m
+    st.session_state.candle_days = 1
 
+# Adjust period based on interval
 if interval == "1d":
-    period = "3mo"  # For daily candles, just show a fixed 3 months
+    period = "3mo"
 else:
-    period = f"{st.session_state.candle_days}d"  # Dynamic for intraday
+    period = f"{st.session_state.candle_days}d"
 
-# Load more button
+# Button to increment days shown
 if interval != "1d":
     if st.button("🔁 Load older candles"):
-        st.session_state.candle_days += 1
-        st.experimental_rerun()
+        st.session_state.candle_days += 1  # Don't rerun, just update
 
-# ─────────────────────────────
-# Fetch and plot chart
-# ─────────────────────────────
+# Display how many days we're loading
+if interval != "1d":
+    st.caption(f"Showing: **{st.session_state.candle_days} day(s)** of data")
+
+# Load and display chart
 if symbol:
     try:
         df = yf.Ticker(symbol + ".NS").history(interval=interval, period=period)
@@ -52,11 +49,7 @@ if symbol:
             df = df.reset_index()
             x_col = "Datetime" if "Datetime" in df.columns else "Date"
 
-            # Format for trimmed x-axis
-            if "m" in interval or "h" in interval:
-                df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M")
-            else:
-                df["x_label"] = df[x_col].dt.strftime("%d/%m")
+            df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M") if "m" in interval or "h" in interval else df[x_col].dt.strftime("%d/%m")
 
             fig = go.Figure()
             fig.add_trace(go.Candlestick(
@@ -81,5 +74,3 @@ if symbol:
 
     except Exception as e:
         st.error(f"Error: {e}")
-
-
