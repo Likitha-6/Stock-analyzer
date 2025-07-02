@@ -184,16 +184,6 @@ if chosen_sym:
                     line=dict(width=1.5, dash="solid"),
                     name=f"EMA ({ema_len})"
                 ))
-
-            # Draw pivot levels as horizontal lines
-            for name, value in pivot_levels.items():
-                fig.add_hline(
-                    y=value,
-                    line=dict(width=1, dash="dot"),
-                    annotation_text=name,
-                    annotation_position="right",
-                    line_color="#999999"
-                )
             if show_pivots and chosen_sym:
                 base = get_previous_period_ohlc(chosen_sym + ".NS", interval)
                 if base:
@@ -208,6 +198,15 @@ if chosen_sym:
                         )
                     st.caption(f"📏 Pivot Source: {base['date']} – Classic")
             
+            # Draw pivot levels as horizontal lines
+            for name, value in pivot_levels.items():
+                fig.add_hline(
+                    y=value,
+                    line=dict(width=1, dash="dot"),
+                    annotation_text=name,
+                    annotation_position="right",
+                    line_color="#999999"
+                )
 
             fig.update_layout(
                 title=f"{chosen_sym}.NS – {label} Chart ({period})",
