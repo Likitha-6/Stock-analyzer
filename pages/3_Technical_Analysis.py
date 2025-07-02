@@ -57,6 +57,8 @@ if show_ema:
 else:
     ema_lengths = []
 
+show_pivots = st.checkbox("📏 Show Pivot Points (Daily)", value=False)
+
 
 
 
@@ -130,6 +132,7 @@ if interval != "1d" and chosen_sym:
 if chosen_sym:
     try:
         df = yf.Ticker(chosen_sym + ".NS").history(interval=interval, period=period)
+        df = df.reset_index()
         # Compute classic pivot points from previous day's data
         pivot_levels = {}
         if show_pivots and interval != "1d" and len(df) > 1:
