@@ -372,14 +372,18 @@ with tab3:
                 
                 fig.update_layout(
                     barmode="group",
-                    title="📊 Analyst Recommendations – Monthly Breakdown",
+                    title="📊 Analyst Recommendations (last 6 months)",
                     xaxis_title="Month",
                     yaxis_title="Number of Ratings",
-                    legend_title="Recommendation",
-                    plot_bgcolor="#FFFFFF",
-                    paper_bgcolor="#FFFFFF",
+                    legend_title="Rating",
+                    plot_bgcolor="#0E1117",   # Dark background
+                    paper_bgcolor="#0E1117",
+                    font=dict(color="white"),  # White font
+                    xaxis=dict(color="white"),
+                    yaxis=dict(color="white"),
                     height=400
                 )
+
                 
                 st.plotly_chart(fig, use_container_width=True)
 
