@@ -337,7 +337,8 @@ with tab3:
                 ratings_df = ticker.recommendations
                 #st.write(ratings_df)
 
-                
+                ratings_df["Month"] = pd.to_datetime(ratings_df["Period"], errors='coerce').dt.strftime('%b')
+
                 # Compute Buy, Hold, Sell categories
                 ratings_df["Buy"] = ratings_df["strongBuy"] + ratings_df["buy"]
                 ratings_df["Sell"] = ratings_df["sell"] + ratings_df["strongSell"]
