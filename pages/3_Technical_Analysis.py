@@ -6,6 +6,8 @@ from common.data import load_name_lookup
 from indicators import apply_sma, apply_ema, get_pivot_lines
 from indicators import detect_cross_signals,compute_rsi
 from indicators import apply_smma
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 
@@ -286,7 +288,7 @@ with tab2:
             df_insights["RSI"] = compute_rsi(df_insights)
 
             latest_rsi = df_insights["RSI"].iloc[-1]
-            st.metric("📊 RSI (14-day)", f"{latest_rsi:.2f}")
+            #st.metric("📊 RSI (14-day)", f"{latest_rsi:.2f}")
             
             if latest_rsi > 70:
                 st.warning("📈 The stock is overbought — momentum may slow, and there could be a short-term dip or consolidation.")
@@ -332,7 +334,16 @@ with tab3:
                 ratings_df = ticker.recommendations
                 #st.write(ratings_df)
 
-                ratings_df["Month"] = ratings_df["period"].apply(lambda x: x if isinstance(x, str) else str(x))
+                def convert_to_month(period_label):
+                    try:
+                        offset = int(str(period_label).replace("m", ""))
+                        month = datetime.today() + relativedelta(months=offset)
+                        return month.strftime("%b")  # e.g., 'Jul', 'Jun'
+                    except:
+                        return str(period_label)
+                
+                ratings_df["Month"] = ratings_df["Period"].apply(convert_to_month)
+                
 
                 # Compute Buy, Hold, Sell categories
                 ratings_df["Buy"] = ratings_df["strongBuy"] + ratings_df["buy"]
