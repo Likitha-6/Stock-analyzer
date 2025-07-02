@@ -252,6 +252,8 @@ with tab2:
             df_insights = df_insights.reset_index()
             df_insights["SMA_50"] = df_insights["Close"].rolling(window=50).mean()
             df_insights["SMA_200"] = df_insights["Close"].rolling(window=200).mean()
+            df_insights["EMA_20"] = df_insights["Close"].ewm(span=20, adjust=False).mean()
+            
 
             latest_price = df_insights["Close"].iloc[-1]
             latest_sma50 = df_insights["SMA_50"].iloc[-1]
@@ -259,6 +261,13 @@ with tab2:
             st.metric("💰 Current Price", f"₹{latest_price:,.2f}")
             st.metric("📈 50-day SMA", f"₹{latest_sma50:,.2f}" if pd.notna(latest_sma50) else "Not Available")
             st.metric("📉 200-day SMA", f"₹{latest_sma200:,.2f}" if pd.notna(latest_sma200) else "Not Available")
+            if df_insights["EMA_20"].iloc[-1] > df_insights["EMA_20"].iloc[-5]:
+                st.success("📈 20-day EMA is sloping upward — short-term trend is strengthening.")
+            else:
+                st.warning("📉 20-day EMA is sloping downward — short-term trend may be weakening.")
+
+            volatility = df_insights["Close"].rolling(window=14).std().iloc[-1]
+            st.caption(f"📊 14-day rolling volatility: **{volatility:.2f}**")
 
             signal = detect_cross_signals(df_insights)
             if signal:
