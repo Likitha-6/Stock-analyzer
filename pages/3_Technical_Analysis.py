@@ -141,59 +141,59 @@ if chosen_sym:
             x_col = "Datetime" if "Datetime" in df.columns else "Date"
             df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M") if "m" in interval or "h" in interval else df[x_col].dt.strftime("%d/%m")
             # Compute classic pivot points from previous day's data
-        pivot_levels = {}
-
-        if show_pivots and len(df) > 10:
-            df_pivot = df.copy()
-            df_pivot = df_pivot.set_index(df[x_col])  # Already Date or Datetime
-        
-            if interval in ["5m", "15m", "60m", "240m"]:
-                # Intraday: use previous day's OHLC
-                df_daily = df_pivot.resample("1D").agg({
-                    "Open": "first",
-                    "High": "max",
-                    "Low": "min",
-                    "Close": "last"
-                }).dropna()
-        
-                if len(df_daily) >= 2:
-                    prev = df_daily.iloc[-2]
-        
-            elif interval == "1d":
-                # Daily chart: use previous week's OHLC
-                df_weekly = df_pivot.resample("W-MON").agg({
-                    "Open": "first",
-                    "High": "max",
-                    "Low": "min",
-                    "Close": "last"
-                }).dropna()
-        
-                if len(df_weekly) >= 2:
-                    prev = df_weekly.iloc[-2]
-        
-            else:
-                prev = None
-        
-            if 'prev' in locals() and prev is not None:
-                high = prev["High"]
-                low = prev["Low"]
-                close = prev["Close"]
-        
-                P = (high + low + close) / 3
-                R1 = 2 * P - low
-                S1 = 2 * P - high
-                R2 = P + (high - low)
-                S2 = P - (high - low)
-                R3 = high + 2 * (P - low)
-                S3 = low - 2 * (high - P)
-        
-                pivot_levels = {
-                    "Pivot": P,
-                    "R1": R1, "R2": R2, "R3": R3,
-                    "S1": S1, "S2": S2, "S3": S3
-                }
-
-
+            pivot_levels = {}
+    
+            if show_pivots and len(df) > 10:
+                df_pivot = df.copy()
+                df_pivot = df_pivot.set_index(df[x_col])  # Already Date or Datetime
+            
+                if interval in ["5m", "15m", "60m", "240m"]:
+                    # Intraday: use previous day's OHLC
+                    df_daily = df_pivot.resample("1D").agg({
+                        "Open": "first",
+                        "High": "max",
+                        "Low": "min",
+                        "Close": "last"
+                    }).dropna()
+            
+                    if len(df_daily) >= 2:
+                        prev = df_daily.iloc[-2]
+            
+                elif interval == "1d":
+                    # Daily chart: use previous week's OHLC
+                    df_weekly = df_pivot.resample("W-MON").agg({
+                        "Open": "first",
+                        "High": "max",
+                        "Low": "min",
+                        "Close": "last"
+                    }).dropna()
+            
+                    if len(df_weekly) >= 2:
+                        prev = df_weekly.iloc[-2]
+            
+                else:
+                    prev = None
+            
+                if 'prev' in locals() and prev is not None:
+                    high = prev["High"]
+                    low = prev["Low"]
+                    close = prev["Close"]
+            
+                    P = (high + low + close) / 3
+                    R1 = 2 * P - low
+                    S1 = 2 * P - high
+                    R2 = P + (high - low)
+                    S2 = P - (high - low)
+                    R3 = high + 2 * (P - low)
+                    S3 = low - 2 * (high - P)
+            
+                    pivot_levels = {
+                        "Pivot": P,
+                        "R1": R1, "R2": R2, "R3": R3,
+                        "S1": S1, "S2": S2, "S3": S3
+                    }
+    
+    
 
             fig = go.Figure()
             fig.add_trace(go.Candlestick(
