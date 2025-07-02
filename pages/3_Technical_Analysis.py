@@ -251,7 +251,6 @@ with tab2:
         
         if current_price > sma50:
             st.info("Price is above 50-day average – bullish strength.")
-        st.write(f"Loaded {len(df)} candles")
 
 with tab3:
     st.write("🔍 Customize your view here for", chosen_sym or "selected stock")
