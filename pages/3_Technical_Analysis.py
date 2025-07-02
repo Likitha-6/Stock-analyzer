@@ -182,6 +182,7 @@ with tab1:
 
 
 
+
                 if ema_lengths:
                     df = apply_ema(df, ema_lengths)
                     for ema_len in ema_lengths:
