@@ -235,11 +235,16 @@ with tab1:
             st.error(f"Error: {e}")
 
 with tab2:
-    if chosen_sym and not df.empty:
-        # Example: SMA Comparison
+    df = st.session_state.get("df_stock", None)
+    if chosen_sym and df is not None and not df.empty:
         signal = detect_cross_signals(df)
         if signal:
             st.info(signal)
+        else:
+            st.warning("No crossover momentum signal detected.")
+    else:
+        st.info("📌 Please select a stock and interval to view insights.")
+
 
 with tab3:
     st.write("🔍 Customize your view here for", chosen_sym or "selected stock")
