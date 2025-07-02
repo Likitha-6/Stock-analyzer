@@ -98,8 +98,7 @@ if chosen_sym:
                 decreasing_line_color=decreasing_color,
                 name="Price"
             ))
-
-           fig.update_layout(
+            fig.update_layout(
                 title=f"{chosen_sym}.NS – {label} Chart ({period})",
                 xaxis_title="Date/Time",
                 yaxis_title="Price",
