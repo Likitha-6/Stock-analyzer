@@ -32,7 +32,6 @@ interval_mapping = {
     "5 minutes": "5m",
     "15 minutes": "15m",
     "1 hour": "60m",
-    "4 hours": "240m",
     "1 day": "1d"
 }
 label = st.selectbox("Select Interval", list(interval_mapping.keys()), index=0)
