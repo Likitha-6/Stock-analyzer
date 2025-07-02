@@ -133,7 +133,14 @@ if chosen_sym:
     try:
         df = yf.Ticker(chosen_sym + ".NS").history(interval=interval, period=period)
         df = df.reset_index()
-        # Compute classic pivot points from previous day's data
+        
+        if df.empty:
+            st.error("No data found.")
+        else:
+            df = df.reset_index()
+            x_col = "Datetime" if "Datetime" in df.columns else "Date"
+            df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M") if "m" in interval or "h" in interval else df[x_col].dt.strftime("%d/%m")
+            # Compute classic pivot points from previous day's data
         pivot_levels = {}
 
         if show_pivots and len(df) > 10:
@@ -187,12 +194,6 @@ if chosen_sym:
                 }
 
 
-        if df.empty:
-            st.error("No data found.")
-        else:
-            df = df.reset_index()
-            x_col = "Datetime" if "Datetime" in df.columns else "Date"
-            df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M") if "m" in interval or "h" in interval else df[x_col].dt.strftime("%d/%m")
 
             fig = go.Figure()
             fig.add_trace(go.Candlestick(
