@@ -3,8 +3,7 @@ import yfinance as yf
 import plotly.graph_objects as go
 import pandas as pd
 from common.data import load_name_lookup
-from pivot_utils import get_previous_period_ohlc, calculate_classic_pivots
-
+from indicators import apply_sma, apply_ema, get_pivot_lines
 
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 
@@ -19,7 +18,6 @@ with col_theme:
 
 theme = "Dark" if dark_mode else "Light"
 
-
 # Theme colors
 bg_color = "#FFFFFF" if theme == "Light" else "#0E1117"
 font_color = "#000000" if theme == "Light" else "#FFFFFF"
@@ -29,39 +27,26 @@ decreasing_color = "#FF3C38" if theme == "Light" else "#eb3b5a"
 # ─────────────────────────────
 # Indicator toggles with user-defined lengths
 # ─────────────────────────────
+all_indicators = st.multiselect(
+    "Select Indicators",
+    ["SMA", "EMA", "Pivot Levels"],
+    default=[]
+)
 
-# ─────────────────────────────
-# Multi-Indicator Selector (SMA/EMA)
-# ─────────────────────────────
-# ─────────────────────────────
-# SMA / EMA toggle and input
-# ─────────────────────────────
-col_sma_chk, col_ema_chk = st.columns(2)
+sma_lengths = []
+ema_lengths = []
+show_pivots = False
 
-with col_sma_chk:
-    show_sma = st.checkbox("📉 Show SMA")
-with col_ema_chk:
-    show_ema = st.checkbox("📈 Show EMA")
-
-col_sma_input, col_ema_input = st.columns(2)
-
-if show_sma:
-    with col_sma_input:
-        sma_input = st.text_input("SMA Lengths (comma-separated)", value="20")
+if "SMA" in all_indicators:
+    sma_input = st.text_input("SMA Lengths (comma-separated)", value="20")
     sma_lengths = sorted(set(int(x.strip()) for x in sma_input.split(",") if x.strip().isdigit()))
-else:
-    sma_lengths = []
 
-if show_ema:
-    with col_ema_input:
-        ema_input = st.text_input("EMA Lengths (comma-separated)", value="20")
+if "EMA" in all_indicators:
+    ema_input = st.text_input("EMA Lengths (comma-separated)", value="20")
     ema_lengths = sorted(set(int(x.strip()) for x in ema_input.split(",") if x.strip().isdigit()))
-else:
-    ema_lengths = []
 
-
-
-
+if "Pivot Levels" in all_indicators:
+    show_pivots = True
 
 # ─────────────────────────────
 # Interval Dropdown
@@ -84,8 +69,6 @@ symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
 
 search_query = st.text_input("Search by Symbol or Company Name").strip().lower()
 chosen_sym = None
-show_pivots = st.checkbox("📌 Show Pivot Levels", value=True)
-pivot_levels = {}
 
 if search_query:
     mask = (
@@ -111,13 +94,12 @@ if "candle_days" not in st.session_state:
 
 if interval == "1d":
     period = "3mo"
-elif interval == "240m":  # 4 hours
-    period = "30d" 
+elif interval == "240m":
+    period = "30d"
 elif interval == "60m":
     period = f"{max(st.session_state.candle_days, 5)}d"
 else:
     period = f"{st.session_state.candle_days}d"
-
 
 if interval != "1d" and chosen_sym:
     col1, col2 = st.columns([1, 1])
@@ -132,7 +114,6 @@ if interval != "1d" and chosen_sym:
 
     st.caption(f"Showing: **{st.session_state.candle_days} day(s)** of data")
 
-
 # ─────────────────────────────
 # Load and render chart
 # ─────────────────────────────
@@ -140,7 +121,7 @@ if chosen_sym:
     try:
         df = yf.Ticker(chosen_sym + ".NS").history(interval=interval, period=period)
         df = df.reset_index()
-        
+
         if df.empty:
             st.error("No data found.")
         else:
@@ -160,69 +141,39 @@ if chosen_sym:
                 name="Price"
             ))
             total_candles = len(df)
-            max_ticks = 15  # target max number of X-axis labels visible
+            max_ticks = 15
             N = max(1, total_candles // max_ticks)
-            
             tickvals = df["x_label"].iloc[::N].tolist()
             ticktext = df["x_label"].iloc[::N].tolist()
-            # Add SMA overlays
-            for sma_len in sma_lengths:
-                df[f"SMA_{sma_len}"] = df["Close"].rolling(window=sma_len).mean()
-                fig.add_trace(go.Scatter(
-                    x=df["x_label"],
-                    y=df[f"SMA_{sma_len}"],
-                    mode="lines",
-                    line=dict(width=1.5),
-                    name=f"SMA ({sma_len})"
-                ))
-            
-            # Add EMA overlays
-            for ema_len in ema_lengths:
-                df[f"EMA_{ema_len}"] = df["Close"].ewm(span=ema_len, adjust=False).mean()
-                fig.add_trace(go.Scatter(
-                    x=df["x_label"],
-                    y=df[f"EMA_{ema_len}"],
-                    mode="lines",
-                    line=dict(width=1.5, dash="solid"),
-                    name=f"EMA ({ema_len})"
-                ))
-            if show_pivots and chosen_sym:
-                base = get_previous_period_ohlc(chosen_sym + ".NS", interval)
-                if base:
-                    pivots = calculate_classic_pivots(base["high"], base["low"], base["close"])
-                    for label, value in pivots.items():
-                        fig.add_shape(
-                            type="line",
-                            x0=df["x_label"].iloc[0],
-                            x1=df["x_label"].iloc[-1],
-                            y0=value,
-                            y1=value,
-                            line=dict(color="#999999", width=1, dash="dot"),
-                            layer="below"  # 👈 doesn't stretch Y-axis
-                        )
-                        fig.add_annotation(
-                            x=df["x_label"].iloc[-1],
-                            y=value,
-                            text=label,
-                            showarrow=False,
-                            xanchor="left",
-                            yanchor="middle",
-                            font=dict(color=font_color, size=10),
-                            bgcolor=bg_color,
-                            borderpad=2
-                        )
 
-                    st.caption(f"📏 Pivot Source: {base['date']} – Classic")
-            
-            # Draw pivot levels as horizontal lines
-            for name, value in pivot_levels.items():
-                fig.add_hline(
-                    y=value,
-                    line=dict(width=1, dash="dot"),
-                    annotation_text=name,
-                    annotation_position="right",
-                    line_color="#999999"
-                )
+            if sma_lengths:
+                df = apply_sma(df, sma_lengths)
+                for sma_len in sma_lengths:
+                    fig.add_trace(go.Scatter(
+                        x=df["x_label"],
+                        y=df[f"SMA_{sma_len}"],
+                        mode="lines",
+                        line=dict(width=1.5),
+                        name=f"SMA ({sma_len})"
+                    ))
+
+            if ema_lengths:
+                df = apply_ema(df, ema_lengths)
+                for ema_len in ema_lengths:
+                    fig.add_trace(go.Scatter(
+                        x=df["x_label"],
+                        y=df[f"EMA_{ema_len}"],
+                        mode="lines",
+                        line=dict(width=1.5, dash="solid"),
+                        name=f"EMA ({ema_len})"
+                    ))
+
+            if show_pivots:
+                pivot_lines, pivot_caption = get_pivot_lines(df, chosen_sym + ".NS", interval, x_col, bg_color, font_color)
+                for line in pivot_lines:
+                    fig.add_shape(**line["shape"])
+                    fig.add_annotation(**line["annotation"])
+                st.caption(pivot_caption)
 
             fig.update_layout(
                 title=f"{chosen_sym}.NS – {label} Chart ({period})",
@@ -245,7 +196,7 @@ if chosen_sym:
                 plot_bgcolor=bg_color,
                 paper_bgcolor=bg_color,
                 font=dict(color=font_color),
-                legend=dict(font=dict(color=font_color)),  # ✅ Add this
+                legend=dict(font=dict(color=font_color)),
                 xaxis_rangeslider_visible=False,
                 dragmode="pan",
                 hovermode="x unified",
@@ -253,20 +204,17 @@ if chosen_sym:
                 width=900
             )
 
-            
-
             st.plotly_chart(
                 fig,
                 use_container_width=False,
                 config={
-                    "scrollZoom": True,             # 🔍 Zoom with scroll wheel
-                    "displayModeBar": True,         # 🛠 Show toolbar for zoom/pan
+                    "scrollZoom": True,
+                    "displayModeBar": True,
                     "modeBarButtonsToRemove": ["zoom2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d"],
                     "displaylogo": False
                 }
             )
 
-
-
     except Exception as e:
         st.error(f"Error: {e}")
+
