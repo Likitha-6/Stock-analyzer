@@ -334,7 +334,7 @@ with tab3:
                 df_merged["Return"] = df_merged["Close"].pct_change()
                 df_merged["NIFTY_Return"] = df_merged["Close_NIFTY"].pct_change()
 
-                st.markdown("### 📈 Price Performance")
+                #st.markdown("### 📈 Price Performance")
                 change_1d = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[-2] - 1) * 100
                 change_5d = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[-6] - 1) * 100
                 change_1mo = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[-22] - 1) * 100
@@ -345,7 +345,7 @@ with tab3:
                 st.metric("1 Month", f"{change_1mo:.2f}%")
                 st.metric("YTD", f"{change_ytd:.2f}%")
 
-                st.markdown("### 📊 Volume Analysis")
+                #st.markdown("### 📊 Volume Analysis")
                 latest_vol = df_merged["Volume"].iloc[-1]
                 avg_vol = df_merged["Volume"].tail(21).mean()
                 st.write(f"Today's Volume: `{int(latest_vol):,}` | 21-Day Avg: `{int(avg_vol):,}`")
@@ -356,17 +356,17 @@ with tab3:
                 else:
                     st.success("🟢 Volume within normal range.")
 
-                st.markdown("### 🧱 Support & Resistance (20-day)")
+                #st.markdown("### 🧱 Support & Resistance (20-day)")
                 support = df_merged["Close"].rolling(window=20).min().iloc[-1]
                 resistance = df_merged["Close"].rolling(window=20).max().iloc[-1]
                 current_price = df_merged["Close"].iloc[-1]
 
-                st.write(f"📉 Support: ₹{support:.2f}")
-                st.write(f"📈 Resistance: ₹{resistance:.2f}")
+                st.write(f"📉 Support(20-day): ₹{support:.2f}")
+                st.write(f"📈 Resistance(20-day): ₹{resistance:.2f}")
 
-                st.markdown("### 🤝 Correlation with NIFTY 50")
+                #st.markdown("### 🤝 Correlation with NIFTY 50")
                 correlation = df_merged["Return"].corr(df_merged["NIFTY_Return"])
-                st.write(f"Correlation (last 6 months): `{correlation:.2f}`")
+                st.write(f"Correlation with NIFTY 50 (last 6 months): `{correlation:.2f}`")
                 if correlation > 0.7:
                     st.success("✅ Highly correlated with broader market.")
                 elif correlation < 0.3:
@@ -375,7 +375,7 @@ with tab3:
                 st.markdown("### 📅 Earnings")
                 st.info("🗓️ Next Earnings: Not available via yFinance. Please check official filings.")
 
-                st.markdown("### 🧭 Most Traded Price Range")
+                #st.markdown("### 🧭 Most Traded Price Range")
                 price_bins = pd.cut(df_merged["Close"], bins=20)
                 most_traded = price_bins.value_counts().idxmax()
                 st.write(f"Most traded price range in last 6 months: **{most_traded}**")
