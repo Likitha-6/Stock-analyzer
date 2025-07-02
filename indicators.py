@@ -63,7 +63,12 @@ def detect_cross_signals(df: pd.DataFrame) -> str:
 def get_pivot_lines(df: pd.DataFrame, symbol: str, interval: str):
     pivot_shapes = []
     pivot_annotations = []
-    base = get_previous_period_ohlc(symbol, interval)
+
+    # Only use previous day OHLC for intraday intervals
+    if interval in ["5m", "15m", "60m", "240m"]:
+        base = get_previous_day_ohlc(symbol)
+    else:
+        return [], "⏳ Pivot levels not supported for this interval."
 
     if base:
         pivots = calculate_classic_pivots(base["high"], base["low"], base["close"])
@@ -92,4 +97,6 @@ def get_pivot_lines(df: pd.DataFrame, symbol: str, interval: str):
                 }
             })
 
-    return pivot_shapes, f"\U0001F4CF Pivot Source: {base['date']} – Classic" if base else ""
+        return pivot_shapes, f"📍 Pivot Source: {base['date']} (Prev Day OHLC)"
+    else:
+        return [], "⚠️ Could not fetch pivot source data."
