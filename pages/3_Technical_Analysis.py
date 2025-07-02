@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
+import pandas as pd
 
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 st.title("📈 Indian Stock – Technical Analysis")
@@ -28,29 +29,32 @@ if symbol:
             df = df.reset_index()
             x_col = "Datetime" if "Datetime" in df.columns else "Date"
 
+            # Format x-values as strings: "01/07 13:45" or "01/07"
+            if "m" in interval or "h" in interval:
+                df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M")
+            else:
+                df["x_label"] = df[x_col].dt.strftime("%d/%m")
+
             fig = go.Figure()
 
             fig.add_trace(go.Candlestick(
-                x=df[x_col],
-                open=df['Open'],
-                high=df['High'],
-                low=df['Low'],
-                close=df['Close'],
+                x=df["x_label"],
+                open=df["Open"],
+                high=df["High"],
+                low=df["Low"],
+                close=df["Close"],
                 name="Price"
             ))
 
-            # Smart tick format: show date only
-            tick_format = "%d/%m" if interval == "1d" else "%d/%m\n%H:%M"
-
             fig.update_layout(
                 title=f"{symbol}.NS – {label} Chart",
-                xaxis_title="Date",
+                xaxis_title="Date/Time",
                 yaxis_title="Price",
-                xaxis_rangeslider_visible=False,
                 xaxis=dict(
-                    tickformat=tick_format,
+                    type="category",  # This trims non-trading gaps
                     tickangle=-45
                 ),
+                xaxis_rangeslider_visible=False,
                 height=600
             )
 
@@ -58,3 +62,4 @@ if symbol:
 
     except Exception as e:
         st.error(f"Error: {e}")
+
