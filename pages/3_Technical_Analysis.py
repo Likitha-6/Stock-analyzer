@@ -190,7 +190,18 @@ if chosen_sym:
                 base = get_previous_period_ohlc(chosen_sym + ".NS", interval)
                 if base:
                     pivots = calculate_classic_pivots(base["high"], base["low"], base["close"])
-                    for label, value in pivots.items():
+                    
+                    y_min = df["Low"].min()
+                    y_max = df["High"].max()
+                    y_range = y_max - y_min
+            
+                    relevant_pivots = {
+                        label: value
+                        for label, value in pivots.items()
+                        if (y_min - y_range * 0.2) <= value <= (y_max + y_range * 0.2)
+                    }
+            
+                    for label, value in relevant_pivots.items():
                         fig.add_shape(
                             type="line",
                             x0=df["x_label"].iloc[0],
@@ -198,7 +209,7 @@ if chosen_sym:
                             y0=value,
                             y1=value,
                             line=dict(color="#999999", width=1, dash="dot"),
-                            layer="below"  # 👈 doesn't stretch Y-axis
+                            layer="below"
                         )
                         fig.add_annotation(
                             x=df["x_label"].iloc[-1],
@@ -211,7 +222,7 @@ if chosen_sym:
                             bgcolor=bg_color,
                             borderpad=2
                         )
-
+            
                     st.caption(f"📏 Pivot Source: {base['date']} – Classic")
             
             # Draw pivot levels as horizontal lines
