@@ -333,7 +333,23 @@ with tab3:
                 # Compute price returns
                 df_merged["Return"] = df_merged["Close"].pct_change()
                 df_merged["NIFTY_Return"] = df_merged["Close_NIFTY"].pct_change()
-
+                ticker = yf.Ticker(chosen_sym + ".NS")
+                ratings_df = ticker.recommendations  # DataFrame with Date, Firm, To Grade, From Grade, Action, etc.
+                
+                if ratings_df is not None and not ratings_df.empty:
+                    last_rating = ratings_df.iloc[-1]
+                    st.subheader("📊 Analyst Rating (Latest)")
+                    st.write(f"- Date: {last_rating.name.date()}")
+                    st.write(f"- From: **{last_rating['From Grade']}** → To: **{last_rating['To Grade']}**")
+                    st.write(f"- Action: {last_rating['Action']}")
+                
+                    # Summary of recent ratings
+                    summary = ratings_df["To Grade"].value_counts().to_dict()
+                    st.subheader("📈 Recent Rating Summary")
+                    for grade, count in summary.items():
+                        st.write(f"- **{grade}**: {count} analyst{'s' if count > 1 else ''}")
+                else:
+                    st.info("No analyst ratings available for this symbol.")
                 #st.markdown("### 📈 Price Performance")
                 change_1d = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[-2] - 1) * 100
                 change_5d = (df_merged["Close"].iloc[-1] / df_merged["Close"].iloc[-6] - 1) * 100
