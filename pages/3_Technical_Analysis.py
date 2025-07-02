@@ -347,7 +347,7 @@ with tab3:
                     except:
                         return offset_str  # fallback in case of error
                 
-                ratings_df["Month"] = ratings_df["Period"].apply(relative_month_label)
+                ratings_df["Month"] = ratings_df["period"].apply(relative_month_label)
 
                 
                 # Compute Buy, Hold, Sell categories
