@@ -24,24 +24,6 @@ font_color = "#000000" if theme == "Light" else "#FFFFFF"
 increasing_color = "#00B26F" if theme == "Light" else "#26de81"
 decreasing_color = "#FF3C38" if theme == "Light" else "#eb3b5a"
 
-# ─────────────────────────────
-# Indicator toggles with user-defined lengths
-# ─────────────────────────────
-
-sma_lengths = []
-ema_lengths = []
-show_pivots = False
-
-if "SMA" in all_indicators:
-    sma_input = st.text_input("SMA Lengths (comma-separated)", value="20")
-    sma_lengths = sorted(set(int(x.strip()) for x in sma_input.split(",") if x.strip().isdigit()))
-
-if "EMA" in all_indicators:
-    ema_input = st.text_input("EMA Lengths (comma-separated)", value="20")
-    ema_lengths = sorted(set(int(x.strip()) for x in ema_input.split(",") if x.strip().isdigit()))
-
-if "Pivot Levels" in all_indicators:
-    show_pivots = True
 
 # ─────────────────────────────
 # Interval Dropdown
@@ -117,6 +99,24 @@ all_indicators = st.multiselect(
     ["SMA", "EMA", "Pivot Levels"],
     default=[]
 )
+# ─────────────────────────────
+# Indicator toggles with user-defined lengths
+# ─────────────────────────────
+
+sma_lengths = []
+ema_lengths = []
+show_pivots = False
+
+if "SMA" in all_indicators:
+    sma_input = st.text_input("SMA Lengths (comma-separated)", value="20")
+    sma_lengths = sorted(set(int(x.strip()) for x in sma_input.split(",") if x.strip().isdigit()))
+
+if "EMA" in all_indicators:
+    ema_input = st.text_input("EMA Lengths (comma-separated)", value="20")
+    ema_lengths = sorted(set(int(x.strip()) for x in ema_input.split(",") if x.strip().isdigit()))
+
+if "Pivot Levels" in all_indicators:
+    show_pivots = True
 if chosen_sym:
     try:
         df = yf.Ticker(chosen_sym + ".NS").history(interval=interval, period=period)
