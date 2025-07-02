@@ -242,7 +242,7 @@ with tab1:
 with tab2:
     if chosen_sym:
         # Always fetch enough data for SMA 200
-        df_insights = yf.Ticker(chosen_sym + ".NS").history(interval="1d", period="12mo")
+        df_insights = yf.Ticker(chosen_sym + ".NS").history(interval="1d", period="24mo")
         if not df_insights.empty:
             df_insights = df_insights.reset_index()
             df_insights["SMA_50"] = df_insights["Close"].rolling(window=50).mean()
