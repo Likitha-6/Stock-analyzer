@@ -27,17 +27,18 @@ decreasing_color = "#FF3C38" if theme == "Light" else "#eb3b5a"
 # ─────────────────────────────
 # Indicator toggles with user-defined lengths
 # ─────────────────────────────
-col_sma_chk, col_sma_len, col_ema_chk, col_ema_len = st.columns([1, 1, 1, 1])
 
-with col_sma_chk:
-    show_sma = st.checkbox("📉 SMA", value=False)
-with col_sma_len:
-    sma_length = st.number_input("SMA Length", min_value=1, max_value=200, value=20, step=1)
+# ─────────────────────────────
+# Multi-Indicator Selector (SMA/EMA)
+# ─────────────────────────────
+col_sma, col_ema = st.columns(2)
 
-with col_ema_chk:
-    show_ema = st.checkbox("📈 EMA", value=False)
-with col_ema_len:
-    ema_length = st.number_input("EMA Length", min_value=1, max_value=200, value=20, step=1)
+with col_sma:
+    sma_lengths = st.multiselect("📉 Select SMA Lengths", [5, 10, 20, 50, 100, 200], default=[20])
+
+with col_ema:
+    ema_lengths = st.multiselect("📈 Select EMA Lengths", [5, 8, 13, 21, 50, 89, 144], default=[20])
+
 
 
 # ─────────────────────────────
@@ -135,25 +136,28 @@ if chosen_sym:
             
             tickvals = df["x_label"].iloc[::N].tolist()
             ticktext = df["x_label"].iloc[::N].tolist()
-            if show_sma:
-                df[f"SMA_{sma_length}"] = df["Close"].rolling(window=sma_length).mean()
+            # Add SMA overlays
+            for sma_len in sma_lengths:
+                df[f"SMA_{sma_len}"] = df["Close"].rolling(window=sma_len).mean()
                 fig.add_trace(go.Scatter(
                     x=df["x_label"],
-                    y=df[f"SMA_{sma_length}"],
+                    y=df[f"SMA_{sma_len}"],
                     mode="lines",
-                    line=dict(color="#FFA500", width=1.5),
-                    name=f"SMA ({sma_length})"
+                    line=dict(width=1.5),
+                    name=f"SMA ({sma_len})"
                 ))
             
-            if show_ema:
-                df[f"EMA_{ema_length}"] = df["Close"].ewm(span=ema_length, adjust=False).mean()
+            # Add EMA overlays
+            for ema_len in ema_lengths:
+                df[f"EMA_{ema_len}"] = df["Close"].ewm(span=ema_len, adjust=False).mean()
                 fig.add_trace(go.Scatter(
                     x=df["x_label"],
-                    y=df[f"EMA_{ema_length}"],
+                    y=df[f"EMA_{ema_len}"],
                     mode="lines",
-                    line=dict(color="#00C0F0", width=1.5, dash="solid"),
-                    name=f"EMA ({ema_length})"
+                    line=dict(width=1.5, dash="dot"),
+                    name=f"EMA ({ema_len})"
                 ))
+
 
 
             fig.update_layout(
