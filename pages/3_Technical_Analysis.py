@@ -352,12 +352,7 @@ with tab3:
                 latest_vol = df_merged["Volume"].iloc[-1]
                 avg_vol = df_merged["Volume"].tail(21).mean()
                 st.write(f"Today's Volume: `{int(latest_vol):,}` | 21-Day Avg: `{int(avg_vol):,}`")
-                if latest_vol > 1.5 * avg_vol:
-                    st.warning("🔺 Significant spike in trading volume today.")
-                elif latest_vol < 0.5 * avg_vol:
-                    st.info("🔻 Unusually low volume today.")
-                else:
-                    st.success("🟢 Volume within normal range.")
+                
 
                 #st.markdown("### 🧱 Support & Resistance (20-day)")
                 support = df_merged["Close"].rolling(window=20).min().iloc[-1]
