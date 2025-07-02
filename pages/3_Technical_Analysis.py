@@ -335,7 +335,7 @@ with tab3:
                 df_merged["NIFTY_Return"] = df_merged["Close_NIFTY"].pct_change()
                 ticker = yf.Ticker(chosen_sym + ".NS")
                 ratings_df = ticker.recommendations
-                st.write(ratings_df)
+                #st.write(ratings_df)
 
                 ratings_df["Month"] = ratings_df["period"].apply(lambda x: x if isinstance(x, str) else str(x))
 
