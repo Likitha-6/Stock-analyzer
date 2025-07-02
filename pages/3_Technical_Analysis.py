@@ -337,7 +337,17 @@ with tab3:
                 ratings_df = ticker.recommendations
                 #st.write(ratings_df)
                 # Create a month column (e.g., 'Jun', 'May')
-                ratings_df["Month"] = pd.to_datetime(ratings_df["period"], errors='coerce').dt.strftime('%b')
+               from dateutil.relativedelta import relativedelta
+
+                def relative_month_label(offset_str):
+                    try:
+                        offset = int(offset_str.replace("m", ""))
+                        month = datetime.today() + relativedelta(months=offset)
+                        return month.strftime("%b")  # 'Jan', 'Feb', etc.
+                    except:
+                        return offset_str  # fallback in case of error
+                
+                ratings_df["Month"] = ratings_df["Period"].apply(relative_month_label)
 
                 
                 # Compute Buy, Hold, Sell categories
