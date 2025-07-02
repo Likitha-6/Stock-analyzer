@@ -31,13 +31,23 @@ decreasing_color = "#FF3C38" if theme == "Light" else "#eb3b5a"
 # ─────────────────────────────
 # Multi-Indicator Selector (SMA/EMA)
 # ─────────────────────────────
-col_sma, col_ema = st.columns(2)
+col_sma_input, col_ema_input = st.columns(2)
 
-with col_sma:
-    sma_lengths = st.multiselect("📉 Select SMA Lengths", [5, 10, 20, 50, 100, 200], default=[20])
+with col_sma_input:
+    sma_input = st.text_input("📉 SMA Lengths (comma-separated)", value="20")
 
-with col_ema:
-    ema_lengths = st.multiselect("📈 Select EMA Lengths", [5, 8, 13, 21, 50, 89, 144], default=[20])
+with col_ema_input:
+    ema_input = st.text_input("📈 EMA Lengths (comma-separated)", value="20")
+
+# Convert string input to list of unique, sorted integers
+def parse_lengths(text):
+    try:
+        return sorted(set(int(x.strip()) for x in text.split(",") if x.strip().isdigit()))
+    except:
+        return []
+
+sma_lengths = parse_lengths(sma_input)
+ema_lengths = parse_lengths(ema_input)
 
 
 
