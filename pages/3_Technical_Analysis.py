@@ -253,7 +253,8 @@ with tab2:
             df_insights["SMA_50"] = df_insights["Close"].rolling(window=50).mean()
             df_insights["SMA_200"] = df_insights["Close"].rolling(window=200).mean()
             df_insights["EMA_20"] = df_insights["Close"].ewm(span=20, adjust=False).mean()
-            
+            high_52w = df_insights["High"].max()
+            low_52w = df_insights["Low"].min()
 
             latest_price = df_insights["Close"].iloc[-1]
             latest_sma50 = df_insights["SMA_50"].iloc[-1]
@@ -268,6 +269,11 @@ with tab2:
 
             volatility = df_insights["Close"].rolling(window=14).std().iloc[-1]
             st.caption(f"📊 14-day rolling volatility: **{volatility:.2f}**")
+            if abs(latest_price - high_52w) < 0.03 * high_52w:
+                st.info("🚀 Price is near its 52-week high — possible resistance level.")
+            elif abs(latest_price - low_52w) < 0.03 * low_52w:
+                st.info("🔻 Price is near its 52-week low — potential support level.")
+            
 
             signal = detect_cross_signals(df_insights)
             if signal:
