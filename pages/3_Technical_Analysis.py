@@ -341,7 +341,7 @@ with tab3:
                         ratings_df = ratings_df.dropna(subset=["To Grade"])
                         latest_row = ratings_df.iloc[-1]
                 
-                        st.subheader("📊 Analyst Rating (Latest)")
+                        #st.subheader("📊 Analyst Rating (Latest)")
                 
                         # Date handling
                         try:
@@ -360,9 +360,9 @@ with tab3:
                         for grade, count in grade_counts.items():
                             st.write(f"- **{grade}**: {count} rating{'s' if count > 1 else ''}")
                     else:
-                        st.info("⚠️ Analyst grade details (To Grade) not available for this stock.")
+                        #st.info("⚠️ Analyst grade details (To Grade) not available for this stock.")
                 else:
-                    st.info("ℹ️ No analyst recommendations found for this stock.")
+                    #st.info("ℹ️ No analyst recommendations found for this stock.")
 
 
                 #st.markdown("### 📈 Price Performance")
