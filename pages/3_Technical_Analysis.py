@@ -27,11 +27,6 @@ decreasing_color = "#FF3C38" if theme == "Light" else "#eb3b5a"
 # ─────────────────────────────
 # Indicator toggles with user-defined lengths
 # ─────────────────────────────
-all_indicators = st.multiselect(
-    "Select Indicators",
-    ["SMA", "EMA", "Pivot Levels"],
-    default=[]
-)
 
 sma_lengths = []
 ema_lengths = []
@@ -117,6 +112,11 @@ if interval != "1d" and chosen_sym:
 # ─────────────────────────────
 # Load and render chart
 # ─────────────────────────────
+all_indicators = st.multiselect(
+    "Select Indicators",
+    ["SMA", "EMA", "Pivot Levels"],
+    default=[]
+)
 if chosen_sym:
     try:
         df = yf.Ticker(chosen_sym + ".NS").history(interval=interval, period=period)
