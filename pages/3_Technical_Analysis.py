@@ -109,7 +109,7 @@ if "candle_days" not in st.session_state:
 if interval == "1d":
     period = "3mo"
 elif interval == "240m":  # 4 hours
-    period = f"{max(st.session_state.candle_days, 7)}d"  # Minimum 7 days
+    period = "30d" 
 elif interval == "60m":
     period = f"{max(st.session_state.candle_days, 5)}d"
 else:
