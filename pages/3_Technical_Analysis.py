@@ -294,9 +294,9 @@ with tab2:
             #st.metric("📊 RSI (14-day)", f"{latest_rsi:.2f}")
             
             if latest_rsi > 70:
-                st.warning("📈 RSI indicates **overbought** conditions – price might be extended.")
+                st.warning("📈 The stock is overbought — momentum may slow, and there could be a short-term dip or consolidation.")
             elif latest_rsi < 30:
-                st.success("📉 RSI indicates **oversold** conditions – possible buying opportunity.")
+                st.success("📉 The stock is oversold — selling may be exhausted, and a potential rebound could follow.")
             else:
                 st.info("⚖️ RSI is in neutral zone – no strong momentum signal.")
                         
