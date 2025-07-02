@@ -137,7 +137,7 @@ if chosen_sym:
                 ))
 
             if show_pivots:
-                base = get_previous_day_ohlc(chosen_sym + ".NS")
+                base = get_previous_period_ohlc(chosen_sym + ".NS")
                 if base:
                     pivots = calculate_classic_pivots(base["high"], base["low"], base["close"])
                     for label, value in pivots.items():
