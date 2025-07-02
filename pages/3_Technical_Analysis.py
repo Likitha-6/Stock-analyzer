@@ -337,7 +337,7 @@ with tab3:
                 ratings_df = ticker.recommendations
                 st.write(ratings_df)
                 # Create a month column (e.g., 'Jun', 'May')
-                ratings_df["Month"] = ratings_df["Period"].apply(lambda x: x if isinstance(x, str) else str(x))
+                ratings_df["Month"] = ratings_df["period"].apply(lambda x: x if isinstance(x, str) else str(x))
                 
                 # Compute Buy, Hold, Sell categories
                 ratings_df["Buy"] = ratings_df["Strong Buy"] + ratings_df["Buy"]
