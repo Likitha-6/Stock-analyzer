@@ -358,7 +358,7 @@ with tab3:
                 
                 fig.add_trace(go.Bar(
                     x=ratings_df["Month"],
-                    y=ratings_df["Hold"],
+                    y=ratings_df["hold"],
                     name="⚪ Hold",
                     marker_color="gray"
                 ))
