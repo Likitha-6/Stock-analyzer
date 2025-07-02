@@ -237,15 +237,24 @@ with tab1:
             st.error(f"Error: {e}")
 
 with tab2:
-    df = st.session_state.get("df_stock", None)
-    if chosen_sym and df is not None and not df.empty:
+    if chosen_sym and not df.empty:
+        # Ensure SMAs are calculated for insight display
+        if "SMA_50" not in df.columns:
+            df["SMA_50"] = df["Close"].rolling(window=50).mean()
+        if "SMA_200" not in df.columns:
+            df["SMA_200"] = df["Close"].rolling(window=200).mean()
+
+        latest_price = df["Close"].iloc[-1]
+        latest_sma50 = df["SMA_50"].iloc[-1]
+        latest_sma200 = df["SMA_200"].iloc[-1]
+
+        st.metric("💰 Current Price", f"₹{latest_price:,.2f}")
+        st.metric("📈 50-day SMA", f"₹{latest_sma50:,.2f}" if pd.notna(latest_sma50) else "Not Available")
+        st.metric("📉 200-day SMA", f"₹{latest_sma200:,.2f}" if pd.notna(latest_sma200) else "Not Available")
+
         signal = detect_cross_signals(df)
         if signal:
             st.info(signal)
-        else:
-            st.warning("No crossover momentum signal detected.")
-    else:
-        st.info("📌 Please select a stock and interval to view insights.")
 
 
 with tab3:
