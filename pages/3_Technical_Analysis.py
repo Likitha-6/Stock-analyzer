@@ -101,9 +101,9 @@ with tab1:
     
     # Adjust period to load enough candles
     if interval == "1d":
-        period = "1y"
+        period = "200d"
     elif interval == "60m":
-        period = "30d"
+        period = "15d"
     else:
         period = "5d"
 
