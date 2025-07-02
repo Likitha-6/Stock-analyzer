@@ -121,34 +121,8 @@ if "Pivot Levels" in all_indicators:
 # ─────────────────────────────
 # Manual Line Drawing
 # ─────────────────────────────
-custom_shapes = []
+
 custom_annotations = []
-
-with st.expander("✏️ Add Custom Lines or Shapes"):
-    shape_type = st.selectbox("Shape Type", ["None", "Horizontal Line", "Vertical Line", "Trend Line"])
-
-    if shape_type == "Horizontal Line":
-        hline_price = st.number_input("Price Level (Y-axis)", min_value=0.0)
-        hline_color = st.color_picker("Line Color", "#0000FF")
-        custom_shapes.append(dict(
-            type="line",
-            x0=0, x1=1,
-            y0=hline_price, y1=hline_price,
-            xref="paper", yref="y",
-            line=dict(color=hline_color, width=1, dash="dash"),
-            layer="above"
-        ))
-
-    elif shape_type == "Vertical Line" and chosen_sym:
-        vline_time = st.selectbox("Choose Timestamp", [])
-        vline_color = st.color_picker("Line Color", "#FF0000")
-        # placeholder added dynamically later when df is loaded
-
-    elif shape_type == "Trend Line" and chosen_sym:
-        idx1 = st.number_input("Start Index", min_value=0)
-        idx2 = st.number_input("End Index", min_value=0)
-        trend_color = st.color_picker("Line Color", "#00FF00")
-        # placeholder added dynamically later when df is loaded
 
 if chosen_sym:
     try:
@@ -207,33 +181,6 @@ if chosen_sym:
                     fig.add_shape(**line["shape"])
                     fig.add_annotation(**line["annotation"])
                 st.caption(pivot_caption)
-
-            # Now apply user-defined vertical/trend lines
-            if shape_type == "Vertical Line":
-                vline_time = st.selectbox("Choose Timestamp", df["x_label"].tolist())
-                fig.add_shape(
-                    type="line",
-                    x0=vline_time, x1=vline_time,
-                    y0=df["Low"].min(), y1=df["High"].max(),
-                    line=dict(color=vline_color, width=1, dash="dot"),
-                    layer="above"
-                )
-            elif shape_type == "Trend Line":
-                idx1 = int(idx1)
-                idx2 = int(idx2)
-                if idx1 < len(df) and idx2 < len(df):
-                    fig.add_shape(
-                        type="line",
-                        x0=df["x_label"].iloc[idx1],
-                        y0=df["Close"].iloc[idx1],
-                        x1=df["x_label"].iloc[idx2],
-                        y1=df["Close"].iloc[idx2],
-                        line=dict(color=trend_color, width=2),
-                        layer="above"
-                    )
-
-            for shape in custom_shapes:
-                fig.add_shape(**shape)
 
             fig.update_layout(
                 title=f"{chosen_sym}.NS – {label} Chart ({period})",
