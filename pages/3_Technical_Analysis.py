@@ -237,25 +237,9 @@ with tab1:
 with tab2:
     if chosen_sym and not df.empty:
         # Example: SMA Comparison
-        sma50 = df["Close"].rolling(50).mean().iloc[-1]
-        sma200 = df["Close"].rolling(200).mean().iloc[-1]
-        current_price = df["Close"].iloc[-1]
-
-        st.markdown(f"**Current Price:** ₹{current_price:.2f}")
-        st.markdown(f"**50-day SMA:** ₹{sma50:.2f}")
-        st.markdown(f"**200-day SMA:** ₹{sma200:.2f}")
-
-        if "SMA_50" in df.columns and "SMA_200" in df.columns:
-            cross_msg = detect_cross_signals(df)
-            if cross_msg:
-                st.markdown(f"**Insight:** {cross_msg}")
-            else:
-                st.markdown("No crossover signals detected at this time.")
-        else:
-            st.info("Please add both SMA 50 and SMA 200 under indicators to see momentum crossover insights.")
-
-        if current_price > sma50:
-            st.info("Price is above 50-day average – bullish strength.")
+        signal = detect_cross_signals(df)
+        if signal:
+            st.info(signal)
 
 with tab3:
     st.write("🔍 Customize your view here for", chosen_sym or "selected stock")
