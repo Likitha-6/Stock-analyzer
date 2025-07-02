@@ -5,7 +5,6 @@ import pandas as pd
 from common.data import load_name_lookup
 from indicators import apply_sma, apply_ema, get_pivot_lines
 from indicators import detect_cross_signals,compute_rsi
-from indicators import apply_smma
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -197,6 +196,17 @@ with tab1:
                         fig.add_shape(**line["shape"])
                         fig.add_annotation(**line["annotation"])
                     st.caption(pivot_caption)
+                from indicators import detect_crossovers  # your own function
+
+                signals = detect_crossovers(df, short="EMA_20", long="EMA_50")
+                for idx in signals["buy"]:
+                    fig.add_trace(go.Scatter(x=[df["x_label"][idx]], y=[df["Close"][idx]],
+                                             mode='markers', marker=dict(color='green', size=10),
+                                             name='Buy Signal'))
+                for idx in signals["sell"]:
+                    fig.add_trace(go.Scatter(x=[df["x_label"][idx]], y=[df["Close"][idx]],
+                                             mode='markers', marker=dict(color='red', size=10),
+                                             name='Sell Signal'))
 
                 fig.update_layout(
                     title=f"{chosen_sym}.NS – {label} Chart ({period})",
