@@ -99,7 +99,7 @@ if chosen_sym:
                 name="Price"
             ))
 
-            fig.update_layout(
+           fig.update_layout(
                 title=f"{chosen_sym}.NS – {label} Chart ({period})",
                 xaxis_title="Date/Time",
                 yaxis_title="Price",
@@ -117,10 +117,15 @@ if chosen_sym:
                 paper_bgcolor=bg_color,
                 font=dict(color=font_color),
                 xaxis_rangeslider_visible=False,
-                height=600
+                height=600,
+                width=900,
+                dragmode="pan",            # ✅ Use pan instead of box select
+                hovermode="x unified"      # ✅ Show unified tooltip across chart
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+
+            st.plotly_chart(fig, use_container_width=False)
+
 
     except Exception as e:
         st.error(f"Error: {e}")
