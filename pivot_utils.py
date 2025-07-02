@@ -4,9 +4,13 @@ import pandas as pd
 def get_previous_period_ohlc(symbol: str, interval: str) -> dict:
     """Get previous week's or previous month's OHLC depending on the interval."""
     ticker = yf.Ticker(symbol)
-    hist = ticker.history(interval="1d", period="2mo")  # longer period for safety
+    hist = ticker.history(interval="1d", period="2mo")
     hist = hist[~hist.index.duplicated()]
-    hist.index = hist.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
+
+    # Handle timezone safely
+    if hist.index.tz is None:
+        hist.index = hist.index.tz_localize("UTC")
+    hist.index = hist.index.tz_convert("Asia/Kolkata")
 
     if interval in ["5m", "15m", "60m", "240m"]:
         resampled = hist.resample("W").agg({
@@ -26,7 +30,7 @@ def get_previous_period_ohlc(symbol: str, interval: str) -> dict:
         return None
 
     if len(resampled) < 2:
-        return None  # not enough data
+        return None
 
     prev = resampled.iloc[-2]
 
