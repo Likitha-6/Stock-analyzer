@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from common.data import load_name_lookup
 from indicators import apply_sma, apply_ema, get_pivot_lines
-from indicators import detect_cross_signals
+from indicators import detect_cross_signals,compute_rsi
 from indicators import apply_smma
 
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
@@ -288,7 +288,18 @@ with tab2:
                 st.info("🚀 Price is near its 52-week high — possible resistance level.")
             elif abs(latest_price - low_52w) < 0.03 * low_52w:
                 st.info("🔻 Price is near its 52-week low — potential support level.")
+            df_insights["RSI"] = compute_rsi(df_insights)
+
+            latest_rsi = df_insights["RSI"].iloc[-1]
+            st.metric("📊 RSI (14-day)", f"{latest_rsi:.2f}")
             
+            if latest_rsi > 70:
+                st.warning("📈 RSI indicates **overbought** conditions – price might be extended.")
+            elif latest_rsi < 30:
+                st.success("📉 RSI indicates **oversold** conditions – possible buying opportunity.")
+            else:
+                st.info("⚖️ RSI is in neutral zone – no strong momentum signal.")
+                        
 
             signal = detect_cross_signals(df_insights)
             if signal:
