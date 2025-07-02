@@ -336,6 +336,52 @@ with tab3:
                 ticker = yf.Ticker(chosen_sym + ".NS")
                 ratings_df = ticker.recommendations
                 st.write(ratings_df)
+                # Create a month column (e.g., 'Jun', 'May')
+                ratings_df["Month"] = ratings_df["Period"].apply(lambda x: x if isinstance(x, str) else str(x))
+                
+                # Compute Buy, Hold, Sell categories
+                ratings_df["Buy"] = ratings_df["Strong Buy"] + ratings_df["Buy"]
+                ratings_df["Sell"] = ratings_df["Sell"] + ratings_df["Strong Sell"]
+                
+                # Ensure order of display (most recent first)
+                ratings_df = ratings_df[::-1]
+                
+                # Create grouped bar chart
+                fig = go.Figure()
+                
+                fig.add_trace(go.Bar(
+                    x=ratings_df["Month"],
+                    y=ratings_df["Buy"],
+                    name="✅ Buy",
+                    marker_color="green"
+                ))
+                
+                fig.add_trace(go.Bar(
+                    x=ratings_df["Month"],
+                    y=ratings_df["Hold"],
+                    name="⚪ Hold",
+                    marker_color="gray"
+                ))
+                
+                fig.add_trace(go.Bar(
+                    x=ratings_df["Month"],
+                    y=ratings_df["Sell"],
+                    name="❌ Sell",
+                    marker_color="red"
+                ))
+                
+                fig.update_layout(
+                    barmode="group",
+                    title="📊 Analyst Recommendations – Monthly Breakdown",
+                    xaxis_title="Month",
+                    yaxis_title="Number of Ratings",
+                    legend_title="Recommendation",
+                    plot_bgcolor="#FFFFFF",
+                    paper_bgcolor="#FFFFFF",
+                    height=400
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
 
 
                 #st.markdown("### 📈 Price Performance")
