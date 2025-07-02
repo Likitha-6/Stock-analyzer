@@ -141,59 +141,79 @@ if chosen_sym:
             x_col = "Datetime" if "Datetime" in df.columns else "Date"
             df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M") if "m" in interval or "h" in interval else df[x_col].dt.strftime("%d/%m")
             # Compute classic pivot points from previous day's data
+            # ─────────────────────────────
+            # Pivot Points – TradingView-style (fixed from previous day/week)
+            # ─────────────────────────────
             pivot_levels = {}
-    
-            if show_pivots and len(df) > 10:
-                df_pivot = df.copy()
-                df_pivot = df_pivot.set_index(df[x_col])  # Already Date or Datetime
             
-                if interval in ["5m", "15m", "60m", "240m"]:
-                    # Intraday: use previous day's OHLC
-                    df_daily = df_pivot.resample("1D").agg({
-                        "Open": "first",
-                        "High": "max",
-                        "Low": "min",
-                        "Close": "last"
-                    }).dropna()
+            if show_pivots:
+                # Get fixed daily or weekly OHLC regardless of current chart interval
+                pivot_base_data = yf.Ticker(chosen_sym + ".NS").history(interval="1d", period="7d").reset_index()
             
-                    if len(df_daily) >= 2:
-                        prev = df_daily.iloc[-2]
+                if len(pivot_base_data) >= 2:
+                    prev_day = pivot_base_data.iloc[-2]  # Previous full day
+                    high = prev_day["High"]
+                    low = prev_day["Low"]
+                    close = prev_day["Close"]
             
-                elif interval == "1d":
-                    # Daily chart: use previous week's OHLC
-                    df_weekly = df_pivot.resample("W-MON").agg({
-                        "Open": "first",
-                        "High": "max",
-                        "Low": "min",
-                        "Close": "last"
-                    }).dropna()
+                    # Choose the pivot type
+                    pivot_type = st.selectbox("Pivot Type", ["Classic", "Fibonacci", "Woodie", "Camarilla", "Demark"], index=0)
             
-                    if len(df_weekly) >= 2:
-                        prev = df_weekly.iloc[-2]
+                    def calculate_pivots(high, low, close, pivot_type):
+                        if pivot_type == "Classic":
+                            P = (high + low + close) / 3
+                            R1 = 2 * P - low
+                            S1 = 2 * P - high
+                            R2 = P + (high - low)
+                            S2 = P - (high - low)
+                            R3 = high + 2 * (P - low)
+                            S3 = low - 2 * (high - P)
+                        elif pivot_type == "Fibonacci":
+                            P = (high + low + close) / 3
+                            R1 = P + 0.382 * (high - low)
+                            S1 = P - 0.382 * (high - low)
+                            R2 = P + 0.618 * (high - low)
+                            S2 = P - 0.618 * (high - low)
+                            R3 = P + 1.000 * (high - low)
+                            S3 = P - 1.000 * (high - low)
+                        elif pivot_type == "Woodie":
+                            P = (high + low + 2 * close) / 4
+                            R1 = 2 * P - low
+                            S1 = 2 * P - high
+                            R2 = P + (high - low)
+                            S2 = P - (high - low)
+                            R3 = high + 2 * (P - low)
+                            S3 = low - 2 * (high - P)
+                        elif pivot_type == "Camarilla":
+                            P = close
+                            range_ = high - low
+                            R1 = close + 0.0916 * range_
+                            S1 = close - 0.0916 * range_
+                            R2 = close + 0.183 * range_
+                            S2 = close - 0.183 * range_
+                            R3 = close + 0.275 * range_
+                            S3 = close - 0.275 * range_
+                        elif pivot_type == "Demark":
+                            open_ = prev_day["Open"]
+                            if close < open_:
+                                X = high + (2 * low) + close
+                            elif close > open_:
+                                X = (2 * high) + low + close
+                            else:
+                                X = high + low + (2 * close)
+                            P = X / 4
+                            R1 = X / 2 - low
+                            S1 = X / 2 - high
+                            R2 = R3 = S2 = S3 = None  # Not defined in Demark
             
-                else:
-                    prev = None
+                        return {
+                            "Pivot": P,
+                            "R1": R1, "R2": R2, "R3": R3,
+                            "S1": S1, "S2": S2, "S3": S3
+                        }
             
-                if 'prev' in locals() and prev is not None:
-                    high = prev["High"]
-                    low = prev["Low"]
-                    close = prev["Close"]
+                    pivot_levels = calculate_pivots(high, low, close, pivot_type)
             
-                    P = (high + low + close) / 3
-                    R1 = 2 * P - low
-                    S1 = 2 * P - high
-                    R2 = P + (high - low)
-                    S2 = P - (high - low)
-                    R3 = high + 2 * (P - low)
-                    S3 = low - 2 * (high - P)
-            
-                    pivot_levels = {
-                        "Pivot": P,
-                        "R1": R1, "R2": R2, "R3": R3,
-                        "S1": S1, "S2": S2, "S3": S3
-                    }
-    
-    
 
             fig = go.Figure()
             fig.add_trace(go.Candlestick(
