@@ -130,6 +130,30 @@ if interval != "1d" and chosen_sym:
 if chosen_sym:
     try:
         df = yf.Ticker(chosen_sym + ".NS").history(interval=interval, period=period)
+        # Compute classic pivot points from previous day's data
+        pivot_levels = {}
+        if show_pivots and interval != "1d" and len(df) > 1:
+            # Filter to previous full day (use -2 row in case current day is partial)
+            prev_day = df.iloc[-2]
+        
+            high = prev_day["High"]
+            low = prev_day["Low"]
+            close = prev_day["Close"]
+        
+            P = (high + low + close) / 3
+            R1 = 2 * P - low
+            S1 = 2 * P - high
+            R2 = P + (high - low)
+            S2 = P - (high - low)
+            R3 = high + 2 * (P - low)
+            S3 = low - 2 * (high - P)
+        
+            pivot_levels = {
+                "Pivot": P,
+                "R1": R1, "R2": R2, "R3": R3,
+                "S1": S1, "S2": S2, "S3": S3
+            }
+
 
         if df.empty:
             st.error("No data found.")
@@ -177,6 +201,15 @@ if chosen_sym:
                     name=f"EMA ({ema_len})"
                 ))
 
+            # Draw pivot levels as horizontal lines
+            for name, value in pivot_levels.items():
+                fig.add_hline(
+                    y=value,
+                    line=dict(width=1, dash="dot"),
+                    annotation_text=name,
+                    annotation_position="right",
+                    line_color="#999999"
+                )
 
 
             fig.update_layout(
