@@ -105,7 +105,7 @@ with tab1:
     elif interval == "60m":
         period = "30d"
     else:
-        period = "15d"
+        period = "5d"
 
 
     if interval != "1d" and chosen_sym:
