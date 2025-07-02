@@ -31,23 +31,32 @@ decreasing_color = "#FF3C38" if theme == "Light" else "#eb3b5a"
 # ─────────────────────────────
 # Multi-Indicator Selector (SMA/EMA)
 # ─────────────────────────────
+# ─────────────────────────────
+# SMA / EMA toggle and input
+# ─────────────────────────────
+col_sma_chk, col_ema_chk = st.columns(2)
+
+with col_sma_chk:
+    show_sma = st.checkbox("📉 Show SMA")
+with col_ema_chk:
+    show_ema = st.checkbox("📈 Show EMA")
+
 col_sma_input, col_ema_input = st.columns(2)
 
-with col_sma_input:
-    sma_input = st.text_input("📉 SMA Lengths (comma-separated)", value="20")
+if show_sma:
+    with col_sma_input:
+        sma_input = st.text_input("SMA Lengths (comma-separated)", value="20")
+    sma_lengths = sorted(set(int(x.strip()) for x in sma_input.split(",") if x.strip().isdigit()))
+else:
+    sma_lengths = []
 
-with col_ema_input:
-    ema_input = st.text_input("📈 EMA Lengths (comma-separated)", value="20")
+if show_ema:
+    with col_ema_input:
+        ema_input = st.text_input("EMA Lengths (comma-separated)", value="20")
+    ema_lengths = sorted(set(int(x.strip()) for x in ema_input.split(",") if x.strip().isdigit()))
+else:
+    ema_lengths = []
 
-# Convert string input to list of unique, sorted integers
-def parse_lengths(text):
-    try:
-        return sorted(set(int(x.strip()) for x in text.split(",") if x.strip().isdigit()))
-    except:
-        return []
-
-sma_lengths = parse_lengths(sma_input)
-ema_lengths = parse_lengths(ema_input)
 
 
 
