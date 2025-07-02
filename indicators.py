@@ -59,6 +59,17 @@ def detect_cross_signals(df: pd.DataFrame) -> str:
                 return "❌ Bearish continuation: 50-day average remains below 200-day. Downtrend may persist."
 
     return "No crossover signals detected at this time."
+def compute_rsi(df: pd.DataFrame, period: int = 14) -> pd.Series:
+    delta = df["Close"].diff()
+    gain = delta.where(delta > 0, 0.0)
+    loss = -delta.where(delta < 0, 0.0)
+
+    avg_gain = gain.rolling(window=period).mean()
+    avg_loss = loss.rolling(window=period).mean()
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
 
 def get_pivot_lines(df: pd.DataFrame, symbol: str, interval: str):
     pivot_shapes = []
