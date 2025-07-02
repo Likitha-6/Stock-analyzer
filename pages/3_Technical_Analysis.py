@@ -98,6 +98,13 @@ if chosen_sym:
                 decreasing_line_color=decreasing_color,
                 name="Price"
             ))
+            total_candles = len(df)
+            max_ticks = 15  # target max number of X-axis labels visible
+            N = max(1, total_candles // max_ticks)
+            
+            tickvals = df["x_label"].iloc[::N].tolist()
+            ticktext = df["x_label"].iloc[::N].tolist()
+
             fig.update_layout(
                 title=f"{chosen_sym}.NS – {label} Chart ({period})",
                 xaxis_title="Date/Time",
@@ -107,7 +114,9 @@ if chosen_sym:
                     tickangle=-45,
                     showgrid=False,
                     tickfont=dict(color=font_color),
-                    fixedrange=False  # ✅ Allow zoom
+                    tickmode="array",
+                    tickvals=tickvals,
+                    ticktext=ticktext
                 ),
                 yaxis=dict(
                     showgrid=False,
