@@ -1,62 +1,48 @@
 import streamlit as st
-from streamlit_lightweight_charts import renderLightweightCharts
 import yfinance as yf
-import pandas as pd
+import plotly.graph_objects as go
 
-st.set_page_config(page_title="📉 Technical Analysis", layout="wide")
-st.title("📉 Technical Analysis – TradingView-style")
+st.set_page_config(page_title="📈 Technical Chart", layout="wide")
+st.title("📈 Indian Stock – Technical Analysis")
 
-symbol = st.text_input("Enter NSE Symbol (e.g., INFY, RELIANCE):").upper().strip()
+symbol = st.text_input("Enter NSE symbol (e.g., INFY, RELIANCE):").upper().strip()
 
 if symbol:
-    stock = yf.Ticker(symbol + ".NS")
-    df = stock.history(period="3mo", interval="1d")
+    data = yf.Ticker(symbol + ".NS").history(period="3mo", interval="1d")
 
-    if df.empty:
-        st.error("No data available for this stock.")
+    if data.empty:
+        st.error("No data found.")
     else:
-        df = df.reset_index()
-        df["time"] = df["Date"].dt.strftime("%Y-%m-%d")
+        fig = go.Figure()
 
-        ohlc_data = [
-            {
-                "time": row["time"],
-                "open": round(row["Open"], 2),
-                "high": round(row["High"], 2),
-                "low": round(row["Low"], 2),
-                "close": round(row["Close"], 2)
-            }
-            for _, row in df.iterrows()
-        ]
+        # Candlestick
+        fig.add_trace(go.Candlestick(
+            x=data.index,
+            open=data['Open'],
+            high=data['High'],
+            low=data['Low'],
+            close=data['Close'],
+            name="Price"
+        ))
 
-        volume_data = [
-            {
-                "time": row["time"],
-                "value": int(row["Volume"]),
-                "color": "green" if row["Close"] >= row["Open"] else "red"
-            }
-            for _, row in df.iterrows()
-        ]
+        # Volume as bar
+        fig.add_trace(go.Bar(
+            x=data.index,
+            y=data["Volume"],
+            name="Volume",
+            marker_color="lightblue",
+            yaxis="y2",
+            opacity=0.3
+        ))
 
-        chart_config = [
-            {
-                "type": "Candlestick",
-                "data": ohlc_data
-            },
-            {
-                "type": "Histogram",
-                "data": volume_data,
-                "options": {
-                    "color": "rgba(76,175,80,0.5)",
-                    "priceFormat": {"type": "volume"},
-                    "priceScaleId": ""
-                },
-                "priceScale": {
-                    "scaleMargins": {"top": 0.8, "bottom": 0}
-                }
-            }
-        ]
+        # Layout with dual y-axis
+        fig.update_layout(
+            title=f"{symbol}.NS – Last 3 Months",
+            xaxis=dict(title="Date"),
+            yaxis=dict(title="Price"),
+            yaxis2=dict(title="Volume", overlaying="y", side="right", showgrid=False),
+            xaxis_rangeslider_visible=False,
+            height=600
+        )
 
-        with st.container():
-            renderLightweightCharts(chart_config)
-
+        st.plotly_chart(fig, use_container_width=True)
