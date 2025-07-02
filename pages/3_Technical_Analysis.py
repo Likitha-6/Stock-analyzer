@@ -335,34 +335,7 @@ with tab3:
                 df_merged["NIFTY_Return"] = df_merged["Close_NIFTY"].pct_change()
                 ticker = yf.Ticker(chosen_sym + ".NS")
                 ratings_df = ticker.recommendations
-                
-                if ratings_df is not None and not ratings_df.empty:
-                    if "To Grade" in ratings_df.columns:
-                        ratings_df = ratings_df.dropna(subset=["To Grade"])
-                        latest_row = ratings_df.iloc[-1]
-                
-                        #st.subheader("📊 Analyst Rating (Latest)")
-                
-                        # Date handling
-                        try:
-                            rating_date = latest_row.name.strftime("%Y-%m-%d")
-                        except Exception:
-                            rating_date = "N/A"
-                
-                        st.write(f"- Date: {rating_date}")
-                        st.write(f"- Firm: {latest_row.get('Firm', 'N/A')}")
-                        st.write(f"- Grade Change: **{latest_row.get('From Grade', 'N/A')}** → **{latest_row.get('To Grade', 'N/A')}**")
-                        st.write(f"- Action: {latest_row.get('Action', 'N/A')}")
-                
-                        # Summary of rating distribution
-                        st.subheader("📈 Rating Summary (All Time)")
-                        grade_counts = ratings_df["To Grade"].value_counts()
-                        for grade, count in grade_counts.items():
-                            st.write(f"- **{grade}**: {count} rating{'s' if count > 1 else ''}")
-                    else:
-                        #st.info("⚠️ Analyst grade details (To Grade) not available for this stock.")
-                else:
-                    #st.info("ℹ️ No analyst recommendations found for this stock.")
+                st.write(ratings_df)
 
 
                 #st.markdown("### 📈 Price Performance")
