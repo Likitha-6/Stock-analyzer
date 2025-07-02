@@ -76,7 +76,7 @@ with tab1:
     # Indicator selection
     all_indicators = st.multiselect(
         "Select Indicators",
-        ["SMA", "EMA", "Pivot Levels"],
+        ["EMA", "Pivot Levels"],
         default=[]
     )
 
