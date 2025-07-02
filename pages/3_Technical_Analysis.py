@@ -89,7 +89,7 @@ if symbol:
                     tickfont=dict(color=font_color)
                 ),
                 yaxis=dict(
-                    showgrid=(theme == "Dark"),
+                    #showgrid=(theme == "Dark"),
                     tickfont=dict(color="#000000" if theme == "Light" else font_color)
                 ),
                 plot_bgcolor=bg_color,
