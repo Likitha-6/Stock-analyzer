@@ -6,19 +6,42 @@ import pandas as pd
 st.set_page_config(page_title="📈 Technical Chart", layout="wide")
 st.title("📈 Indian Stock – Technical Analysis")
 
+# ─────────────────────────────
+# Interval & Symbol Input
+# ─────────────────────────────
 interval_mapping = {
-    "5 minutes": ("5m", "1d"),
-    "15 minutes": ("15m", "5d"),
-    "1 hour": ("60m", "7d"),
-    "4 hours": ("240m", "10d"),
-    "1 day": ("1d", "3mo")
+    "5 minutes": "5m",
+    "15 minutes": "15m",
+    "1 hour": "60m",
+    "4 hours": "240m",
+    "1 day": "1d"
 }
 
-label = st.selectbox("Select Interval", list(interval_mapping.keys()), index=4)
-interval, period = interval_mapping[label]
+label = st.selectbox("Select Interval", list(interval_mapping.keys()), index=0)
+interval = interval_mapping[label]
 
 symbol = st.text_input("Enter NSE Symbol (e.g., INFY, RELIANCE):").upper().strip()
 
+# ─────────────────────────────
+# Manage session state for loading older candles
+# ─────────────────────────────
+if "candle_days" not in st.session_state:
+    st.session_state.candle_days = 1  # Start with 1 day for 5m/15m
+
+if interval == "1d":
+    period = "3mo"  # For daily candles, just show a fixed 3 months
+else:
+    period = f"{st.session_state.candle_days}d"  # Dynamic for intraday
+
+# Load more button
+if interval != "1d":
+    if st.button("🔁 Load older candles"):
+        st.session_state.candle_days += 1
+        st.experimental_rerun()
+
+# ─────────────────────────────
+# Fetch and plot chart
+# ─────────────────────────────
 if symbol:
     try:
         df = yf.Ticker(symbol + ".NS").history(interval=interval, period=period)
@@ -29,14 +52,13 @@ if symbol:
             df = df.reset_index()
             x_col = "Datetime" if "Datetime" in df.columns else "Date"
 
-            # Format x-values as strings: "01/07 13:45" or "01/07"
+            # Format for trimmed x-axis
             if "m" in interval or "h" in interval:
                 df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M")
             else:
                 df["x_label"] = df[x_col].dt.strftime("%d/%m")
 
             fig = go.Figure()
-
             fig.add_trace(go.Candlestick(
                 x=df["x_label"],
                 open=df["Open"],
@@ -47,13 +69,10 @@ if symbol:
             ))
 
             fig.update_layout(
-                title=f"{symbol}.NS – {label} Chart",
+                title=f"{symbol}.NS – {label} Chart ({period})",
                 xaxis_title="Date/Time",
                 yaxis_title="Price",
-                xaxis=dict(
-                    type="category",  # This trims non-trading gaps
-                    tickangle=-45
-                ),
+                xaxis=dict(type="category", tickangle=-45),
                 xaxis_rangeslider_visible=False,
                 height=600
             )
@@ -62,4 +81,5 @@ if symbol:
 
     except Exception as e:
         st.error(f"Error: {e}")
+
 
