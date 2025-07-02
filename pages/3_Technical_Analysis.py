@@ -85,7 +85,7 @@ if symbol:
                 xaxis=dict(
                     type="category",
                     tickangle=-45,
-                    showgrid=(theme == "Dark"),
+                    #showgrid=(theme == "Dark"),
                     tickfont=dict(color=font_color)
                 ),
                 yaxis=dict(
