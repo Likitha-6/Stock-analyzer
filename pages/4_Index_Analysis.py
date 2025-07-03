@@ -332,7 +332,7 @@ else:
         score = sentiment["score"]
         color = "green" if label == "positive" else "red" if label == "negative" else "gray"
         st.markdown(
-            f"- **{title}**  \n<span style='color:{color}'>`{label} ({score:.2f})`</span>",
+            f"- **{title}**  \n<span style='color:{color}'>`{label} `</span>",
             unsafe_allow_html=True
         )
 
