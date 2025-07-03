@@ -2,7 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
-from indicators import compute_rsi  # Ensure compute_rsi exists in your indicators.py
+from indicators import compute_rsi  # Ensure this is implemented in your indicators.py
 
 st.set_page_config(page_title="📈 Index Analysis", layout="wide")
 
@@ -27,14 +27,44 @@ df["EMA_15"] = df["Close"].ewm(span=15, adjust=False).mean()
 df["RSI"] = compute_rsi(df)
 
 # ─────────────────────────────────────
-# Price Chart (Only EMA 9 and EMA 15)
+# Find Swing Highs and Lows
 # ─────────────────────────────────────
-st.subheader(f"📈 {selected_index} – Price Chart with EMA 9 & EMA 15")
+def find_swing_levels(df, window=5):
+    swing_highs = []
+    swing_lows = []
+    for i in range(window, len(df) - window):
+        is_high = all(df["High"].iloc[i] > df["High"].iloc[i - j] and df["High"].iloc[i] > df["High"].iloc[i + j] for j in range(1, window + 1))
+        is_low = all(df["Low"].iloc[i] < df["Low"].iloc[i - j] and df["Low"].iloc[i] < df["Low"].iloc[i + j] for j in range(1, window + 1))
+
+        if is_high:
+            swing_highs.append((df["Date"].iloc[i], df["High"].iloc[i]))
+        if is_low:
+            swing_lows.append((df["Date"].iloc[i], df["Low"].iloc[i]))
+
+    return swing_highs[-3:], swing_lows[-3:]  # latest 3 each
+
+# ─────────────────────────────────────
+# Price Chart (EMA 9, EMA 15 + Support/Resistance)
+# ─────────────────────────────────────
+st.subheader(f"📈 {selected_index} – Price Chart with EMA 9, EMA 15 & Levels")
 
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=df["Date"], y=df["Close"], name="Close Price", line=dict(width=2)))
-fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], name="EMA 9", line=dict(dash="solid")))
-fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], name="EMA 15", line=dict(dash="solid")))
+fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], name="EMA 9", line=dict(dash="dot")))
+fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], name="EMA 15", line=dict(dash="dot")))
+
+# Add swing levels
+swing_highs, swing_lows = find_swing_levels(df)
+for _, price in swing_highs:
+    fig.add_shape(type="line",
+                  x0=df["Date"].iloc[0], x1=df["Date"].iloc[-1],
+                  y0=price, y1=price,
+                  line=dict(color="red", dash="dash"))
+for _, price in swing_lows:
+    fig.add_shape(type="line",
+                  x0=df["Date"].iloc[0], x1=df["Date"].iloc[-1],
+                  y0=price, y1=price,
+                  line=dict(color="green", dash="dash"))
 
 fig.update_layout(
     height=500,
@@ -42,6 +72,8 @@ fig.update_layout(
     yaxis_title="Price",
     legend_title="Indicators",
     dragmode="pan",
+    xaxis=dict(showgrid=False),
+    yaxis=dict(showgrid=False),
     margin=dict(t=10)
 )
 st.plotly_chart(fig, use_container_width=True)
