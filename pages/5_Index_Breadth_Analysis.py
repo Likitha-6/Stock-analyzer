@@ -72,7 +72,7 @@ support, resistance = get_nearest_support_resistance(nifty_df, nifty_price)
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(
-    x=ndf.index,
+    x=nifty_df.index,
     y=nifty_df["Close"],
     mode="lines",
     name="NIFTY Close",
