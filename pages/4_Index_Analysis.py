@@ -33,8 +33,8 @@ st.subheader(f"📈 {selected_index} – Price Chart with EMA 9 & EMA 15")
 
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=df["Date"], y=df["Close"], name="Close Price", line=dict(width=2)))
-fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], name="EMA 9", line=dict(dash="dot")))
-fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], name="EMA 15", line=dict(dash="dot")))
+fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], name="EMA 9", line=dict(dash="solid")))
+fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], name="EMA 15", line=dict(dash="solid")))
 
 fig.update_layout(
     height=500,
