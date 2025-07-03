@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from scipy.signal import argrelextrema
-from indicators import compute_rsi  # make sure this function exists
+from indicators import compute_rsi  # make sure this function exists and returns a "RSI" column
 
 st.set_page_config(page_title="📈 Index Analysis", layout="wide")
 
@@ -25,47 +25,33 @@ index_symbol = index_options[selected_index]
 df = yf.Ticker(index_symbol).history(period="12mo", interval="1d").reset_index()
 price = df["Close"].iloc[-1]
 
+# Compute indicators
 df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
 df["EMA_15"] = df["Close"].ewm(span=15, adjust=False).mean()
 df["RSI"] = compute_rsi(df)
 
 # ─────────────────────────────────────
-# Find Swing Highs and Lows
+# Nearest Support & Resistance
 # ─────────────────────────────────────
-def find_swing_levels(df, window=5):
-    swing_highs = []
-    swing_lows = []
-    for i in range(window, len(df) - window):
-        is_high = all(df["High"].iloc[i] > df["High"].iloc[i - j] and df["High"].iloc[i] > df["High"].iloc[i + j] for j in range(1, window + 1))
-        is_low = all(df["Low"].iloc[i] < df["Low"].iloc[i - j] and df["Low"].iloc[i] < df["Low"].iloc[i + j] for j in range(1, window + 1))
-
-        if is_high:
-            swing_highs.append((df["Date"].iloc[i], df["High"].iloc[i]))
-        if is_low:
-            swing_lows.append((df["Date"].iloc[i], df["Low"].iloc[i]))
-
-    return swing_highs[-3:], swing_lows[-3:]  # last 3 each
-
-
-st.subheader(f"📈 {selected_index} – Candlestick Chart with EMA 9, EMA 15")
-
-show_levels = st.checkbox("📏 Show Support & Resistance", value=True)
-
 def get_nearest_support_resistance(df, price):
-        df = df.copy()
-        df["min"] = df["Close"].iloc[argrelextrema(df["Close"].values, np.less_equal, order=5)[0]]
-        df["max"] = df["Close"].iloc[argrelextrema(df["Close"].values, np.greater_equal, order=5)[0]]
-        supports = df["min"].dropna()
-        resistances = df["max"].dropna()
-        nearest_support = supports[supports < price].max() if not supports.empty else None
-        nearest_resistance = resistances[resistances > price].min() if not resistances.empty else None
-        return nearest_support, nearest_resistance
+    df = df.copy()
+    df["min"] = df["Close"].iloc[argrelextrema(df["Close"].values, np.less_equal, order=5)[0]]
+    df["max"] = df["Close"].iloc[argrelextrema(df["Close"].values, np.greater_equal, order=5)[0]]
+    supports = df["min"].dropna()
+    resistances = df["max"].dropna()
+    nearest_support = supports[supports < price].max() if not supports.empty else None
+    nearest_resistance = resistances[resistances > price].min() if not resistances.empty else None
+    return nearest_support, nearest_resistance
 
 support, resistance = get_nearest_support_resistance(df, price)
-df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
-df["EMA_15"] = df["Close"].ewm(span=15, adjust=False).mean()
+
+# ─────────────────────────────────────
+# Chart Rendering
+# ─────────────────────────────────────
+st.subheader(f"📈 {selected_index} – Candlestick Chart with EMA 9, EMA 15")
 
 fig = go.Figure()
+
 fig.add_trace(go.Candlestick(
     x=df["Date"],
     open=df["Open"],
@@ -73,15 +59,18 @@ fig.add_trace(go.Candlestick(
     low=df["Low"],
     close=df["Close"],
     increasing_line_color="green",
-    decreasing_line_color="red"
+    decreasing_line_color="red",
+    name="Price"
 ))
 fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], mode="lines", name="EMA 9", line=dict(color="orange")))
 fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], mode="lines", name="EMA 15", line=dict(color="cyan")))
 
 if support:
-    fig.add_hline(y=support, line_color="green", line_dash="dot", opacity=0.7, annotation_text=f"Support: {support:.2f}", annotation_position="bottom right")
+    fig.add_hline(y=support, line_color="green", line_dash="dot", opacity=0.7,
+                  annotation_text=f"Support: {support:.2f}", annotation_position="bottom right")
 if resistance:
-    fig.add_hline(y=resistance, line_color="red", line_dash="dot", opacity=0.7, annotation_text=f"Resistance: {resistance:.2f}", annotation_position="top right")
+    fig.add_hline(y=resistance, line_color="red", line_dash="dot", opacity=0.7,
+                  annotation_text=f"Resistance: {resistance:.2f}", annotation_position="top right")
 
 fig.update_layout(
     title=f"{selected_index} – Nearest Support & Resistance",
@@ -94,14 +83,18 @@ fig.update_layout(
     xaxis=dict(showgrid=False),
     yaxis=dict(showgrid=False)
 )
+
 st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
-st.subheader(f"{index_name} Key Levels")
-st.write(f"Current Price: `{price:.2f}`")
+# ─────────────────────────────────────
+# Levels Display
+# ─────────────────────────────────────
+st.subheader(f"{selected_index} Key Levels")
+st.write(f"💰 Current Price: `{price:.2f}`")
 if support:
-    st.success(f"Nearest Support: `{support:.2f}`")
+    st.success(f"📉 Nearest Support: `{support:.2f}`")
 if resistance:
-    st.warning(f"Nearest Resistance: `{resistance:.2f}`")
+    st.warning(f"📈 Nearest Resistance: `{resistance:.2f}`")
 
 # ─────────────────────────────────────
 # Technical Insights
