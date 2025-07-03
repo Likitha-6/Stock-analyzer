@@ -68,6 +68,10 @@ def get_nearest_support_resistance(df, price):
 
 nifty_df = yf.Ticker("^NSEI").history(period="90d", interval="1d")
 nifty_price = nifty_df["Close"].iloc[-1]
+nifty_df = nifty_df.reset_index()
+if "Date" not in nifty_df.columns:
+    nifty_df.rename(columns={nifty_df.columns[0]: "Date"}, inplace=True)
+
 support, resistance = get_nearest_support_resistance(nifty_df, nifty_price)
 nifty_df["swing_low"] = nifty_df["Close"].iloc[argrelextrema(nifty_df["Close"].values, np.less_equal, order=5)[0]]
 nifty_df["swing_high"] = nifty_df["Close"].iloc[argrelextrema(nifty_df["Close"].values, np.greater_equal, order=5)[0]]
