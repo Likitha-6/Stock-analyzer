@@ -1,68 +1,47 @@
 import streamlit as st
 import pandas as pd
-import yfinance as yf
 import numpy as np
+import yfinance as yf
+from scipy.signal import argrelextrema
 
-# ───────────────────────────────
-# Load symbols & sectors from CSV
-# ───────────────────────────────
+# Load NIFTY 50 symbols + sectors
 @st.cache_data
-def load_nifty_symbols():
+def load_symbols():
     df = pd.read_csv("HeatmapDetail_Data.csv")
     df.columns = ["Symbol", "Sector", "Price % Chng", "Price Chng", "Index % Chng", "Index Chng"]
     df["Symbol"] = df["Symbol"].str.strip().str.upper()
-    df["Sector"] = df["Sector"].str.strip()
-    df = df.dropna(subset=["Symbol", "Sector"])
+    df = df.dropna(subset=["Symbol"])
     return df
 
-df_csv = load_nifty_symbols()
+df_csv = load_symbols()
 nifty_symbols = df_csv["Symbol"].unique().tolist()
 
-# ───────────────────────────────
-# Streamlit Setup
-# ───────────────────────────────
-st.title("📊 NIFTY 50 – Breadth Analysis (using CSV & yFinance)")
-st.markdown("This page shows market breadth using your sector-wise CSV + live prices from Yahoo Finance.")
+st.title("📊 NIFTY 50 Breadth & Support/Resistance")
 
-# ───────────────────────────────
 # Compute Breadth Metrics
-# ───────────────────────────────
-#st.subheader("🔄 Computing Breadth Metrics...")
-
 ma50_above = ma200_above = advance = decline = 0
 valid_count = 0
-
-progress = st.progress(0)
-for i, sym in enumerate(nifty_symbols):
-    try:
-        df = yf.Ticker(sym + ".NS").history(period="250d", interval="1d")
-        if len(df) < 200:
+with st.spinner("Fetching stock data..."):
+    for sym in nifty_symbols:
+        try:
+            df = yf.Ticker(sym + ".NS").history(period="250d", interval="1d")
+            if len(df) < 200:
+                continue
+            close = df["Close"].iloc[-1]
+            prev_close = df["Close"].iloc[-2]
+            ma50 = df["Close"].rolling(50).mean().iloc[-1]
+            ma200 = df["Close"].rolling(200).mean().iloc[-1]
+            if close > ma50:
+                ma50_above += 1
+            if close > ma200:
+                ma200_above += 1
+            if close > prev_close:
+                advance += 1
+            else:
+                decline += 1
+            valid_count += 1
+        except:
             continue
-
-        close = df["Close"].iloc[-1]
-        prev_close = df["Close"].iloc[-2]
-        ma50 = df["Close"].rolling(50).mean().iloc[-1]
-        ma200 = df["Close"].rolling(200).mean().iloc[-1]
-
-        if close > ma50:
-            ma50_above += 1
-        if close > ma200:
-            ma200_above += 1
-        if close > prev_close:
-            advance += 1
-        else:
-            decline += 1
-        valid_count += 1
-    except:
-        continue
-    progress.progress((i + 1) / len(nifty_symbols))
-
-#st.success(f"✅ Fetched data for {valid_count} out of {len(nifty_symbols)} stocks.")
-
-# ───────────────────────────────
-# Display Results
-# ───────────────────────────────
-st.subheader("📈 Breadth Summary")
 
 pct_50 = ma50_above / valid_count * 100 if valid_count else 0
 pct_200 = ma200_above / valid_count * 100 if valid_count else 0
@@ -73,33 +52,40 @@ col1.metric("% Above 50-day MA", f"{pct_50:.1f}%")
 col2.metric("% Above 200-day MA", f"{pct_200:.1f}%")
 col3.metric("Advance/Decline", f"{a_d_ratio:.2f}")
 
-# ───────────────────────────────
+# Support/Resistance for NIFTY Index
+def get_nearest_support_resistance(df, price):
+    df = df.copy()
+    df["min"] = df["Close"].iloc[argrelextrema(df["Close"].values, np.less_equal, order=5)[0]]
+    df["max"] = df["Close"].iloc[argrelextrema(df["Close"].values, np.greater_equal, order=5)[0]]
+    supports = df["min"].dropna()
+    resistances = df["max"].dropna()
+    nearest_support = supports[supports < price].max() if not supports.empty else None
+    nearest_resistance = resistances[resistances > price].min() if not resistances.empty else None
+    return nearest_support, nearest_resistance
+
+nifty_df = yf.Ticker("^NSEI").history(period="90d", interval="1d")
+nifty_price = nifty_df["Close"].iloc[-1]
+support, resistance = get_nearest_support_resistance(nifty_df, nifty_price)
+
+st.subheader("📍 NIFTY Index Key Levels")
+st.write(f"💰 Current Price: `{nifty_price:.2f}`")
+if support:
+    st.success(f"📉 Nearest Support: `{support:.2f}`")
+if resistance:
+    st.warning(f"📈 Nearest Resistance: `{resistance:.2f}`")
+
 # Insights
-# ───────────────────────────────
-
-st.subheader("📉 Market Signal – What Should You Do?")
-
+st.subheader("📌 Market Signal Summary")
 if pct_50 > 70 and a_d_ratio > 1.2:
-    st.success("✅ **BUY**: Market is strong both technically and in momentum.")
+    st.success("✅ BUY: Strong breadth and momentum.")
 elif pct_50 < 40 and a_d_ratio < 0.8:
-    st.error("❌ **SELL / Exit**: Market shows clear weakness.")
+    st.error("❌ SELL: Market showing weakness.")
 elif 40 <= pct_50 <= 70 and 0.8 <= a_d_ratio <= 1.2:
-    st.info("⏸️ **HOLD**: Signals are neutral. Wait for clarity.")
-elif pct_50 > 70 and a_d_ratio < 1:
-    st.warning("⚠️ Mixed: Breadth strong, but short-term momentum weakening.")
-elif pct_50 < 40 and a_d_ratio > 1:
-    st.warning("⚠️ Mixed: Weak breadth but short-term bounce possible.")
+    st.info("⏸️ HOLD: Mixed signals.")
 else:
-    st.info("↔️ **Sideways Market**: No strong conviction either way.")
+    st.warning("⚠️ Be cautious — conflicting signals.")
 
-# ───────────────────────────────
-# Final Recommendation
-# ───────────────────────────────
-st.subheader("📌 Final Recommendation")
-
-if pct_50 > 65 and a_d_ratio > 1:
-    st.success("✅ Market supports **buying** — trend looks healthy.")
-elif pct_50 < 50 and a_d_ratio < 1:
-    st.error("❌ Consider **avoiding** fresh entries — trend is weak.")
-else:
-    st.info("📊 Stay **neutral** and observe for clarity.")
+if pct_200 > 70:
+    st.success("📈 Long-term trend is strong.")
+elif pct_200 < 40:
+    st.error("📉 Long-term trend is weak.")
