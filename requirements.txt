@@ -11,3 +11,5 @@ ta
 streamlit-lightweight-charts
 nsetools
 feedparser
+transformers
+torch
