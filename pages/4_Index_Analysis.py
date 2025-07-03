@@ -26,11 +26,14 @@ index_options = {
 selected_index = st.selectbox("📊 Select Index", list(index_options.keys()))
 index_symbol = index_options[selected_index]
 
+
 # ─────────────────────────────────────
 # Load Data and Compute Indicators
 # ─────────────────────────────────────
 df = yf.Ticker(index_symbol).history(period="12mo", interval="1d").reset_index()
 price = df["Close"].iloc[-1]
+st.metric(label="🔢 Latest Index Price", value=f"{price:.2f} ₹")
+
 
 # Compute indicators
 df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
