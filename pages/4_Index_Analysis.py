@@ -187,7 +187,7 @@ import datetime
 
 def fetch_index_news(index_name, max_headlines=10):
     query = index_name.replace(" ", "+")
-    feed_url = f"https://news.google.com/rss/search?q={query}+site:moneycontrol.com+OR+site:economictimes.indiatimes.com"
+    feed_url = f"https://news.google.com/rss/search?q={query}+site:cnbctv18.com"
     feed = feedparser.parse(feed_url)
 
     today = datetime.datetime.utcnow().date()
