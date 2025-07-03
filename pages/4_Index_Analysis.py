@@ -201,6 +201,38 @@ fig_weekday.update_layout(
 st.plotly_chart(fig_weekday, use_container_width=True)
 
 # ─────────────────────────────────────
+# ✅ Green vs Red Days per Weekday
+# ─────────────────────────────────────
+st.markdown("### ✅ Green vs Red Days by Weekday")
+
+# Compute daily return direction
+df["Return"] = df["Close"].pct_change()
+df["Weekday"] = df["Date"].dt.day_name()
+df["Color"] = df["Return"].apply(lambda x: "Green" if x > 0 else "Red" if x < 0 else "Flat")
+
+# Count green/red by weekday
+green_red_counts = df[df["Color"] != "Flat"].groupby(["Weekday", "Color"]).size().unstack(fill_value=0)
+green_red_counts = green_red_counts.reindex(index=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
+
+# Plot grouped bar chart
+fig2 = go.Figure(data=[
+    go.Bar(name='🟢 Green Days', x=green_red_counts.index, y=green_red_counts["Green"], marker_color="green"),
+    go.Bar(name='🔴 Red Days', x=green_red_counts.index, y=green_red_counts["Red"], marker_color="red")
+])
+
+fig2.update_layout(
+    barmode='group',
+    title="Number of Green vs Red Days by Weekday",
+    xaxis_title="Weekday",
+    yaxis_title="Number of Days",
+    template="plotly_dark",
+    height=400
+)
+
+st.plotly_chart(fig2, use_container_width=True)
+
+
+# ─────────────────────────────────────
 # 🧠 Dynamic Weekday Insights (Generic)
 # ─────────────────────────────────────
 st.markdown("### 🧠 Weekday-Based Insights")
