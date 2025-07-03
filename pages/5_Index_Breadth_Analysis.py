@@ -27,7 +27,7 @@ st.markdown("This page shows market breadth using your sector-wise CSV + live pr
 # ───────────────────────────────
 # Compute Breadth Metrics
 # ───────────────────────────────
-st.subheader("🔄 Computing Breadth Metrics...")
+#st.subheader("🔄 Computing Breadth Metrics...")
 
 ma50_above = ma200_above = advance = decline = 0
 valid_count = 0
@@ -57,7 +57,7 @@ for i, sym in enumerate(nifty_symbols):
         continue
     progress.progress((i + 1) / len(nifty_symbols))
 
-st.success(f"✅ Fetched data for {valid_count} out of {len(nifty_symbols)} stocks.")
+#st.success(f"✅ Fetched data for {valid_count} out of {len(nifty_symbols)} stocks.")
 
 # ───────────────────────────────
 # Display Results
@@ -76,19 +76,21 @@ col3.metric("Advance/Decline", f"{a_d_ratio:.2f}")
 # ───────────────────────────────
 # Insights
 # ───────────────────────────────
-st.subheader("📋 Market Insight")
 
-if pct_50 > 70 and pct_200 > 70:
-    st.success("✅ Strong market breadth — most stocks are above both 50 and 200 MAs.")
-elif pct_50 < 50:
-    st.warning("⚠️ Weak short-term breadth — less than half of stocks above 50-day MA.")
+st.subheader("📉 Market Signal – What Should You Do?")
 
-if a_d_ratio > 1.2:
-    st.success("📈 More stocks are advancing than declining.")
-elif a_d_ratio < 0.8:
-    st.warning("📉 More stocks are declining — cautious tone.")
+if pct_50 > 70 and a_d_ratio > 1.2:
+    st.success("✅ **BUY**: Market is strong both technically and in momentum.")
+elif pct_50 < 40 and a_d_ratio < 0.8:
+    st.error("❌ **SELL / Exit**: Market shows clear weakness.")
+elif 40 <= pct_50 <= 70 and 0.8 <= a_d_ratio <= 1.2:
+    st.info("⏸️ **HOLD**: Signals are neutral. Wait for clarity.")
+elif pct_50 > 70 and a_d_ratio < 1:
+    st.warning("⚠️ Mixed: Breadth strong, but short-term momentum weakening.")
+elif pct_50 < 40 and a_d_ratio > 1:
+    st.warning("⚠️ Mixed: Weak breadth but short-term bounce possible.")
 else:
-    st.info("↔️ Market is balanced today.")
+    st.info("↔️ **Sideways Market**: No strong conviction either way.")
 
 # ───────────────────────────────
 # Final Recommendation
