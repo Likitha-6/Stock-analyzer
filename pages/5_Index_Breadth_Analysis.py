@@ -17,7 +17,7 @@ def load_symbols():
 df_csv = load_symbols()
 nifty_symbols = df_csv["Symbol"].unique().tolist()
 
-st.title(" NIFTY 50 Breadth & Support/Resistance")
+st.title("NIFTY 50 Breadth & Support/Resistance")
 
 # Compute Breadth Metrics
 ma50_above = ma200_above = advance = decline = 0
@@ -71,8 +71,6 @@ if "Date" not in nifty_df.columns:
     nifty_df.rename(columns={nifty_df.columns[0]: "Date"}, inplace=True)
 
 support, resistance = get_nearest_support_resistance(nifty_df, nifty_price)
-nifty_df["swing_low"] = nifty_df["Close"].iloc[argrelextrema(nifty_df["Close"].values, np.less_equal, order=5)[0]]
-nifty_df["swing_high"] = nifty_df["Close"].iloc[argrelextrema(nifty_df["Close"].values, np.greater_equal, order=5)[0]]
 
 # Plot chart in dark mode
 fig = go.Figure()
@@ -89,27 +87,31 @@ fig.add_trace(go.Candlestick(
     decreasing_line_color="red"
 ))
 
-# Add swing support lines
-for y in nifty_df["swing_low"].dropna():
+# Add nearest support line
+if support:
     fig.add_hline(
-        y=y,
+        y=support,
         line_color="green",
         line_dash="dot",
-        opacity=0.4
+        opacity=0.7,
+        annotation_text=f"Support: {support:.2f}",
+        annotation_position="bottom right"
     )
 
-# Add swing resistance lines
-for y in nifty_df["swing_high"].dropna():
+# Add nearest resistance line
+if resistance:
     fig.add_hline(
-        y=y,
+        y=resistance,
         line_color="red",
         line_dash="dot",
-        opacity=0.4
+        opacity=0.7,
+        annotation_text=f"Resistance: {resistance:.2f}",
+        annotation_position="top right"
     )
 
 # Chart layout
 fig.update_layout(
-    title=" NIFTY 50 – All Swing Support & Resistance",
+    title="NIFTY 50 – Nearest Support & Resistance",
     xaxis_title="Date",
     yaxis_title="Price",
     template="plotly_dark",
@@ -120,26 +122,25 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
-st.subheader(" NIFTY Index Key Levels")
-st.write(f" Current Price: `{nifty_price:.2f}`")
+st.subheader("NIFTY Index Key Levels")
+st.write(f"Current Price: `{nifty_price:.2f}`")
 if support:
-    st.success(f" Nearest Support: `{support:.2f}`")
+    st.success(f"Nearest Support: `{support:.2f}`")
 if resistance:
-    st.warning(f" Nearest Resistance: `{resistance:.2f}`")
+    st.warning(f"Nearest Resistance: `{resistance:.2f}`")
 
 # Insights
-st.subheader(" Market Signal Summary")
+st.subheader("Market Signal Summary")
 if pct_50 > 70 and a_d_ratio > 1.2:
-    st.success(" BUY: Strong breadth and momentum.")
+    st.success("BUY: Strong breadth and momentum.")
 elif pct_50 < 40 and a_d_ratio < 0.8:
-    st.error(" SELL: Market showing weakness.")
+    st.error("SELL: Market showing weakness.")
 elif 40 <= pct_50 <= 70 and 0.8 <= a_d_ratio <= 1.2:
-    st.info(" HOLD: Mixed signals.")
+    st.info("HOLD: Mixed signals.")
 else:
-    st.warning(" Be cautious — conflicting signals.")
+    st.warning("Be cautious — conflicting signals.")
 
 if pct_200 > 70:
-    st.success(" Long-term trend is strong.")
+    st.success("Long-term trend is strong.")
 elif pct_200 < 40:
-    st.error(" Long-term trend is weak.")
-
+    st.error("Long-term trend is weak.")
