@@ -72,6 +72,10 @@ if "Date" not in nifty_df.columns:
 
 support, resistance = get_nearest_support_resistance(nifty_df, nifty_price)
 
+# Calculate EMA 9 and 15
+nifty_df["EMA_9"] = nifty_df["Close"].ewm(span=9, adjust=False).mean()
+nifty_df["EMA_15"] = nifty_df["Close"].ewm(span=15, adjust=False).mean()
+
 # Plot chart in dark mode
 fig = go.Figure()
 
@@ -85,6 +89,24 @@ fig.add_trace(go.Candlestick(
     name="NIFTY",
     increasing_line_color="green",
     decreasing_line_color="red"
+))
+
+# Add EMA 9
+fig.add_trace(go.Scatter(
+    x=nifty_df["Date"],
+    y=nifty_df["EMA_9"],
+    mode="lines",
+    name="EMA 9",
+    line=dict(color="orange")
+))
+
+# Add EMA 15
+fig.add_trace(go.Scatter(
+    x=nifty_df["Date"],
+    y=nifty_df["EMA_15"],
+    mode="lines",
+    name="EMA 15",
+    line=dict(color="cyan")
 ))
 
 # Add nearest support line
