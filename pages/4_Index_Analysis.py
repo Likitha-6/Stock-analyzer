@@ -19,9 +19,6 @@ index_options = {
     "NIFTY FMCG": "^CNXFMCG",
     "NIFTY Auto": "^CNXAUTO",
     "NIFTY Pharma": "^CNXPHARMA",
-    "NIFTY Midcap 100": "^NSEMIDCAP100",
-    "NIFTY Next 50": "^NSENEXT50",
-    "NIFTY Smallcap 100": "^NSESMALLCAP100"
 }
 selected_index = st.selectbox(" Select Index", list(index_options.keys()))
 index_symbol = index_options[selected_index]
