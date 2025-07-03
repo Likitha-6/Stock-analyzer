@@ -263,6 +263,7 @@ def fetch_index_news(index_name, max_headlines=10):
             published_date = datetime.datetime(*entry.published_parsed[:6]).date()
             if published_date == today:
                 headlines.append(entry.title)
+                print(entry.title, entry.published)
                 if len(headlines) >= max_headlines:
                     break
 
