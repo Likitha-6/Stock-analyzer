@@ -65,8 +65,8 @@ fig.add_trace(go.Candlestick(
     high=df["High"],
     low=df["Low"],
     close=df["Close"],
-    increasing_line_color="green",
-    decreasing_line_color="red",
+    increasing_line_color="#00bcd4",
+    decreasing_line_color="#e74c3c",
     name="Price"
 ))
 fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], mode="lines", name="EMA 9", line=dict(color="orange")))
