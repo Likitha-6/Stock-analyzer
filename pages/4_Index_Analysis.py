@@ -48,60 +48,58 @@ st.subheader(f"📈 {selected_index} – Candlestick Chart with EMA 9, EMA 15")
 
 show_levels = st.checkbox("📏 Show Support & Resistance", value=True)
 
-fig = go.Figure()
+def get_nearest_support_resistance(df, price):
+        df = df.copy()
+        df["min"] = df["Close"].iloc[argrelextrema(df["Close"].values, np.less_equal, order=5)[0]]
+        df["max"] = df["Close"].iloc[argrelextrema(df["Close"].values, np.greater_equal, order=5)[0]]
+        supports = df["min"].dropna()
+        resistances = df["max"].dropna()
+        nearest_support = supports[supports < price].max() if not supports.empty else None
+        nearest_resistance = resistances[resistances > price].min() if not resistances.empty else None
+        return nearest_support, nearest_resistance
 
-# Candlestick chart
-fig.add_trace(go.Candlestick(
-    x=df["Date"],
-    open=df["Open"],
-    high=df["High"],
-    low=df["Low"],
-    close=df["Close"],
-    name="Candles",
-    increasing_line_color="#26de81",
-    decreasing_line_color="#eb3b5a"
-))
+    support, resistance = get_nearest_support_resistance(df_index, price)
+    df_index["EMA_9"] = df_index["Close"].ewm(span=9, adjust=False).mean()
+    df_index["EMA_15"] = df_index["Close"].ewm(span=15, adjust=False).mean()
 
-# EMA overlays
-fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], mode="lines", name="EMA 9", line=dict(dash="solid")))
-fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], mode="lines", name="EMA 15", line=dict(dash="solid")))
+    fig = go.Figure()
+    fig.add_trace(go.Candlestick(
+        x=df_index["Date"],
+        open=df_index["Open"],
+        high=df_index["High"],
+        low=df_index["Low"],
+        close=df_index["Close"],
+        name=index_name,
+        increasing_line_color="green",
+        decreasing_line_color="red"
+    ))
+    fig.add_trace(go.Scatter(x=df_index["Date"], y=df_index["EMA_9"], mode="lines", name="EMA 9", line=dict(color="orange")))
+    fig.add_trace(go.Scatter(x=df_index["Date"], y=df_index["EMA_15"], mode="lines", name="EMA 15", line=dict(color="cyan")))
 
-# Support/Resistance levels (optional)
-if show_levels:
-    swing_highs, swing_lows = find_swing_levels(df)
-    for _, price in swing_highs:
-        fig.add_shape(type="line",
-                      x0=df["Date"].iloc[0], x1=df["Date"].iloc[-1],
-                      y0=price, y1=price,
-                      line=dict(color="red", dash="dash"))
-    for _, price in swing_lows:
-        fig.add_shape(type="line",
-                      x0=df["Date"].iloc[0], x1=df["Date"].iloc[-1],
-                      y0=price, y1=price,
-                      line=dict(color="green", dash="dash"))
+    if support:
+        fig.add_hline(y=support, line_color="green", line_dash="dot", opacity=0.7, annotation_text=f"Support: {support:.2f}", annotation_position="bottom right")
+    if resistance:
+        fig.add_hline(y=resistance, line_color="red", line_dash="dot", opacity=0.7, annotation_text=f"Resistance: {resistance:.2f}", annotation_position="top right")
 
-fig.update_layout(
-    height=500,
-    xaxis_title="Date",
-    yaxis_title="Price",
-    legend_title="Indicators",
-    dragmode="pan",
-    xaxis=dict(showgrid=False),
-    yaxis=dict(showgrid=False),
-    xaxis_rangeslider_visible=False,
-    margin=dict(t=10)
-)
+    fig.update_layout(
+        title=f"{index_name} – Nearest Support & Resistance",
+        xaxis_title="Date",
+        yaxis_title="Price",
+        template="plotly_dark",
+        xaxis_rangeslider_visible=False,
+        dragmode="pan",
+        height=600,
+        xaxis=dict(showgrid=False),
+        yaxis=dict(showgrid=False)
+    )
+    st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
-st.plotly_chart(
-    fig,
-    use_container_width=True,
-    config={
-        "scrollZoom": True,  # allows zoom with mouse wheel
-        "displayModeBar": True,
-        "modeBarButtonsToRemove": ["select2d", "lasso2d"],
-        "displaylogo": False
-    }
-)
+    st.subheader(f"{index_name} Key Levels")
+    st.write(f"Current Price: `{price:.2f}`")
+    if support:
+        st.success(f"Nearest Support: `{support:.2f}`")
+    if resistance:
+        st.warning(f"Nearest Resistance: `{resistance:.2f}`")
 
 # ─────────────────────────────────────
 # Technical Insights
