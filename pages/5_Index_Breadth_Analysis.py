@@ -1,154 +1,103 @@
 import streamlit as st
-import yfinance as yf
 import pandas as pd
+import yfinance as yf
 import numpy as np
-import plotly.graph_objects as go
-from indicators import compute_rsi
 
-# ─────────────────────────────────────
-# Load NIFTY 50 symbols from CSV
-# ─────────────────────────────────────
-csv_path = "HeatmapDetail_Data.csv"
-df_csv = pd.read_csv(csv_path)
-df_csv.columns = ["Symbol", "Sector", "Price % Chng", "Price Chng", "Index % Chng", "Index Chng"]
-df_csv["Price % Chng"] = df_csv["Price % Chng"].str.replace('%', '', regex=False).astype(float)
-nifty50_symbols = df_csv["Symbol"].tolist()
+# ───────────────────────────────
+# Load symbols & sectors from CSV
+# ───────────────────────────────
+@st.cache_data
+def load_nifty_symbols():
+    df = pd.read_csv("HeatmapDetail_Data.csv")
+    df.columns = ["Symbol", "Sector", "Price % Chng", "Price Chng", "Index % Chng", "Index Chng"]
+    df["Symbol"] = df["Symbol"].str.strip().str.upper()
+    df["Sector"] = df["Sector"].str.strip()
+    df = df.dropna(subset=["Symbol", "Sector"])
+    return df
 
-# ─────────────────────────────────────
-# Load NIFTY Index Data
-# ─────────────────────────────────────
-df = yf.Ticker("^NSEI").history(period="12mo", interval="1d").reset_index()
-df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
-df["EMA_15"] = df["Close"].ewm(span=15, adjust=False).mean()
-df["RSI"] = compute_rsi(df)
+df_csv = load_nifty_symbols()
+nifty_symbols = df_csv["Symbol"].unique().tolist()
 
-# ─────────────────────────────────────
-# Breadth Metrics: % Above MAs, A/D Ratio
-# ─────────────────────────────────────
-with st.spinner("🔄 Computing breadth metrics..."):
-    ma50_above = ma200_above = advance = decline = 0
-    for sym in nifty50_symbols:
-        try:
-            data = yf.Ticker(sym + ".NS").history(period="250d", interval="1d")
-            if len(data) < 200:
-                continue
-            close = data["Close"].iloc[-1]
-            if close > data["Close"].rolling(50).mean().iloc[-1]:
-                ma50_above += 1
-            if close > data["Close"].rolling(200).mean().iloc[-1]:
-                ma200_above += 1
-            if close > data["Close"].iloc[-2]:
-                advance += 1
-            else:
-                decline += 1
-        except:
+# ───────────────────────────────
+# Streamlit Setup
+# ───────────────────────────────
+st.title("📊 NIFTY 50 – Breadth Analysis (using CSV & yFinance)")
+st.markdown("This page shows market breadth using your sector-wise CSV + live prices from Yahoo Finance.")
+
+# ───────────────────────────────
+# Compute Breadth Metrics
+# ───────────────────────────────
+st.subheader("🔄 Computing Breadth Metrics...")
+
+ma50_above = ma200_above = advance = decline = 0
+valid_count = 0
+
+progress = st.progress(0)
+for i, sym in enumerate(nifty_symbols):
+    try:
+        df = yf.Ticker(sym + ".NS").history(period="250d", interval="1d")
+        if len(df) < 200:
             continue
 
-    pct_50 = ma50_above / len(nifty50_symbols) * 100
-    pct_200 = ma200_above / len(nifty50_symbols) * 100
-    a_d_ratio = advance / decline if decline else np.inf
+        close = df["Close"].iloc[-1]
+        prev_close = df["Close"].iloc[-2]
+        ma50 = df["Close"].rolling(50).mean().iloc[-1]
+        ma200 = df["Close"].rolling(200).mean().iloc[-1]
 
-# ─────────────────────────────────────
-# Display Breadth Metrics
-# ─────────────────────────────────────
-st.title("📈 NIFTY 50 – Breadth & Technical Analysis")
-st.subheader("📊 Market Breadth Metrics")
+        if close > ma50:
+            ma50_above += 1
+        if close > ma200:
+            ma200_above += 1
+        if close > prev_close:
+            advance += 1
+        else:
+            decline += 1
+        valid_count += 1
+    except:
+        continue
+    progress.progress((i + 1) / len(nifty_symbols))
+
+st.success(f"✅ Fetched data for {valid_count} out of {len(nifty_symbols)} stocks.")
+
+# ───────────────────────────────
+# Display Results
+# ───────────────────────────────
+st.subheader("📈 Breadth Summary")
+
+pct_50 = ma50_above / valid_count * 100 if valid_count else 0
+pct_200 = ma200_above / valid_count * 100 if valid_count else 0
+a_d_ratio = advance / decline if decline else np.inf
 
 col1, col2, col3 = st.columns(3)
-col1.metric("% > 50-day MA", f"{pct_50:.1f}%")
-col2.metric("% > 200-day MA", f"{pct_200:.1f}%")
-col3.metric("Advance/Decline Ratio", f"{a_d_ratio:.2f}")
+col1.metric("% Above 50-day MA", f"{pct_50:.1f}%")
+col2.metric("% Above 200-day MA", f"{pct_200:.1f}%")
+col3.metric("Advance/Decline", f"{a_d_ratio:.2f}")
 
-# ─────────────────────────────────────
-# Candlestick + EMA Chart
-# ─────────────────────────────────────
-def find_swing(df, window=5):
-    highs, lows = [], []
-    for i in range(window, len(df) - window):
-        if all(df.High[i] > df.High[i - j] and df.High[i] > df.High[i + j] for j in range(1, window + 1)):
-            highs.append(df.High[i])
-        if all(df.Low[i] < df.Low[i - j] and df.Low[i] < df.Low[i + j] for j in range(1, window + 1)):
-            lows.append(df.Low[i])
-    return highs[-3:], lows[-3:]
-
-st.subheader("📈 NIFTY 50 – Candlestick with EMA 9/15")
-show_levels = st.checkbox("📏 Show Support/Resistance Levels", value=True)
-
-fig = go.Figure(go.Candlestick(
-    x=df.Date, open=df.Open, high=df.High, low=df.Low, close=df.Close,
-    increasing_line_color="#26de81", decreasing_line_color="#eb3b5a"
-))
-fig.add_trace(go.Scatter(x=df.Date, y=df.EMA_9, mode="lines", name="EMA 9", line=dict(dash="dot")))
-fig.add_trace(go.Scatter(x=df.Date, y=df.EMA_15, mode="lines", name="EMA 15", line=dict(dash="dot")))
-
-if show_levels:
-    highs, lows = find_swing(df)
-    for price in highs:
-        fig.add_shape(type="line", x0=df.Date.min(), x1=df.Date.max(), y0=price, y1=price,
-                      line=dict(color="red", dash="dash"))
-    for price in lows:
-        fig.add_shape(type="line", x0=df.Date.min(), x1=df.Date.max(), y0=price, y1=price,
-                      line=dict(color="green", dash="dash"))
-
-fig.update_layout(dragmode="pan", xaxis_rangeslider_visible=False,
-                  xaxis=dict(showgrid=False), yaxis=dict(showgrid=False),
-                  height=550, margin=dict(t=10))
-
-st.plotly_chart(fig, use_container_width=True,
-                config={"scrollZoom": True, "displayModeBar": True,
-                        "modeBarButtonsToRemove": ["select2d", "lasso2d"], "displaylogo": False})
-
-# ─────────────────────────────────────
-# Insights & Final Recommendation
-# ─────────────────────────────────────
-st.subheader("📋 Technical Insights & Recommendation")
-
-latest_ema9 = df.EMA_9.iloc[-1]
-latest_ema15 = df.EMA_15.iloc[-1]
-ema15_5ago = df.EMA_15.iloc[-5]
-latest_rsi = df.RSI.iloc[-1]
+# ───────────────────────────────
+# Insights
+# ───────────────────────────────
+st.subheader("📋 Market Insight")
 
 if pct_50 > 70 and pct_200 > 70:
-    st.success("✅ Strong breadth: Over 70% of stocks are above both 50- and 200-day MAs.")
+    st.success("✅ Strong market breadth — most stocks are above both 50 and 200 MAs.")
 elif pct_50 < 50:
-    st.warning("⚠️ Weak short-term breadth: Less than half of stocks above 50-day MA.")
-if a_d_ratio > 1:
-    st.success("📈 Advance/Decline > 1: More stocks are advancing than declining.")
-else:
-    st.warning("📉 Advance/Decline < 1: More stocks are declining — caution.")
+    st.warning("⚠️ Weak short-term breadth — less than half of stocks above 50-day MA.")
 
-# EMA & RSI insights
-if latest_ema9 > latest_ema15:
-    st.success("✅ Short-term momentum bullish (EMA 9 > EMA 15)")
+if a_d_ratio > 1.2:
+    st.success("📈 More stocks are advancing than declining.")
+elif a_d_ratio < 0.8:
+    st.warning("📉 More stocks are declining — cautious tone.")
 else:
-    st.error("❌ Short-term momentum bearish (EMA 9 < EMA 15)")
-if latest_ema15 > ema15_5ago:
-    st.success("📈 EMA 15 is rising — strengthening trend.")
-else:
-    st.warning("📉 EMA 15 is falling — weakening trend.")
-if latest_rsi > 70:
-    st.warning("⚠️ RSI > 70: Overbought — pullback likely.")
-elif latest_rsi < 30:
-    st.success("📉 RSI < 30: Oversold — rebound possible.")
-else:
-    st.info("⚖️ RSI is neutral.")
+    st.info("↔️ Market is balanced today.")
 
-# Final recommendation
-st.markdown("---")
+# ───────────────────────────────
+# Final Recommendation
+# ───────────────────────────────
 st.subheader("📌 Final Recommendation")
 
-buy = latest_ema9 > latest_ema15 and latest_rsi < 30 and pct_50 > 50
-hold = latest_ema9 > latest_ema15 and pct_50 > 50
-avoid = latest_ema9 < latest_ema15 and pct_50 < 50
-
-if buy:
-    st.success("✅ **Buy** — Multiple bullish signals aligned.")
-elif hold:
-    st.info("⚖️ **Hold / Watch** — Market fundamentals OK, but wait for confirmation.")
-elif avoid:
-    st.error("❌ **Avoid** — Weak breadth and bearish momentum.")
+if pct_50 > 65 and a_d_ratio > 1:
+    st.success("✅ Market supports **buying** — trend looks healthy.")
+elif pct_50 < 50 and a_d_ratio < 1:
+    st.error("❌ Consider **avoiding** fresh entries — trend is weak.")
 else:
-    st.warning("ℹ️ No clear directional signal — observe further.")
-
-
-
+    st.info("📊 Stay **neutral** and observe for clarity.")
