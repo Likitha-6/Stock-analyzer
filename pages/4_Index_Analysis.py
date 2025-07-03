@@ -2,7 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
-from indicators import compute_rsi  # Ensure this is implemented in your indicators.py
+from indicators import compute_rsi  # make sure this function exists
 
 st.set_page_config(page_title="📈 Index Analysis", layout="wide")
 
@@ -41,19 +41,32 @@ def find_swing_levels(df, window=5):
         if is_low:
             swing_lows.append((df["Date"].iloc[i], df["Low"].iloc[i]))
 
-    return swing_highs[-3:], swing_lows[-3:]  # latest 3 each
+    return swing_highs[-3:], swing_lows[-3:]  # last 3 each
 
 # ─────────────────────────────────────
-# Price Chart (EMA 9, EMA 15 + Support/Resistance)
+# Price Chart (Candlesticks + EMA + Levels)
 # ─────────────────────────────────────
-st.subheader(f"📈 {selected_index} – Price Chart with EMA 9, EMA 15 & Levels")
+st.subheader(f"📈 {selected_index} – Candlestick Chart with EMA 9, EMA 15 & Levels")
 
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=df["Date"], y=df["Close"], name="Close Price", line=dict(width=2)))
-fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], name="EMA 9", line=dict(dash="dot")))
-fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], name="EMA 15", line=dict(dash="dot")))
 
-# Add swing levels
+# Candlestick chart
+fig.add_trace(go.Candlestick(
+    x=df["Date"],
+    open=df["Open"],
+    high=df["High"],
+    low=df["Low"],
+    close=df["Close"],
+    name="Candles",
+    increasing_line_color="#26de81",
+    decreasing_line_color="#eb3b5a"
+))
+
+# EMA overlays
+fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], mode="lines", name="EMA 9", line=dict(dash="dot")))
+fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], mode="lines", name="EMA 15", line=dict(dash="dot")))
+
+# Support/Resistance levels
 swing_highs, swing_lows = find_swing_levels(df)
 for _, price in swing_highs:
     fig.add_shape(type="line",
