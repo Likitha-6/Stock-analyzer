@@ -19,44 +19,7 @@ nifty_symbols = df_csv["Symbol"].unique().tolist()
 
 st.title("📊 NIFTY 50 Breadth & Support/Resistance")
 
-fig = go.Figure()
 
-fig.add_trace(go.Scatter(
-    x=nifty_df.index,
-    y=nifty_df["Close"],
-    mode="lines",
-    name="NIFTY Close",
-    line=dict(color="blue")
-))
-
-if support:
-    fig.add_hline(
-        y=support,
-        line_dash="dot",
-        line_color="green",
-        annotation_text=f"Support: {support:.2f}",
-        annotation_position="bottom right"
-    )
-
-if resistance:
-    fig.add_hline(
-        y=resistance,
-        line_dash="dot",
-        line_color="red",
-        annotation_text=f"Resistance: {resistance:.2f}",
-        annotation_position="top right"
-    )
-
-fig.update_layout(
-    title="📈 NIFTY Index with Support & Resistance",
-    xaxis_title="Date",
-    yaxis_title="Price",
-    height=500,
-    plot_bgcolor="#f9f9f9",
-    paper_bgcolor="#f9f9f9"
-)
-
-st.plotly_chart(fig, use_container_width=True)
 
 # Compute Breadth Metrics
 ma50_above = ma200_above = advance = decline = 0
@@ -106,6 +69,44 @@ def get_nearest_support_resistance(df, price):
 nifty_df = yf.Ticker("^NSEI").history(period="90d", interval="1d")
 nifty_price = nifty_df["Close"].iloc[-1]
 support, resistance = get_nearest_support_resistance(nifty_df, nifty_price)
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(
+    x=ndf.index,
+    y=nifty_df["Close"],
+    mode="lines",
+    name="NIFTY Close",
+    line=dict(color="blue")
+))
+
+if support:
+    fig.add_hline(
+        y=support,
+        line_dash="dot",
+        line_color="green",
+        annotation_text=f"Support: {support:.2f}",
+        annotation_position="bottom right"
+    )
+
+if resistance:
+    fig.add_hline(
+        y=resistance,
+        line_dash="dot",
+        line_color="red",
+        annotation_text=f"Resistance: {resistance:.2f}",
+        annotation_position="top right"
+    )
+
+fig.update_layout(
+    title="📈 NIFTY Index with Support & Resistance",
+    xaxis_title="Date",
+    yaxis_title="Price",
+    height=500,
+    plot_bgcolor="#f9f9f9",
+    paper_bgcolor="#f9f9f9"
+)
+
+st.plotly_chart(fig, use_container_width=True)
 
 st.subheader("📍 NIFTY Index Key Levels")
 st.write(f"💰 Current Price: `{nifty_price:.2f}`")
