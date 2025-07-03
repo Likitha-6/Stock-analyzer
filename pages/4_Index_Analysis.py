@@ -41,6 +41,7 @@ fig.update_layout(
     xaxis_title="Date",
     yaxis_title="Price",
     legend_title="Indicators",
+    dragmode="pan",
     margin=dict(t=10)
 )
 st.plotly_chart(fig, use_container_width=True)
