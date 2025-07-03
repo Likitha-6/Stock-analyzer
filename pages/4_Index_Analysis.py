@@ -32,7 +32,27 @@ index_symbol = index_options[selected_index]
 # ─────────────────────────────────────
 df = yf.Ticker(index_symbol).history(period="12mo", interval="1d").reset_index()
 price = df["Close"].iloc[-1]
-st.metric(label="🔢 Latest Index Price", value=f"{price:.2f} ₹")
+# Ensure we have enough data
+df["Date"] = pd.to_datetime(df["Date"])
+df.set_index("Date", inplace=True)
+
+# Compute previous values
+day_ago = df["Close"].iloc[-2] if len(df) >= 2 else np.nan
+month_ago = df["Close"].asfreq("D").last("30D").iloc[0] if len(df) >= 30 else np.nan
+year_ago = df["Close"].asfreq("D").last("365D").iloc[0] if len(df) >= 250 else np.nan
+
+# Compute percentage changes
+day_change = (price - day_ago) / day_ago * 100 if not pd.isna(day_ago) else np.nan
+month_change = (price - month_ago) / month_ago * 100 if not pd.isna(month_ago) else np.nan
+year_change = (price - year_ago) / year_ago * 100 if not pd.isna(year_ago) else np.nan
+
+st.markdown("### 📊 Price Performance")
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric("📌 Latest Price", f"{price:.2f} ₹")
+col2.metric("📅 1-Day Change", f"{day_change:+.2f}%", delta_color="inverse")
+col3.metric("🗓️ 1-Month Change", f"{month_change:+.2f}%", delta_color="inverse")
+col4.metric("📆 1-Year Change", f"{year_change:+.2f}%", delta_color="inverse")
 
 
 # Compute indicators
