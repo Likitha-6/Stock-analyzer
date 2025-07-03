@@ -380,7 +380,7 @@ with tab3:
                 
                 fig.update_layout(
                     barmode="group",
-                    title="📊 Analyst Recommendations (last 3 months)",
+                    title="📊 Analyst Recommendations",
                     xaxis_title="Month",
                     yaxis_title="Number of Ratings",
                     legend_title="Rating",
