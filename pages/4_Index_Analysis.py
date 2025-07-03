@@ -30,7 +30,7 @@ index_symbol = index_options[selected_index]
 # ─────────────────────────────────────
 # Load Data and Compute Indicators
 # ─────────────────────────────────────
-df = yf.Ticker(index_symbol).history(period="12mo", interval="1d").reset_index()
+df = yf.Ticker(index_symbol).history(period="400d", interval="1d").reset_index()
 price = df["Close"].iloc[-1]
 # Ensure we have enough data
 df["Date"] = pd.to_datetime(df["Date"])
@@ -48,13 +48,13 @@ year_change = (price - year_ago) / year_ago * 100 if not pd.isna(year_ago) else 
 
 df.reset_index(inplace=True)
 
-st.markdown("###  Price Performance")
+
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("📌 Latest Price", f"{price:.2f} ₹")
-col2.metric("📅 1-Day Change", f"{day_change:+.2f}%", delta_color="inverse")
-col3.metric("🗓️ 1-Month Change", f"{month_change:+.2f}%", delta_color="inverse")
-col4.metric("📆 1-Year Change", f"{year_change:+.2f}%", delta_color="inverse")
+col1.metric(" Latest Price", f"{price:.2f} ₹")
+col2.metric(" 1-Day Change", f"{day_change:+.2f}%", delta_color="inverse")
+col3.metric("1-Month Change", f"{month_change:+.2f}%", delta_color="inverse")
+col4.metric("1-Year Change", f"{year_change:+.2f}%", delta_color="inverse")
 
 
 # Compute indicators
@@ -80,7 +80,7 @@ support, resistance = get_nearest_support_resistance(df, price)
 # ─────────────────────────────────────
 # Chart Rendering
 # ─────────────────────────────────────
-st.subheader(f"📈 {selected_index} – Candlestick Chart with EMA 9, EMA 15")
+st.subheader(f" {selected_index} – Candlestick Chart with EMA 9, EMA 15")
 
 fig = go.Figure()
 
@@ -136,14 +136,14 @@ else:
     st.error("❌ Short-term momentum is **bearish** (EMA 9 < EMA 15).")
 
 if latest_ema15 > ema15_5days_ago:
-    st.success("📈 EMA 15 is sloping upward — trend strengthening.")
+    st.success(" EMA 15 is sloping upward — trend strengthening.")
 else:
-    st.warning("📉 EMA 15 is sloping downward — short-term weakening.")
+    st.warning(" EMA 15 is sloping downward — short-term weakening.")
 
 if latest_rsi > 70:
     st.warning("⚠️ RSI > 70: **Overbought** — potential pullback.")
 elif latest_rsi < 30:
-    st.success("📉 RSI < 30: **Oversold** — potential rebound opportunity.")
+    st.success("RSI < 30: **Oversold** — potential rebound opportunity.")
 else:
     st.info("⚖️ RSI is in **neutral zone**.")
 
@@ -151,7 +151,7 @@ else:
 # Final Recommendation
 # ─────────────────────────────────────
 st.markdown("---")
-st.subheader("📌 Final Recommendation")
+st.subheader(" Final Recommendation")
 
 buy_signal = latest_ema9 > latest_ema15 and latest_rsi < 30 and latest_ema15 < ema15_5days_ago
 wait_signal = latest_ema9 > latest_ema15 and 30 <= latest_rsi <= 60
