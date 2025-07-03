@@ -164,50 +164,6 @@ else:
     st.warning("ℹ️ No strong signal. Continue to monitor index behavior.")
 
 
-import plotly.express as px
-
-st.markdown("---")
-st.subheader("📆 Heatmap of Average Return by Weekday and Month")
-
-# Compute daily return
-df["Return"] = df["Close"].pct_change() * 100
-df["Month"] = df["Date"].dt.strftime('%b')
-df["Weekday"] = df["Date"].dt.day_name().str[:3]  # 'Mon', 'Tue', ...
-
-# Choose year (optional, if you want to filter by year)
-available_years = sorted(df["Date"].dt.year.unique(), reverse=True)
-selected_year = st.selectbox("Select Year", available_years)
-df_filtered = df[df["Date"].dt.year == selected_year]
-
-# Create pivot table: rows = Month, columns = Weekday, values = average return
-heatmap_df = df_filtered.pivot_table(
-    values="Return",
-    index="Month",
-    columns="Weekday",
-    aggfunc="mean"
-)
-
-# Reorder rows and columns
-heatmap_df = heatmap_df.reindex(index=["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])
-heatmap_df = heatmap_df[["Mon", "Tue", "Wed", "Thu", "Fri"]]
-
-# Plot heatmap
-fig = px.imshow(
-    heatmap_df,
-    labels=dict(x="Weekday", y="Month", color="Avg Return (%)"),
-    color_continuous_scale="RdYlGn",
-    text_auto=".2f"
-)
-
-fig.update_layout(
-    title=f"{selected_index} – Average Return by Weekday & Month ({selected_year})",
-    xaxis_side="top",
-    template="plotly_dark",
-    height=600
-)
-
-st.plotly_chart(fig, use_container_width=True)
 
 # ─────────────────────────────────────
 # Average Return by Weekday
