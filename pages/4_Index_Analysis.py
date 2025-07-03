@@ -92,7 +92,16 @@ fig.update_layout(
     margin=dict(t=10)
 )
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(
+    fig,
+    use_container_width=True,
+    config={
+        "scrollZoom": True,  # allows zoom with mouse wheel
+        "displayModeBar": True,
+        "modeBarButtonsToRemove": ["select2d", "lasso2d"],
+        "displaylogo": False
+    }
+)
 
 # ─────────────────────────────────────
 # Technical Insights
