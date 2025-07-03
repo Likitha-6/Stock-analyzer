@@ -51,10 +51,15 @@ with st.spinner("🔄 Computing breadth metrics..."):
 # ─────────────────────────────────────
 # PCR via yFinance Option Chain
 # ─────────────────────────────────────
-opt = yf.Ticker("^NSEI").option_chain()
-total_put_oi = opt.puts["openInterest"].sum()
-total_call_oi = opt.calls["openInterest"].sum()
-pcr = total_put_oi / total_call_oi if total_call_oi else None
+
+try:
+    opt = yf.Ticker("^NSEI").option_chain()
+    total_put_oi = opt.puts["openInterest"].sum()
+    total_call_oi = opt.calls["openInterest"].sum()
+    pcr = total_put_oi / total_call_oi if total_call_oi else None
+except Exception as e:
+    pcr = None
+
 
 # ─────────────────────────────────────
 # Heatmap Integration
