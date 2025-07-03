@@ -275,4 +275,65 @@ if not np.isnan(worst_value):
 
 st.caption("Insights are generated dynamically based on selected index and year.")
 
+# ─────────────────────────────────────
+# 📰 News Sentiment Analysis (FinBERT)
+# ─────────────────────────────────────
+import feedparser
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
+
+# Cache FinBERT model
+@st.cache_resource
+def load_finbert():
+    tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
+    model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
+    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
+
+sentiment_pipeline = load_finbert()
+
+# Function to fetch Google News headlines
+def fetch_index_news(index_name, max_headlines=10):
+    query = index_name.replace(" ", "+")
+    feed_url = f"https://news.google.com/rss/search?q={query}+site:moneycontrol.com+OR+site:economictimes.indiatimes.com"
+    feed = feedparser.parse(feed_url)
+    return [entry.title for entry in feed.entries[:max_headlines]]
+
+# News Sentiment Section
+st.markdown("---")
+st.subheader("📰 News Sentiment Analysis")
+
+headlines = fetch_index_news(selected_index)
+
+if not headlines:
+    st.warning("No recent news found.")
+else:
+    results = sentiment_pipeline(headlines)
+
+    sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
+    for r in results:
+        sentiment_counts[r["label"].lower()] += 1
+
+    # Show summary
+    col1, col2, col3 = st.columns(3)
+    col1.metric("🟢 Positive", sentiment_counts["positive"])
+    col2.metric("🔴 Negative", sentiment_counts["negative"])
+    col3.metric("⚪ Neutral", sentiment_counts["neutral"])
+
+    if sentiment_counts["positive"] > sentiment_counts["negative"]:
+        st.success("✅ Overall sentiment is **Positive** based on recent headlines.")
+    elif sentiment_counts["negative"] > sentiment_counts["positive"]:
+        st.error("❌ Overall sentiment is **Negative** based on recent headlines.")
+    else:
+        st.info("⚖️ Overall sentiment is **Neutral**.")
+
+    # Display headlines with sentiment labels
+    st.markdown("### 📝 Headlines & Sentiment")
+    for title, sentiment in zip(headlines, results):
+        label = sentiment["label"]
+        score = sentiment["score"]
+        color = "green" if label == "positive" else "red" if label == "negative" else "gray"
+        st.markdown(
+            f"- **{title}**  \n<span style='color:{color}'>`{label} ({score:.2f})`</span>",
+            unsafe_allow_html=True
+        )
+
 
