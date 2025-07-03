@@ -9,4 +9,4 @@ matplotlib
 plotly
 ta
 streamlit-lightweight-charts
-nse tools
+nsetools
