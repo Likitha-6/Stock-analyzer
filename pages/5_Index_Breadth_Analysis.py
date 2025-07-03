@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from indicators import compute_rsi
 
 # ─────────────────────────────────────
-# Load CSV with NIFTY 50 stocks
+# Load NIFTY 50 symbols from CSV
 # ─────────────────────────────────────
 csv_path = "HeatmapDetail_Data.csv"
 df_csv = pd.read_csv(csv_path)
@@ -49,25 +49,7 @@ with st.spinner("🔄 Computing breadth metrics..."):
     a_d_ratio = advance / decline if decline else np.inf
 
 # ─────────────────────────────────────
-# PCR via yFinance Option Chain
-# ─────────────────────────────────────
-
-try:
-    opt = yf.Ticker("^NSEI").option_chain()
-    total_put_oi = opt.puts["openInterest"].sum()
-    total_call_oi = opt.calls["openInterest"].sum()
-    pcr = total_put_oi / total_call_oi if total_call_oi else None
-except Exception as e:
-    pcr = None
-
-
-# ─────────────────────────────────────
-# Heatmap Integration
-# ─────────────────────────────────────
-heatmap_path = "nifty50_heatmap.png"  # make sure the heatmap image is saved here
-
-# ─────────────────────────────────────
-# Display Metrics
+# Display Breadth Metrics
 # ─────────────────────────────────────
 st.title("📈 NIFTY 50 – Breadth & Technical Analysis")
 st.subheader("📊 Market Breadth Metrics")
@@ -77,27 +59,15 @@ col1.metric("% > 50-day MA", f"{pct_50:.1f}%")
 col2.metric("% > 200-day MA", f"{pct_200:.1f}%")
 col3.metric("Advance/Decline Ratio", f"{a_d_ratio:.2f}")
 
-if pcr:
-    sentiment = "Bearish contrarian (PCR > 1)" if pcr > 1 else "Neutral/Bullish"
-    st.write(f"**Put/Call Ratio (Open Interest)**: {pcr:.2f} — {sentiment}")
-else:
-    st.info("Put/Call Ratio data not available")
-
-# ─────────────────────────────────────
-# Display Heatmap
-# ─────────────────────────────────────
-st.subheader("🔥 NIFTY 50 Heatmap by Sector (% Price Change)")
-st.image(heatmap_path, caption="Sector-wise Price % Change Heatmap", use_column_width=True)
-
 # ─────────────────────────────────────
 # Candlestick + EMA Chart
 # ─────────────────────────────────────
 def find_swing(df, window=5):
     highs, lows = [], []
     for i in range(window, len(df) - window):
-        if all(df.High[i] > df.High[i - j] and df.High[i] > df.High[i+j] for j in range(1, window+1)):
+        if all(df.High[i] > df.High[i - j] and df.High[i] > df.High[i + j] for j in range(1, window + 1)):
             highs.append(df.High[i])
-        if all(df.Low[i] < df.Low[i - j] and df.Low[i] < df.Low[i+j] for j in range(1, window+1)):
+        if all(df.Low[i] < df.Low[i - j] and df.Low[i] < df.Low[i + j] for j in range(1, window + 1)):
             lows.append(df.Low[i])
     return highs[-3:], lows[-3:]
 
@@ -147,14 +117,6 @@ if a_d_ratio > 1:
 else:
     st.warning("📉 Advance/Decline < 1: More stocks are declining — caution.")
 
-if pcr:
-    if pcr > 1:
-        st.success("🔄 High PCR (>1): Contrarian bullish signal.")
-    elif pcr < 0.7:
-        st.warning("📉 Low PCR (<0.7): Bullish sentiment—possible short-term caution.")
-    else:
-        st.info("ℹ️ PCR neutral.")
-
 # EMA & RSI insights
 if latest_ema9 > latest_ema15:
     st.success("✅ Short-term momentum bullish (EMA 9 > EMA 15)")
@@ -175,7 +137,7 @@ else:
 st.markdown("---")
 st.subheader("📌 Final Recommendation")
 
-buy = latest_ema9 > latest_ema15 and latest_rsi < 30 and pct_50 > 50 and pcr and pcr > 1
+buy = latest_ema9 > latest_ema15 and latest_rsi < 30 and pct_50 > 50
 hold = latest_ema9 > latest_ema15 and pct_50 > 50
 avoid = latest_ema9 < latest_ema15 and pct_50 < 50
 
@@ -187,5 +149,6 @@ elif avoid:
     st.error("❌ **Avoid** — Weak breadth and bearish momentum.")
 else:
     st.warning("ℹ️ No clear directional signal — observe further.")
+
 
 
