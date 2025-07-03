@@ -17,7 +17,7 @@ def load_symbols():
 df_csv = load_symbols()
 nifty_symbols = df_csv["Symbol"].unique().tolist()
 
-st.title("\ud83d\udcca NIFTY 50 Breadth & Support/Resistance")
+st.title(" NIFTY 50 Breadth & Support/Resistance")
 
 # Compute Breadth Metrics
 ma50_above = ma200_above = advance = decline = 0
@@ -109,7 +109,7 @@ for y in nifty_df["swing_high"].dropna():
 
 # Chart layout
 fig.update_layout(
-    title="\ud83d\udcc9 NIFTY 50 – All Swing Support & Resistance",
+    title=" NIFTY 50 – All Swing Support & Resistance",
     xaxis_title="Date",
     yaxis_title="Price",
     template="plotly_dark",
@@ -120,26 +120,26 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
-st.subheader("\ud83d\udccd NIFTY Index Key Levels")
-st.write(f"\ud83d\udcb0 Current Price: `{nifty_price:.2f}`")
+st.subheader(" NIFTY Index Key Levels")
+st.write(f" Current Price: `{nifty_price:.2f}`")
 if support:
-    st.success(f"\ud83d\udcc9 Nearest Support: `{support:.2f}`")
+    st.success(f" Nearest Support: `{support:.2f}`")
 if resistance:
-    st.warning(f"\ud83d\udcc8 Nearest Resistance: `{resistance:.2f}`")
+    st.warning(f" Nearest Resistance: `{resistance:.2f}`")
 
 # Insights
-st.subheader("\ud83d\udccc Market Signal Summary")
+st.subheader(" Market Signal Summary")
 if pct_50 > 70 and a_d_ratio > 1.2:
-    st.success("\u2705 BUY: Strong breadth and momentum.")
+    st.success(" BUY: Strong breadth and momentum.")
 elif pct_50 < 40 and a_d_ratio < 0.8:
-    st.error("\u274c SELL: Market showing weakness.")
+    st.error(" SELL: Market showing weakness.")
 elif 40 <= pct_50 <= 70 and 0.8 <= a_d_ratio <= 1.2:
-    st.info("\u23f8\ufe0f HOLD: Mixed signals.")
+    st.info(" HOLD: Mixed signals.")
 else:
-    st.warning("\u26a0\ufe0f Be cautious — conflicting signals.")
+    st.warning(" Be cautious — conflicting signals.")
 
 if pct_200 > 70:
-    st.success("\ud83d\udcc8 Long-term trend is strong.")
+    st.success(" Long-term trend is strong.")
 elif pct_200 < 40:
-    st.error("\ud83d\udcc9 Long-term trend is weak.")
+    st.error(" Long-term trend is weak.")
 
