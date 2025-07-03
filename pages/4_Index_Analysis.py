@@ -84,7 +84,7 @@ if resistance:
     fig.add_hline(y=resistance, line_color="red", line_dash="dot", opacity=0.7, annotation_text=f"Resistance: {resistance:.2f}", annotation_position="top right")
 
 fig.update_layout(
-    title=f"{index_name} – Nearest Support & Resistance",
+    title=f"{selected_index} – Nearest Support & Resistance",
     xaxis_title="Date",
     yaxis_title="Price",
     template="plotly_dark",
