@@ -117,10 +117,12 @@ fig.update_layout(
     template="plotly_dark",
     xaxis_rangeslider_visible=False,
     dragmode="pan",
-    height=600
+    height=600,
+    xaxis=dict(showgrid=False),
+    yaxis=dict(showgrid=False)
 )
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
 st.subheader("NIFTY Index Key Levels")
 st.write(f"Current Price: `{nifty_price:.2f}`")
