@@ -66,24 +66,33 @@ def detect_cross_signals(df: pd.DataFrame) -> str:
     if "SMA_50" not in df.columns or "SMA_200" not in df.columns:
         return ""
 
+    latest_price = df["Close"].iloc[-1]
     latest_50 = df["SMA_50"].iloc[-1]
     latest_200 = df["SMA_200"].iloc[-1]
     prev_50 = df["SMA_50"].iloc[-2]
     prev_200 = df["SMA_200"].iloc[-2]
 
     if pd.notna(latest_50) and pd.notna(latest_200):
+        # Golden cross
         if latest_50 > latest_200:
             if prev_50 < prev_200:
-                return "✅ Short-term momentum (50-day) is overtaking long-term momentum (200-day). Now might be a good time to buy."
+                return "✅ Golden cross: Short-term momentum (50-day) is overtaking long-term momentum (200-day). This may be a bullish signal."
+            elif latest_price < latest_50:
+                return "📉 Price is below the 50-day average, but the overall trend remains bullish (50 > 200). This could be a healthy pullback within an uptrend."
             else:
                 return "✅ Bullish continuation: 50-day average remains above 200-day. Trend looks strong."
+
+        # Death cross
         elif latest_50 < latest_200:
             if prev_50 > prev_200:
-                return "❌ Short-term momentum (50-day) is dropping below long-term trend (200-day). Caution is advised."
+                return "❌ Death cross: Short-term momentum (50-day) just dropped below long-term trend (200-day). Caution is advised."
+            elif latest_price > latest_50:
+                return "📈 Price is above the 50-day average, but the overall trend remains bearish (50 < 200). Potential short-term strength in a weak market."
             else:
                 return "❌ Bearish continuation: 50-day average remains below 200-day. Downtrend may persist."
 
-    return "No crossover signals detected at this time."
+    return "⚠️ No crossover signals detected at this time."
+
 def compute_rsi(df: pd.DataFrame, period: int = 14) -> pd.Series:
     delta = df["Close"].diff()
     gain = delta.where(delta > 0, 0.0)
