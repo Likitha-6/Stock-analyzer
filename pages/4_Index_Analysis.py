@@ -247,11 +247,27 @@ def load_finbert():
 sentiment_pipeline = load_finbert()
 
 # Function to fetch Google News headlines
+import datetime
+
 def fetch_index_news(index_name, max_headlines=10):
     query = index_name.replace(" ", "+")
     feed_url = f"https://news.google.com/rss/search?q={query}+site:moneycontrol.com+OR+site:economictimes.indiatimes.com"
     feed = feedparser.parse(feed_url)
-    return [entry.title for entry in feed.entries[:max_headlines]]
+
+    today = datetime.datetime.utcnow().date()
+    headlines = []
+
+    for entry in feed.entries:
+        # Ensure entry has published date
+        if hasattr(entry, "published_parsed"):
+            published_date = datetime.datetime(*entry.published_parsed[:6]).date()
+            if published_date == today:
+                headlines.append(entry.title)
+                if len(headlines) >= max_headlines:
+                    break
+
+    return headlines
+
 
 # News Sentiment Section
 st.markdown("---")
