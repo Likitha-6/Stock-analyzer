@@ -69,44 +69,54 @@ def get_nearest_support_resistance(df, price):
 nifty_df = yf.Ticker("^NSEI").history(period="90d", interval="1d")
 nifty_price = nifty_df["Close"].iloc[-1]
 support, resistance = get_nearest_support_resistance(nifty_df, nifty_price)
+nifty_df["swing_low"] = nifty_df["Close"].iloc[argrelextrema(nifty_df["Close"].values, np.less_equal, order=5)[0]]
+nifty_df["swing_high"] = nifty_df["Close"].iloc[argrelextrema(nifty_df["Close"].values, np.greater_equal, order=5)[0]]
+
+# Plot chart in dark mode
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(
-    x=nifty_df.index,
-    y=nifty_df["Close"],
-    mode="lines",
-    name="NIFTY Close",
-    line=dict(color="blue")
+# Candlestick chart
+fig.add_trace(go.Candlestick(
+    x=nifty_df["Date"],
+    open=nifty_df["Open"],
+    high=nifty_df["High"],
+    low=nifty_df["Low"],
+    close=nifty_df["Close"],
+    name="NIFTY",
+    increasing_line_color="green",
+    decreasing_line_color="red"
 ))
 
-if support:
+# Add swing support lines
+for y in nifty_df["swing_low"].dropna():
     fig.add_hline(
-        y=support,
-        line_dash="dot",
+        y=y,
         line_color="green",
-        annotation_text=f"Support: {support:.2f}",
-        annotation_position="bottom right"
-    )
-
-if resistance:
-    fig.add_hline(
-        y=resistance,
         line_dash="dot",
-        line_color="red",
-        annotation_text=f"Resistance: {resistance:.2f}",
-        annotation_position="top right"
+        opacity=0.4
     )
 
+# Add swing resistance lines
+for y in nifty_df["swing_high"].dropna():
+    fig.add_hline(
+        y=y,
+        line_color="red",
+        line_dash="dot",
+        opacity=0.4
+    )
+
+# Chart layout
 fig.update_layout(
-    title="📈 NIFTY Index with Support & Resistance",
+    title="📉 NIFTY 50 – All Swing Support & Resistance",
     xaxis_title="Date",
     yaxis_title="Price",
-    height=500,
-    plot_bgcolor="#f9f9f9",
-    paper_bgcolor="#f9f9f9"
+    template="plotly_dark",
+    xaxis_rangeslider_visible=False,
+    dragmode="pan",
+    height=600
 )
 
-st.plotly_chart(fig, use_container_width=True)
+fig.show()
 
 st.subheader("📍 NIFTY Index Key Levels")
 st.write(f"💰 Current Price: `{nifty_price:.2f}`")
