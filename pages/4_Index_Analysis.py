@@ -86,15 +86,7 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
-# ─────────────────────────────────────
-# Levels Display
-# ─────────────────────────────────────
-st.subheader(f"{selected_index} Key Levels")
-st.write(f"💰 Current Price: `{price:.2f}`")
-if support:
-    st.success(f"📉 Nearest Support: `{support:.2f}`")
-if resistance:
-    st.warning(f"📈 Nearest Resistance: `{resistance:.2f}`")
+
 
 # ─────────────────────────────────────
 # Technical Insights
