@@ -21,6 +21,7 @@ index_symbol = index_options[selected_index]
 # Load Data and Compute Indicators
 # ─────────────────────────────────────
 df = yf.Ticker(index_symbol).history(period="12mo", interval="1d").reset_index()
+price = df["Close"].iloc[-1]
 
 df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
 df["EMA_15"] = df["Close"].ewm(span=15, adjust=False).mean()
