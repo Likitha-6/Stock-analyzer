@@ -120,7 +120,7 @@ st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 # ─────────────────────────────────────
 # Technical Insights
 # ─────────────────────────────────────
-st.subheader("📋 Technical Insights")
+st.subheader("Insights")
 
 latest_ema9 = df["EMA_9"].iloc[-1]
 latest_ema15 = df["EMA_15"].iloc[-1]
@@ -147,8 +147,8 @@ else:
 # ─────────────────────────────────────
 # Final Recommendation
 # ─────────────────────────────────────
-st.markdown("---")
-st.subheader(" Final Recommendation")
+#st.markdown("---")
+#st.subheader(" Final Recommendation")
 
 buy_signal = latest_ema9 > latest_ema15 and latest_rsi < 30 and latest_ema15 < ema15_5days_ago
 wait_signal = latest_ema9 > latest_ema15 and 30 <= latest_rsi <= 60
