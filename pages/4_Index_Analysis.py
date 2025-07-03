@@ -204,33 +204,33 @@ st.plotly_chart(fig2, use_container_width=True)
 # ─────────────────────────────────────
 # 🧠 Dynamic Weekday Insights (Generic)
 # ─────────────────────────────────────
-st.markdown("### 🧠 Weekday-Based Insights")
+# ─────────────────────────────────────
+# 🧠 Dynamic Insights: Green vs Red Days
+# ─────────────────────────────────────
+st.markdown("### 🧠 Weekday Consistency Insights")
 
-# Identify top and bottom performers
-top_days = weekday_avg.sort_values(ascending=False).head(2)
-worst_day = weekday_avg.sort_values().idxmin()
-worst_value = weekday_avg.min()
+weekday_insights = []
 
-# Show top-performing weekdays
-st.success(
-    f"📈 **Top weekdays**: {', '.join([f'{day} ({val:.2f}%)' for day, val in top_days.items()])} — "
-    f"these days have shown relatively **stronger average returns** historically."
-)
+for day in green_red_counts.index:
+    green = green_red_counts.loc[day, "Green"]
+    red = green_red_counts.loc[day, "Red"]
+    total = green + red
+    if total == 0:
+        continue
+    green_pct = green / total * 100
 
-# Show weakest weekday
-if not np.isnan(worst_value):
-    if worst_value < 0:
-        st.warning(
-            f"📉 **Weakest weekday**: {worst_day} with an average return of **{worst_value:.2f}%** — "
-            f"may indicate selling pressure or opportunity for **buy-on-dip**, if broader trend is bullish."
-        )
+    if green_pct > 65:
+        weekday_insights.append(f"✅ **{day}** shows a strong bullish tendency — {green} out of {total} days ({green_pct:.1f}%) closed higher.")
+    elif green_pct < 40:
+        weekday_insights.append(f"❌ **{day}** is predominantly bearish — only {green} out of {total} days ({green_pct:.1f}%) were positive.")
     else:
-        st.info(
-            f"⚖️ **Least performing weekday**: {worst_day} with an average return of **{worst_value:.2f}%** — "
-            f"still positive, but relatively weaker compared to other days."
-        )
+        weekday_insights.append(f"⚖️ **{day}** has mixed behavior — {green} green vs {red} red days ({green_pct:.1f}% bullish).")
 
-st.caption("Insights are generated dynamically based on selected index and year.")
+for insight in weekday_insights:
+    st.write(insight)
+
+st.caption("Insights are based on the number of green/red days per weekday from available historical data.")
+
 
 # ─────────────────────────────────────
 # 📰 News Sentiment Analysis (FinBERT)
