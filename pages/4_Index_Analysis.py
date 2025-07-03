@@ -162,3 +162,46 @@ elif avoid_signal:
     st.error("❌ **Avoid**: Bearish alignment and weakening trend. Stay cautious.")
 else:
     st.warning("ℹ️ No strong signal. Continue to monitor index behavior.")
+# ─────────────────────────────────────
+# Heatmap of Daily Returns
+# ─────────────────────────────────────
+import plotly.express as px
+
+st.markdown("---")
+st.subheader("📆 Daily Return Heatmap")
+
+# Compute daily return and extract calendar components
+df["Return"] = df["Close"].pct_change() * 100
+df["Day"] = df["Date"].dt.day
+df["Month"] = df["Date"].dt.strftime('%b')
+df["Year"] = df["Date"].dt.year
+
+# Select year to view heatmap for
+available_years = sorted(df["Year"].unique(), reverse=True)
+selected_year = st.selectbox("Select Year", available_years)
+
+# Filter for selected year
+df_year = df[df["Year"] == selected_year]
+
+# Pivot table for heatmap (Month x Day)
+heatmap_data = df_year.pivot_table(values="Return", index="Month", columns="Day", aggfunc="mean")
+heatmap_data = heatmap_data.reindex(index=["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])
+
+# Plot heatmap
+fig_heatmap = px.imshow(
+    heatmap_data,
+    labels=dict(x="Day", y="Month", color="Return (%)"),
+    color_continuous_scale="RdYlGn",
+    aspect="auto",
+)
+
+fig_heatmap.update_layout(
+    title=f"{selected_index} – Daily Return Heatmap ({selected_year})",
+    xaxis_nticks=31,
+    yaxis=dict(autorange="reversed"),
+    height=500,
+    template="plotly_dark"
+)
+
+st.plotly_chart(fig_heatmap, use_container_width=True)
