@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
+from scipy.signal import argrelextrema
 from indicators import compute_rsi  # make sure this function exists
 
 st.set_page_config(page_title="📈 Index Analysis", layout="wide")
