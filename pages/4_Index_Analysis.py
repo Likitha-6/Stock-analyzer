@@ -162,49 +162,53 @@ elif avoid_signal:
     st.error("❌ **Avoid**: Bearish alignment and weakening trend. Stay cautious.")
 else:
     st.warning("ℹ️ No strong signal. Continue to monitor index behavior.")
-# ─────────────────────────────────────
-# Heatmap of Daily Returns
-# ─────────────────────────────────────
+
+
 import plotly.express as px
 
 st.markdown("---")
-st.subheader("📆 Daily Return Heatmap")
+st.subheader("📆 Heatmap of Average Return by Weekday and Month")
 
-# Compute daily return and extract calendar components
+# Compute daily return
 df["Return"] = df["Close"].pct_change() * 100
-df["Day"] = df["Date"].dt.day
 df["Month"] = df["Date"].dt.strftime('%b')
-df["Year"] = df["Date"].dt.year
+df["Weekday"] = df["Date"].dt.day_name().str[:3]  # 'Mon', 'Tue', ...
 
-# Select year to view heatmap for
-available_years = sorted(df["Year"].unique(), reverse=True)
+# Choose year (optional, if you want to filter by year)
+available_years = sorted(df["Date"].dt.year.unique(), reverse=True)
 selected_year = st.selectbox("Select Year", available_years)
+df_filtered = df[df["Date"].dt.year == selected_year]
 
-# Filter for selected year
-df_year = df[df["Year"] == selected_year]
+# Create pivot table: rows = Month, columns = Weekday, values = average return
+heatmap_df = df_filtered.pivot_table(
+    values="Return",
+    index="Month",
+    columns="Weekday",
+    aggfunc="mean"
+)
 
-# Pivot table for heatmap (Month x Day)
-heatmap_data = df_year.pivot_table(values="Return", index="Month", columns="Day", aggfunc="mean")
-heatmap_data = heatmap_data.reindex(index=["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])
+# Reorder rows and columns
+heatmap_df = heatmap_df.reindex(index=["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])
+heatmap_df = heatmap_df[["Mon", "Tue", "Wed", "Thu", "Fri"]]
 
 # Plot heatmap
-fig_heatmap = px.imshow(
-    heatmap_data,
-    labels=dict(x="Day", y="Month", color="Return (%)"),
+fig = px.imshow(
+    heatmap_df,
+    labels=dict(x="Weekday", y="Month", color="Avg Return (%)"),
     color_continuous_scale="RdYlGn",
-    aspect="auto",
+    text_auto=".2f"
 )
 
-fig_heatmap.update_layout(
-    title=f"{selected_index} – Daily Return Heatmap ({selected_year})",
-    xaxis_nticks=31,
-    yaxis=dict(autorange="reversed"),
-    height=500,
-    template="plotly_dark"
+fig.update_layout(
+    title=f"{selected_index} – Average Return by Weekday & Month ({selected_year})",
+    xaxis_side="top",
+    template="plotly_dark",
+    height=600
 )
 
-st.plotly_chart(fig_heatmap, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
+
 # ─────────────────────────────────────
 # Average Return by Weekday
 # ─────────────────────────────────────
