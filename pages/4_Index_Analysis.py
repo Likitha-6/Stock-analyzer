@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from scipy.signal import argrelextrema
 from indicators import compute_rsi  # make sure this function exists and returns a "RSI" column
 
-st.set_page_config(page_title="📈 Index Analysis", layout="wide")
+st.set_page_config(page_title=" Index Analysis", layout="wide")
 
 # ─────────────────────────────────────
 # Index Selector
@@ -23,7 +23,7 @@ index_options = {
     "NIFTY Next 50": "^NSENEXT50",
     "NIFTY Smallcap 100": "^NSESMALLCAP100"
 }
-selected_index = st.selectbox("📊 Select Index", list(index_options.keys()))
+selected_index = st.selectbox(" Select Index", list(index_options.keys()))
 index_symbol = index_options[selected_index]
 
 
@@ -46,7 +46,9 @@ day_change = (price - day_ago) / day_ago * 100 if not pd.isna(day_ago) else np.n
 month_change = (price - month_ago) / month_ago * 100 if not pd.isna(month_ago) else np.nan
 year_change = (price - year_ago) / year_ago * 100 if not pd.isna(year_ago) else np.nan
 
-st.markdown("### 📊 Price Performance")
+df.reset_index(inplace=True)
+
+st.markdown("###  Price Performance")
 col1, col2, col3, col4 = st.columns(4)
 
 col1.metric("📌 Latest Price", f"{price:.2f} ₹")
