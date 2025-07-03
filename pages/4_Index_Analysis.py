@@ -244,3 +244,35 @@ fig_weekday.update_layout(
 
 st.plotly_chart(fig_weekday, use_container_width=True)
 
+# ─────────────────────────────────────
+# 🧠 Dynamic Weekday Insights (Generic)
+# ─────────────────────────────────────
+st.markdown("### 🧠 Weekday-Based Insights")
+
+# Identify top and bottom performers
+top_days = weekday_avg.sort_values(ascending=False).head(2)
+worst_day = weekday_avg.sort_values().idxmin()
+worst_value = weekday_avg.min()
+
+# Show top-performing weekdays
+st.success(
+    f"📈 **Top weekdays**: {', '.join([f'{day} ({val:.2f}%)' for day, val in top_days.items()])} — "
+    f"these days have shown relatively **stronger average returns** historically."
+)
+
+# Show weakest weekday
+if not np.isnan(worst_value):
+    if worst_value < 0:
+        st.warning(
+            f"📉 **Weakest weekday**: {worst_day} with an average return of **{worst_value:.2f}%** — "
+            f"may indicate selling pressure or opportunity for **buy-on-dip**, if broader trend is bullish."
+        )
+    else:
+        st.info(
+            f"⚖️ **Least performing weekday**: {worst_day} with an average return of **{worst_value:.2f}%** — "
+            f"still positive, but relatively weaker compared to other days."
+        )
+
+st.caption("Insights are generated dynamically based on selected index and year.")
+
+
