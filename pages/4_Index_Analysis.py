@@ -147,7 +147,7 @@ else:
 # ─────────────────────────────────────
 # Final Recommendation
 # ─────────────────────────────────────
-#st.markdown("---")
+st.markdown("---")
 #st.subheader(" Final Recommendation")
 
 buy_signal = latest_ema9 > latest_ema15 and latest_rsi < 30 and latest_ema15 < ema15_5days_ago
@@ -209,7 +209,7 @@ def fetch_index_news(index_name, max_headlines=10):
 
 # News Sentiment Section
 st.markdown("---")
-st.subheader("📰 News Sentiment Analysis")
+st.subheader("News Analysis")
 
 headlines = fetch_index_news(selected_index)
 
@@ -227,7 +227,7 @@ else:
     elif sentiment_counts["negative"] > sentiment_counts["positive"]:
         st.error("❌ Overall sentiment is **Negative** based on recent headlines.")
     else:
-        st.info("⚖️ Overall sentiment is **Neutral**.")
+        st.info(" Overall sentiment is **Neutral**.")
 
 
 
