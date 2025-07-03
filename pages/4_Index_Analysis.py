@@ -63,8 +63,8 @@ fig.add_trace(go.Candlestick(
 ))
 
 # EMA overlays
-fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], mode="lines", name="EMA 9", line=dict(dash="dot")))
-fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], mode="lines", name="EMA 15", line=dict(dash="dot")))
+fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], mode="lines", name="EMA 9", line=dict(dash="solid")))
+fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], mode="lines", name="EMA 15", line=dict(dash="solid")))
 
 # Support/Resistance levels (optional)
 if show_levels:
