@@ -43,10 +43,10 @@ def find_swing_levels(df, window=5):
 
     return swing_highs[-3:], swing_lows[-3:]  # last 3 each
 
-# ─────────────────────────────────────
-# Price Chart (Candlesticks + EMA + Levels)
-# ─────────────────────────────────────
-st.subheader(f"📈 {selected_index} – Candlestick Chart with EMA 9, EMA 15 & Levels")
+
+st.subheader(f"📈 {selected_index} – Candlestick Chart with EMA 9, EMA 15")
+
+show_levels = st.checkbox("📏 Show Support & Resistance", value=True)
 
 fig = go.Figure()
 
@@ -66,18 +66,19 @@ fig.add_trace(go.Candlestick(
 fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_9"], mode="lines", name="EMA 9", line=dict(dash="dot")))
 fig.add_trace(go.Scatter(x=df["Date"], y=df["EMA_15"], mode="lines", name="EMA 15", line=dict(dash="dot")))
 
-# Support/Resistance levels
-swing_highs, swing_lows = find_swing_levels(df)
-for _, price in swing_highs:
-    fig.add_shape(type="line",
-                  x0=df["Date"].iloc[0], x1=df["Date"].iloc[-1],
-                  y0=price, y1=price,
-                  line=dict(color="red", dash="dash"))
-for _, price in swing_lows:
-    fig.add_shape(type="line",
-                  x0=df["Date"].iloc[0], x1=df["Date"].iloc[-1],
-                  y0=price, y1=price,
-                  line=dict(color="green", dash="dash"))
+# Support/Resistance levels (optional)
+if show_levels:
+    swing_highs, swing_lows = find_swing_levels(df)
+    for _, price in swing_highs:
+        fig.add_shape(type="line",
+                      x0=df["Date"].iloc[0], x1=df["Date"].iloc[-1],
+                      y0=price, y1=price,
+                      line=dict(color="red", dash="dash"))
+    for _, price in swing_lows:
+        fig.add_shape(type="line",
+                      x0=df["Date"].iloc[0], x1=df["Date"].iloc[-1],
+                      y0=price, y1=price,
+                      line=dict(color="green", dash="dash"))
 
 fig.update_layout(
     height=500,
@@ -87,8 +88,10 @@ fig.update_layout(
     dragmode="pan",
     xaxis=dict(showgrid=False),
     yaxis=dict(showgrid=False),
+    xaxis_rangeslider_visible=False,
     margin=dict(t=10)
 )
+
 st.plotly_chart(fig, use_container_width=True)
 
 # ─────────────────────────────────────
