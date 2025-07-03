@@ -205,3 +205,38 @@ fig_heatmap.update_layout(
 )
 
 st.plotly_chart(fig_heatmap, use_container_width=True)
+# ─────────────────────────────────────
+# Average Return by Weekday
+# ─────────────────────────────────────
+st.markdown("---")
+st.subheader("📊 Average Return by Weekday")
+
+# Compute daily return
+df["Return"] = df["Close"].pct_change() * 100
+df["Weekday"] = df["Date"].dt.day_name()
+
+# Group and compute mean return
+weekday_avg = df.groupby("Weekday")["Return"].mean().reindex([
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
+])
+
+# Plot as bar chart
+fig_weekday = go.Figure()
+fig_weekday.add_trace(go.Bar(
+    x=weekday_avg.index,
+    y=weekday_avg.values,
+    marker_color="mediumturquoise",
+    text=[f"{val:.2f}%" for val in weekday_avg.values],
+    textposition="outside"
+))
+
+fig_weekday.update_layout(
+    title=f"📅 Average Daily Return by Weekday – {selected_index}",
+    xaxis_title="Weekday",
+    yaxis_title="Average Return (%)",
+    template="plotly_dark",
+    height=400
+)
+
+st.plotly_chart(fig_weekday, use_container_width=True)
+
