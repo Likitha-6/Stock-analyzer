@@ -10,3 +10,4 @@ plotly
 ta
 streamlit-lightweight-charts
 nsetools
+feedparser
