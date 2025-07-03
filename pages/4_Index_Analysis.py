@@ -293,15 +293,5 @@ else:
     else:
         st.info("⚖️ Overall sentiment is **Neutral**.")
 
-    # Display headlines with sentiment labels
-    st.markdown("### 📝 Headlines & Sentiment")
-    for title, sentiment in zip(headlines, results):
-        label = sentiment["label"]
-        score = sentiment["score"]
-        color = "green" if label == "positive" else "red" if label == "negative" else "gray"
-        st.markdown(
-            f"- **{title}**  \n<span style='color:{color}'>",
-            unsafe_allow_html=True
-        )
 
 
