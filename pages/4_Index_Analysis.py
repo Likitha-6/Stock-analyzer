@@ -65,7 +65,7 @@ fig.add_trace(go.Candlestick(
     high=df["High"],
     low=df["Low"],
     close=df["Close"],
-    increasing_line_color="#00bcd4",
+    increasing_line_color="green",
     decreasing_line_color="#e74c3c",
     name="Price"
 ))
