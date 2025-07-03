@@ -312,12 +312,6 @@ else:
     for r in results:
         sentiment_counts[r["label"].lower()] += 1
 
-    # Show summary
-    col1, col2, col3 = st.columns(3)
-    col1.metric("🟢 Positive", sentiment_counts["positive"])
-    col2.metric("🔴 Negative", sentiment_counts["negative"])
-    col3.metric("⚪ Neutral", sentiment_counts["neutral"])
-
     if sentiment_counts["positive"] > sentiment_counts["negative"]:
         st.success("✅ Overall sentiment is **Positive** based on recent headlines.")
     elif sentiment_counts["negative"] > sentiment_counts["positive"]:
