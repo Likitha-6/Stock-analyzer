@@ -58,48 +58,48 @@ def get_nearest_support_resistance(df, price):
         nearest_resistance = resistances[resistances > price].min() if not resistances.empty else None
         return nearest_support, nearest_resistance
 
-    support, resistance = get_nearest_support_resistance(df_index, price)
-    df_index["EMA_9"] = df_index["Close"].ewm(span=9, adjust=False).mean()
-    df_index["EMA_15"] = df_index["Close"].ewm(span=15, adjust=False).mean()
+support, resistance = get_nearest_support_resistance(df_index, price)
+df_index["EMA_9"] = df_index["Close"].ewm(span=9, adjust=False).mean()
+df_index["EMA_15"] = df_index["Close"].ewm(span=15, adjust=False).mean()
 
-    fig = go.Figure()
-    fig.add_trace(go.Candlestick(
-        x=df_index["Date"],
-        open=df_index["Open"],
-        high=df_index["High"],
-        low=df_index["Low"],
-        close=df_index["Close"],
-        name=index_name,
-        increasing_line_color="green",
-        decreasing_line_color="red"
-    ))
-    fig.add_trace(go.Scatter(x=df_index["Date"], y=df_index["EMA_9"], mode="lines", name="EMA 9", line=dict(color="orange")))
-    fig.add_trace(go.Scatter(x=df_index["Date"], y=df_index["EMA_15"], mode="lines", name="EMA 15", line=dict(color="cyan")))
+fig = go.Figure()
+fig.add_trace(go.Candlestick(
+    x=df_index["Date"],
+    open=df_index["Open"],
+    high=df_index["High"],
+    low=df_index["Low"],
+    close=df_index["Close"],
+    name=index_name,
+    increasing_line_color="green",
+    decreasing_line_color="red"
+))
+fig.add_trace(go.Scatter(x=df_index["Date"], y=df_index["EMA_9"], mode="lines", name="EMA 9", line=dict(color="orange")))
+fig.add_trace(go.Scatter(x=df_index["Date"], y=df_index["EMA_15"], mode="lines", name="EMA 15", line=dict(color="cyan")))
 
-    if support:
-        fig.add_hline(y=support, line_color="green", line_dash="dot", opacity=0.7, annotation_text=f"Support: {support:.2f}", annotation_position="bottom right")
-    if resistance:
-        fig.add_hline(y=resistance, line_color="red", line_dash="dot", opacity=0.7, annotation_text=f"Resistance: {resistance:.2f}", annotation_position="top right")
+if support:
+    fig.add_hline(y=support, line_color="green", line_dash="dot", opacity=0.7, annotation_text=f"Support: {support:.2f}", annotation_position="bottom right")
+if resistance:
+    fig.add_hline(y=resistance, line_color="red", line_dash="dot", opacity=0.7, annotation_text=f"Resistance: {resistance:.2f}", annotation_position="top right")
 
-    fig.update_layout(
-        title=f"{index_name} – Nearest Support & Resistance",
-        xaxis_title="Date",
-        yaxis_title="Price",
-        template="plotly_dark",
-        xaxis_rangeslider_visible=False,
-        dragmode="pan",
-        height=600,
-        xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=False)
-    )
-    st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
+fig.update_layout(
+    title=f"{index_name} – Nearest Support & Resistance",
+    xaxis_title="Date",
+    yaxis_title="Price",
+    template="plotly_dark",
+    xaxis_rangeslider_visible=False,
+    dragmode="pan",
+    height=600,
+    xaxis=dict(showgrid=False),
+    yaxis=dict(showgrid=False)
+)
+st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
 
-    st.subheader(f"{index_name} Key Levels")
-    st.write(f"Current Price: `{price:.2f}`")
-    if support:
-        st.success(f"Nearest Support: `{support:.2f}`")
-    if resistance:
-        st.warning(f"Nearest Resistance: `{resistance:.2f}`")
+st.subheader(f"{index_name} Key Levels")
+st.write(f"Current Price: `{price:.2f}`")
+if support:
+    st.success(f"Nearest Support: `{support:.2f}`")
+if resistance:
+    st.warning(f"Nearest Resistance: `{resistance:.2f}`")
 
 # ─────────────────────────────────────
 # Technical Insights
