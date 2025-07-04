@@ -50,24 +50,15 @@ scoped_df[existing_cols] = scoped_df[existing_cols].apply(pd.to_numeric, errors=
 scoped_df[cols_to_use["Debt to Equity"]] = scoped_df[cols_to_use["Debt to Equity"]] / 100  # <- ADD THIS LINE
 
 
-# Clean profit margin values
-def clean_profit_margin(val):
-    if pd.isna(val):
-        return None
-    return val * 100 if val < 1 else val
+from common.finance import get_industry_averages
 
-scoped_df["ProfitMarginCleaned"] = scoped_df[cols_to_use["Profit Margin"]].apply(clean_profit_margin)
+# Get cleaned industry-level medians from shared logic
+avg_vals = get_industry_averages(ind_sel, df)
 
-# Average values
-# Make a copy for median calculation only
-filtered_df = scoped_df[scoped_df["PE Ratio"] < 200]
+# Format for use
+profit_margin_avg = avg_vals.get("Profit Margin")
+avg_vals["ProfitMarginCleaned"] = profit_margin_avg  # for consistency
 
-# Replace infs just in this filtered copy
-filtered_df[existing_cols] = filtered_df[existing_cols].replace([np.inf, -np.inf], np.nan)
-
-# Median from filtered copy
-avg_vals = filtered_df[existing_cols].median()
-profit_margin_avg = filtered_df["ProfitMarginCleaned"].median()
 
 
 
