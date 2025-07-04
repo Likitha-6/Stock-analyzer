@@ -47,7 +47,7 @@ cols_to_use = {
 
 existing_cols = [v for v in cols_to_use.values() if v in scoped_df.columns]
 scoped_df[existing_cols] = scoped_df[existing_cols].apply(pd.to_numeric, errors="coerce")
-scoped_df[cols_to_use["Debt to Equity"]] = pd.to_numeric(scoped_df[cols_to_use["Debt to Equity"]], errors="coerce")
+scoped_df[cols_to_use["Debt to Equity"]] = pd.to_numeric(scoped_df[cols_to_use["Debt to Equity"]]/100, errors="coerce")
 
 
 from common.finance import get_industry_averages
