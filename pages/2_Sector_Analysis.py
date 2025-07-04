@@ -158,15 +158,8 @@ if qualified:
     qual_df.index = qual_df.index + 1
     st.dataframe(qual_df, use_container_width=True)
 
-    csv = qual_df.to_csv(index=False).encode()
-    st.download_button("⬇️ Download list as CSV", csv, f"green_stocks_{ind_sel}.csv")
 
-    for _, r in qual_df.iterrows():
-        if st.button(f"View Fundamentals →  {r['Company']} ({r['Symbol']})", key=f"q_{r['Symbol']}"):
-            st.session_state.compare_symbol = r["Symbol"]
-            st.session_state.qual_peers = qual_df["Symbol"].drop(r.name).tolist()
-            st.session_state.from_sector_nav = True
-            st.switch_page("pages/1_Fundamentals.py")
+   
 else:
     st.info("No company meets the selected green criteria.")
 
