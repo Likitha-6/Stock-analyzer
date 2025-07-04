@@ -54,6 +54,10 @@ from common.finance import get_industry_averages
 
 # Get cleaned industry-level medians from shared logic
 avg_vals = get_industry_averages(ind_sel, df)
+st.subheader("Debugging: Industry Averages")
+st.write("Full avg_vals dictionary:")
+st.write(avg_vals)
+st.write(f"Value for Debt to Equity in avg_vals: {avg_vals.get(cols_to_use['Debt to Equity'])}")
 
 
 # Cleaned versions (same as your old logic)
