@@ -19,8 +19,7 @@ st.title("📂 Sector & Industry Analysis")
 master_df = load_master()
 name_df = load_name_lookup()
 df = pd.merge(master_df, name_df, on="Symbol", how="left")
-st.subheader("DEBUGGING: Master DataFrame Columns")
-st.write(master_df.columns.tolist())
+
 
 # Sidebar filters
 st.sidebar.header("🏍️ Filter by")
@@ -56,10 +55,6 @@ from common.finance import get_industry_averages
 
 # Get cleaned industry-level medians from shared logic
 avg_vals = get_industry_averages(ind_sel, df)
-st.subheader("Debugging: Industry Averages")
-st.write("Full avg_vals dictionary:")
-st.write(avg_vals)
-st.write(f"Value for Debt to Equity in avg_vals: {avg_vals.get(cols_to_use['Debt to Equity'])}")
 
 
 # Cleaned versions (same as your old logic)
@@ -119,10 +114,6 @@ rows, qualified = [], []
 name_lookup = name_df.set_index("Symbol")["Company Name"].to_dict()
 # ... (inside your script, after scoped_df is defined)
 
-st.subheader("Debugging: Debt to Equity Values")
-st.write("First 10 rows of scoped_df DebtToEquity column:")
-st.write(scoped_df[[cols_to_use["Debt to Equity"], "Symbol"]].head(10))
-st.write(f"Number of NaN values in DebtToEquity: {scoped_df[cols_to_use['Debt to Equity']].isna().sum()}")
 
 for _, row in sel_df.iterrows():
     sym = row["Symbol"]
@@ -130,8 +121,7 @@ for _, row in sel_df.iterrows():
     profit_margin_clean = pm_val * 100 if pd.notna(pm_val) and pm_val < 1 else pm_val
     de_val = pd.to_numeric(row.get(cols_to_use["Debt to Equity"]), errors="coerce")
     de_avg = pd.to_numeric(avg_vals.get("Debt to Equity"), errors="coerce")
-    print(f"DEBUG: Symbol: {sym}, de_val: {de_val}, type(de_val): {type(de_val)}")
-    print(f"DEBUG: Industry Avg D/E (de_avg): {de_avg}, type(de_avg): {type(de_avg)}")
+
 
 
 
