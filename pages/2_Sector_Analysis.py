@@ -117,10 +117,10 @@ for _, row in sel_df.iterrows():
     sym = row["Symbol"]
     pm_val = row.get(cols_to_use["Profit Margin"])
     profit_margin_clean = pm_val * 100 if pd.notna(pm_val) and pm_val < 1 else pm_val
-    de_val = row[cols_to_use["Debt to Equity"]]
-    de_avg = avg_vals.get(cols_to_use["Debt to Equity"])
-    if isinstance(de_avg, str):  # Fix just in case
-        de_avg = pd.to_numeric(de_avg, errors="coerce")
+    de_val = pd.to_numeric(row.get(cols_to_use["Debt to Equity"]), errors="coerce")
+    de_avg = pd.to_numeric(avg_vals.get(cols_to_use["Debt to Equity"]), errors="coerce")
+
+
 
     r = {
         "Symbol": sym,
