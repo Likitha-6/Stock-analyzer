@@ -116,9 +116,6 @@ de_avg = avg_vals.get(cols_to_use["Debt to Equity"])
 if isinstance(de_avg, str):  # Fix just in case
     de_avg = pd.to_numeric(de_avg, errors="coerce")
 
-"D/E": de_val,
-"Interpretation": icon_d2e(de_val, de_avg),
-
 
 for _, row in sel_df.iterrows():
     sym = row["Symbol"]
@@ -132,7 +129,7 @@ for _, row in sel_df.iterrows():
         "EPS": row[cols_to_use["EPS"]],
         "ROE %": None if pd.isna(row[cols_to_use["ROE"]]) else row[cols_to_use["ROE"]] * 100,
         "P. Margin %": profit_margin_clean,
-        "D/E": row[cols_to_use["Debt to Equity"]],
+        "D/E": de_val,
         "MCap": fmt_cap(row[cols_to_use["Market Cap"]]),
         #"Notes": "⚠️ Margin > 100%" if profit_margin_clean and profit_margin_clean > 100 else ""
     }
@@ -141,7 +138,7 @@ for _, row in sel_df.iterrows():
         "EPS": icon_hi(row[cols_to_use["EPS"]], avg_vals.get(cols_to_use["EPS"])),
         "ROE": icon_hi(row[cols_to_use["ROE"]], avg_vals.get(cols_to_use["ROE"])),
         "PM": icon_hi(profit_margin_clean, profit_margin_avg),
-        "D/E": icon_d2e(row[cols_to_use["Debt to Equity"]], avg_vals.get("Debt to Equity")),
+        "D/E": icon_d2e(de_val, de_avg),
 
     }
     r["Interpretation"] = " | ".join([f"{k} {v}" for k, v in icons.items()])
