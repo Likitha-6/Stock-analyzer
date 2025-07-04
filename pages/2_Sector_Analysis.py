@@ -55,9 +55,19 @@ from common.finance import get_industry_averages
 # Get cleaned industry-level medians from shared logic
 avg_vals = get_industry_averages(ind_sel, df)
 
-# Format for use
-profit_margin_avg = avg_vals.get("Profit Margin")
-avg_vals["ProfitMarginCleaned"] = profit_margin_avg  # for consistency
+# Cleaned versions (same as your old logic)
+de = avg_vals.get("Debt to Equity")
+pm = avg_vals.get("Profit Margin")
+
+if de is not None and de > 5:  # Heuristic: anything above 5 is probably in %
+    avg_vals["Debt to Equity"] = de / 100
+
+if pm is not None and pm < 1:  # Heuristic: 0.18 => 18%
+    profit_margin_avg = pm * 100
+else:
+    profit_margin_avg = pm
+
+avg_vals["ProfitMarginCleaned"] = profit_margin_avg
 
 
 
