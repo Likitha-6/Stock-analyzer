@@ -21,7 +21,6 @@ name_df = load_name_lookup()
 df = pd.merge(master_df, name_df, on="Symbol", how="left")
 st.subheader("DEBUGGING: Master DataFrame Columns")
 st.write(master_df.columns.tolist())
-st.stop()
 
 # Sidebar filters
 st.sidebar.header("🏍️ Filter by")
