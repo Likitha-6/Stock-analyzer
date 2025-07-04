@@ -111,7 +111,12 @@ sel_df = scoped_df if show_all else scoped_df.head(10)
 
 rows, qualified = [], []
 name_lookup = name_df.set_index("Symbol")["Company Name"].to_dict()
+# ... (inside your script, after scoped_df is defined)
 
+st.subheader("Debugging: Debt to Equity Values")
+st.write("First 10 rows of scoped_df DebtToEquity column:")
+st.write(scoped_df[[cols_to_use["Debt to Equity"], "Symbol"]].head(10))
+st.write(f"Number of NaN values in DebtToEquity: {scoped_df[cols_to_use['Debt to Equity']].isna().sum()}")
 
 for _, row in sel_df.iterrows():
     sym = row["Symbol"]
