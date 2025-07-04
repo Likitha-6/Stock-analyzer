@@ -133,7 +133,8 @@ for _, row in sel_df.iterrows():
         "EPS": icon_hi(row[cols_to_use["EPS"]], avg_vals.get(cols_to_use["EPS"])),
         "ROE": icon_hi(row[cols_to_use["ROE"]], avg_vals.get(cols_to_use["ROE"])),
         "PM": icon_hi(profit_margin_clean, profit_margin_avg),
-        "D/E": icon_d2e(row[cols_to_use["Debt to Equity"]], avg_vals.get(cols_to_use["Debt to Equity"])),
+        "D/E": icon_d2e(row[cols_to_use["Debt to Equity"]], avg_vals.get("Debt to Equity")),
+
     }
     r["Interpretation"] = " | ".join([f"{k} {v}" for k, v in icons.items()])
     rows.append(r)
