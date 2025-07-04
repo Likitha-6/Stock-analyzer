@@ -127,7 +127,7 @@ for _, row in sel_df.iterrows():
     pm_val = row.get(cols_to_use["Profit Margin"])
     profit_margin_clean = pm_val * 100 if pd.notna(pm_val) and pm_val < 1 else pm_val
     de_val = pd.to_numeric(row.get(cols_to_use["Debt to Equity"]), errors="coerce")
-    de_avg = pd.to_numeric(avg_vals.get(cols_to_use["Debt to Equity"]), errors="coerce")
+    de_avg = pd.to_numeric(avg_vals.get("Debt to Equity"), errors="coerce")
     print(f"DEBUG: Symbol: {sym}, de_val: {de_val}, type(de_val): {type(de_val)}")
     print(f"DEBUG: Industry Avg D/E (de_avg): {de_avg}, type(de_avg): {type(de_avg)}")
 
