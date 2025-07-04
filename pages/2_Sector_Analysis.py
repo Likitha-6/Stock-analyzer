@@ -41,7 +41,7 @@ cols_to_use = {
     "EPS": "EPS",
     "ROE": "ROE",
     "Profit Margin": "ProfitMargin",
-    "Debt to Equity": "DebtToEquity",
+    "Debt to Equity": "Debt To Equity",
     "Market Cap": "MarketCap"
 }
 
