@@ -54,8 +54,6 @@ from common.finance import get_industry_averages
 
 # Get cleaned industry-level medians from shared logic
 avg_vals = get_industry_averages(ind_sel, df)
-st.write("DEBUG – Debt to Equity raw values from scoped_df:")
-st.write(scoped_df[[cols_to_use["Debt to Equity"], "Symbol"]].dropna())
 
 
 # Cleaned versions (same as your old logic)
