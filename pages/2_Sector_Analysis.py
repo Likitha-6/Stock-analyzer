@@ -102,7 +102,9 @@ name_lookup = name_df.set_index("Symbol")["Company Name"].to_dict()
 
 for _, row in sel_df.iterrows():
     sym = row["Symbol"]
-    profit_margin_clean = row["ProfitMarginCleaned"]
+    pm_val = row.get(cols_to_use["Profit Margin"])
+    profit_margin_clean = pm_val * 100 if pd.notna(pm_val) and pm_val < 1 else pm_val
+
     r = {
         "Symbol": sym,
         "Company": name_lookup.get(sym, ""),
