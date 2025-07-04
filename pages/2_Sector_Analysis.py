@@ -97,7 +97,8 @@ cols[0].metric("Avg PE", f"{avg_vals.get(cols_to_use['PE'], np.nan):.2f}")
 cols[1].metric("Avg EPS", f"{avg_vals.get(cols_to_use['EPS'], np.nan):.2f}")
 cols[2].metric("Avg ROE", f"{avg_vals.get(cols_to_use['ROE'], np.nan) * 100:.2f}%")
 cols[3].metric("Avg P. Margin", f"{profit_margin_avg:.2f}%")
-cols[4].metric("Avg D/E", f"{avg_vals.get(cols_to_use['Debt to Equity'], np.nan):.2f}")
+cols[4].metric("Avg D/E", f"{avg_vals.get('Debt to Equity', np.nan):.2f}")
+
 cols[5].metric("Avg MCap", fmt_cap(avg_vals.get(cols_to_use["Market Cap"])))
 
 # Rank and interpret companies
