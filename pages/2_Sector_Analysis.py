@@ -111,6 +111,14 @@ sel_df = scoped_df if show_all else scoped_df.head(10)
 
 rows, qualified = [], []
 name_lookup = name_df.set_index("Symbol")["Company Name"].to_dict()
+de_val = row[cols_to_use["Debt to Equity"]]
+de_avg = avg_vals.get(cols_to_use["Debt to Equity"])
+if isinstance(de_avg, str):  # Fix just in case
+    de_avg = pd.to_numeric(de_avg, errors="coerce")
+
+"D/E": de_val,
+"Interpretation": icon_d2e(de_val, de_avg),
+
 
 for _, row in sel_df.iterrows():
     sym = row["Symbol"]
