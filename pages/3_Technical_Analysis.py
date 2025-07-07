@@ -8,14 +8,14 @@ from indicators import detect_cross_signals,compute_rsi
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-st.set_page_config(page_title="📈 Technical Chart", layout="wide")
+st.set_page_config(page_title="Technical Chart", layout="wide")
 
 # ─────────────────────────────
 # Theme selector
 # ─────────────────────────────
 col_title, col_theme = st.columns([6, 1])
 with col_title:
-    st.title("📈 Indian Stock – Technical Analysis")
+    st.title("Indian Stock – Technical Analysis")
 with col_theme:
     dark_mode = st.checkbox("🌙 Dark Mode", value=False)
 
@@ -55,7 +55,7 @@ if search_query:
 # ─────────────────────────────
 # Tabs
 # ─────────────────────────────
-tab1, tab2, tab3 = st.tabs(["📊 Chart", "📋 Insights", "🔍 View"])
+tab1, tab2, tab3 = st.tabs([" Chart", " Insights", " View"])
 
 with tab1:
     # Load period state
@@ -105,7 +105,7 @@ with tab1:
     elif interval == "60m":
         period = "15d"
     else:
-        period = "5d"
+        period = "2d"
 
 
     if interval != "1d" and chosen_sym:
@@ -380,7 +380,7 @@ with tab3:
                 
                 fig.update_layout(
                     barmode="group",
-                    title="📊 Analyst Recommendations",
+                    title="Analyst Recommendations",
                     xaxis_title="Month",
                     yaxis_title="Number of Ratings",
                     legend_title="Rating",
