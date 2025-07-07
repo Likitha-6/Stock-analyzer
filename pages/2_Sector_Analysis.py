@@ -8,7 +8,7 @@ from common.finance import human_market_cap
 
 st.set_page_config(
     page_title="Sector Analysis",
-    page_icon="",
+    page_icon=" ",
     layout="wide",
     initial_sidebar_state="expanded"
 )
