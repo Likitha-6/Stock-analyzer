@@ -30,21 +30,6 @@ default_sym = st.session_state.get("compare_symbol")
 # ─────────────────────────────
 # Optional “compare stocks” panel (super-simple)
 # ─────────────────────────────
-show_compare = st.checkbox(
-    "🔄 Compare stocks manually",
-    help="Tick to choose extra tickers for side-by-side comparison"
-)
-
-compare_symbols = []
-if show_compare:
-    compare_symbols = st.multiselect(
-        label="Type a ticker or company name",
-        options=name_df["Symbol"].sort_values(),   # searchable list
-        default=[],
-        key="manual_compare"
-    )
-    # make sure the primary symbol isn’t duplicated
-    compare_symbols = [s for s in compare_symbols if s != chosen_sym]
 
 # ─────────────────────────────
 # Display fundamentals
@@ -80,6 +65,21 @@ else:
 
 if not chosen_sym:
     st.stop()
+show_compare = st.checkbox(
+    "🔄 Compare stocks manually",
+    help="Tick to choose extra tickers for side-by-side comparison"
+)
+
+compare_symbols = []
+if show_compare:
+    compare_symbols = st.multiselect(
+        label="Type a ticker or company name",
+        options=name_df["Symbol"].sort_values(),   # searchable list
+        default=[],
+        key="manual_compare"
+    )
+    # make sure the primary symbol isn’t duplicated
+    compare_symbols = [s for s in compare_symbols if s != chosen_sym]
 
 # ─────────────────────────────
 # Display fundamentals + similar peers
