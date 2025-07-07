@@ -77,6 +77,5 @@ if not chosen_sym:
 display_metrics(
     chosen_sym,
     master_df,
-    name_df,
-    manual_compares=compare_symbols,   # your display_metrics signature must accept this
+    name_df,   # your display_metrics signature must accept this
 )
