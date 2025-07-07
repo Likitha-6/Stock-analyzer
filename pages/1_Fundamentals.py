@@ -68,24 +68,7 @@ if not chosen_sym:
     st.stop()
 
 
-# ─────────────────────────────
-# 2️⃣ Optional manual-compare section
-# ─────────────────────────────
-show_compare = st.checkbox(
-    "🔄 Compare stocks manually",
-    help="Tick to choose extra tickers for side-by-side comparison"
-)
 
-compare_symbols = []
-if show_compare:
-    compare_symbols = st.multiselect(
-        "Type a ticker or company name",
-        options=name_df["Symbol"].sort_values(),
-        default=[],
-        key="manual_compare",
-    )
-    # don’t allow the primary symbol to appear twice
-    compare_symbols = [s for s in compare_symbols if s != chosen_sym]
 
 
 # ─────────────────────────────
