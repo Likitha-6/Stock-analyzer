@@ -27,6 +27,24 @@ symbol2name = dict(zip(name_df["Symbol"], name_df["Company Name"]))
 # Sector navigation handoff
 # ─────────────────────────────
 default_sym = st.session_state.get("compare_symbol")
+# ─────────────────────────────
+# NEW: optional manual-compare panel
+# ─────────────────────────────
+show_compare = st.checkbox(
+    "🔄 Compare stocks manually",
+    help="Tick to add one or more extra tickers for side-by-side comparison"
+)
+
+compare_symbols = []
+if show_compare:
+    compare_symbols = st.multiselect(
+        "Pick tickers to compare with the primary stock",
+        options=name_df["Symbol"].sort_values(),
+        default=[],
+    )
+    # Don’t duplicate the main symbol
+    compare_symbols = [s for s in compare_symbols if s != chosen_sym]
+
 
 if default_sym and not st.session_state.get("already_loaded_from_sector"):
     st.success(f"Auto-loaded **{default_sym}** from Sector Analysis")
