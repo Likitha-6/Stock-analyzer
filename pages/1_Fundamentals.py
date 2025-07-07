@@ -9,8 +9,8 @@ from common.display import display_metrics
 # ─────────────────────────────
 # Page config
 # ─────────────────────────────
-st.set_page_config(page_title="🔍 Fundamentals", page_icon="📈", layout="wide")
-st.title("🔍 Fundamentals – Single-Stock Analysis")
+st.set_page_config(page_title="Fundamentals", page_icon="📈", layout="wide")
+st.title("Fundamentals – Stock Analysis")
 
 
 # ─────────────────────────────
