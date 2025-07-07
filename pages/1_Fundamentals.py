@@ -30,20 +30,57 @@ default_sym = st.session_state.get("compare_symbol")
 # ─────────────────────────────
 # NEW: optional manual-compare panel
 # ─────────────────────────────
+# ─────────────────────────────
+# Manual “compare stocks” workflow
+# ─────────────────────────────
 show_compare = st.checkbox(
     "🔄 Compare stocks manually",
     help="Tick to add one or more extra tickers for side-by-side comparison"
 )
 
-compare_symbols = []
+# initialise the persistent list once per session
+if "compare_list" not in st.session_state:
+    st.session_state.compare_list = []
+
 if show_compare:
-    compare_symbols = st.multiselect(
-        "Pick tickers to compare with the primary stock",
-        options=name_df["Symbol"].sort_values(),
-        default=[],
-    )
-    # Don’t duplicate the main symbol
-    compare_symbols = [s for s in compare_symbols if s != chosen_sym]
+    # --- search bar ---
+    add_query = st.text_input(
+        "Search ticker or company name to add",
+        key="cmp_query"
+    ).strip()
+
+    if add_query:
+        # same fuzzy-match logic you use for the primary search
+        mask = (
+            name_df["Symbol"].str.contains(add_query, case=False, na=False) |
+            name_df["Company Name"].str.contains(add_query, case=False, na=False)
+        )
+        matches = name_df[mask]
+
+        if not matches.empty:
+            opts = matches.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
+            sel = st.selectbox("Select match to add", opts.tolist(), key="cmp_sel")
+            if st.button("Add stock"):
+                sym_to_add = sel.split(" – ")[0]
+                if sym_to_add != chosen_sym and sym_to_add not in st.session_state.compare_list:
+                    st.session_state.compare_list.append(sym_to_add)
+        else:
+            st.info("No matches for that query.")
+
+    # show current list & allow removal
+    if st.session_state.compare_list:
+        to_remove = st.multiselect(
+            "Currently comparing",
+            options=st.session_state.compare_list,
+            default=[]
+        )
+        if st.button("Remove selected"):
+            st.session_state.compare_list = [
+                s for s in st.session_state.compare_list if s not in to_remove
+            ]
+
+# final list to feed into display_metrics
+compare_symbols = st.session_state.compare_list
 
 
 if default_sym and not st.session_state.get("already_loaded_from_sector"):
