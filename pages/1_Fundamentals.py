@@ -31,52 +31,34 @@ default_sym = st.session_state.get("compare_symbol")
 # NEW: optional manual-compare panel
 # ─────────────────────────────
 # ─────────────────────────────
-# Manual “compare stocks” workflow
+# Optional “compare stocks” panel (super-simple)
 # ─────────────────────────────
 show_compare = st.checkbox(
     "🔄 Compare stocks manually",
-    help="Tick to add one or more extra tickers for side-by-side comparison"
+    help="Tick to choose extra tickers for side-by-side comparison"
 )
 
-# initialise the persistent list once per session
-if "compare_list" not in st.session_state:
-    st.session_state.compare_list = []
-
+compare_symbols = []
 if show_compare:
-    # --- search bar ---
-    add_query = st.text_input(
-        "Search ticker or company name to add",
-        key="cmp_query"
-    ).strip()
+    compare_symbols = st.multiselect(
+        label="Type a ticker or company name",
+        options=name_df["Symbol"].sort_values(),   # searchable list
+        default=[],
+        key="manual_compare"
+    )
+    # make sure the primary symbol isn’t duplicated
+    compare_symbols = [s for s in compare_symbols if s != chosen_sym]
 
-    if add_query:
-        # same fuzzy-match logic you use for the primary search
-        mask = (
-            name_df["Symbol"].str.contains(add_query, case=False, na=False) |
-            name_df["Company Name"].str.contains(add_query, case=False, na=False)
-        )
-        matches = name_df[mask]
+# ─────────────────────────────
+# Display fundamentals
+# ─────────────────────────────
+display_metrics(
+    chosen_sym,
+    master_df,
+    name_df,
+    manual_compares=compare_symbols
+)
 
-        if not matches.empty:
-            opts = matches.apply(lambda r: f"{r['Symbol']} – {r['Company Name']}", axis=1)
-            sel = st.selectbox("Select match to add", opts.tolist(), key="cmp_sel")
-            if st.button("Add stock"):
-                sym_to_add = sel.split(" – ")[0]
-                if sym_to_add != chosen_sym and sym_to_add not in st.session_state.compare_list:
-                    st.session_state.compare_list.append(sym_to_add)
-        else:
-            st.info("No matches for that query.")
-
-    # show current list & allow removal
-    if st.session_state.compare_list:
-        to_remove = st.multiselect(
-            "Currently comparing",
-            options=st.session_state.compare_list,
-            default=[]
-        )
-        if st.button("Remove selected"):
-            st.session_state.compare_list = [
-                s for s in st.session_state.compare_list if s not in to_remove
             ]
 
 # final list to feed into display_metrics
