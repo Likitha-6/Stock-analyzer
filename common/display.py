@@ -139,7 +139,7 @@ def display_metrics(symbol: str, master_df: pd.DataFrame, name_df: pd.DataFrame)
     ]
     st.caption(" | ".join(meta))
     with st.expander(" Description"):
-        st.write(get_stock_description(symbol))
+       # st.write(get_stock_description(symbol))
     st.markdown("---")
 
     metrics = ["PE Ratio","EPS","Profit Margin","ROE","Debt to Equity","Dividend Yield","Free Cash Flow"]
