@@ -43,6 +43,7 @@ cols_to_use = {
     "ROE": "ROE",
     "Profit Margin": "ProfitMargin",
     "Debt to Equity": "DebtToEquity",
+    "Market Cap":"Marketcap",
 }
 
 existing_cols = [v for v in cols_to_use.values() if v in scoped_df.columns]
