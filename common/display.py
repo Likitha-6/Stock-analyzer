@@ -37,14 +37,14 @@ def _meta_header(sym: str, data: dict, industry: str):
         f"ATH: {ath:.2f} ({pct:.2f}% from current)" if ath is not None and pct is not None else "ATH: N/A",
     ]
     st.caption(" | ".join(meta))
-    with st.expander("📝 Description"):
+    with st.expander("Description"):
         st.write(get_stock_description(sym))
 
 
 def compare_stocks(sym1: str, sym2: str, master_df: pd.DataFrame):
     """Side‑by‑side comparison view."""
     st.markdown("---")
-    st.markdown(f"## 🔄 Comparison: {sym1} vs {sym2}")
+    st.markdown(f"## Comparison: {sym1} vs {sym2}")
 
     d1, d2 = _fetch_core_metrics(sym1), _fetch_core_metrics(sym2)
     ind1   = master_df.loc[master_df["Symbol"] == sym1, "Industry"].iat[0]
@@ -90,11 +90,11 @@ def compare_stocks(sym1: str, sym2: str, master_df: pd.DataFrame):
     rev1, pm1, fcf1 = _rev_pm_fcf_frames(sym1)
     rev2, pm2, fcf2 = _rev_pm_fcf_frames(sym2)
     if rev1 is not None and rev2 is not None:
-        st.subheader("📈 Revenue (₹ Cr)"); c1,c2=st.columns(2); c1.bar_chart(rev1); c2.bar_chart(rev2)
+        st.subheader("Revenue (₹ Cr)"); c1,c2=st.columns(2); c1.bar_chart(rev1); c2.bar_chart(rev2)
     if pm1 is not None and pm2 is not None:
-        st.subheader("🧮 Profit Margin (%)"); c1,c2=st.columns(2); c1.line_chart(pm1); c2.line_chart(pm2)
+        st.subheader("Profit Margin (%)"); c1,c2=st.columns(2); c1.line_chart(pm1); c2.line_chart(pm2)
     if fcf1 is not None and fcf2 is not None:
-        st.subheader("💰 Free Cash Flow (₹ Cr)"); c1,c2=st.columns(2); c1.bar_chart(fcf1); c2.bar_chart(fcf2)
+        st.subheader(" Free Cash Flow (₹ Cr)"); c1,c2=st.columns(2); c1.bar_chart(fcf1); c2.bar_chart(fcf2)
 
 # ────────────────────────────────────────────────────────────────
 # 2️⃣  Single‑stock dashboard
@@ -112,7 +112,7 @@ def display_metrics(symbol: str, master_df: pd.DataFrame, name_df: pd.DataFrame)
         peer_df = top_peers(symbol, master_df, k=10)
         if not peer_df.empty:
             peer_labels = [f"{row['Company Name']} ({row['Symbol']})" for _, row in peer_df.iterrows()]
-            chosen = st.selectbox("🔄 Compare with peer", ["--"] + peer_labels, key=f"peer_{symbol}")
+            chosen = st.selectbox("Compare with peer", ["--"] + peer_labels, key=f"peer_{symbol}")
             peer_sym = chosen.split("(")[-1].rstrip(")") if chosen != "--" else None
 
     if peer_sym:
@@ -138,7 +138,7 @@ def display_metrics(symbol: str, master_df: pd.DataFrame, name_df: pd.DataFrame)
         f"ATH: {ath:.2f} ({pct:.2f}% from current)" if ath is not None and pct is not None else "ATH: N/A",
     ]
     st.caption(" | ".join(meta))
-    with st.expander("📝 Description"):
+    with st.expander(" Description"):
         st.write(get_stock_description(symbol))
     st.markdown("---")
 
