@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.title("📂 Sector & Industry Analysis")
+st.title("Sector & Industry Analysis")
 
 # Load data
 master_df = load_master()
@@ -33,7 +33,7 @@ interp_cutoff = {"All ✅": 5, "≥4 ✅": 4, "≥3 ✅": 3, "≥2 ✅": 2}[inte
 # Scope the data
 scoped_df = df[df["Industry"] == ind_sel].copy()
 
-st.subheader(f"📊 Summary – {ind_sel}")
+st.subheader(f"Summary – {ind_sel}")
 st.markdown(f"**Total companies in industry:** {len(scoped_df)}")
 
 # Correct column name mapping
@@ -43,7 +43,6 @@ cols_to_use = {
     "ROE": "ROE",
     "Profit Margin": "ProfitMargin",
     "Debt to Equity": "DebtToEquity",
-    "Market Cap": "MarketCap"
 }
 
 existing_cols = [v for v in cols_to_use.values() if v in scoped_df.columns]
@@ -97,7 +96,6 @@ cols[1].metric("Avg EPS", f"{avg_vals.get(cols_to_use['EPS'], np.nan):.2f}")
 cols[2].metric("Avg ROE", f"{avg_vals.get(cols_to_use['ROE'], np.nan) * 100:.2f}%")
 cols[3].metric("Avg P. Margin", f"{profit_margin_avg:.2f}%")
 cols[4].metric("Avg D/E", f"{avg_vals.get('Debt to Equity', np.nan):.2f}")
-
 cols[5].metric("Avg MCap", fmt_cap(avg_vals.get(cols_to_use["Market Cap"])))
 
 # Rank and interpret companies
@@ -151,7 +149,7 @@ for _, row in sel_df.iterrows():
         qualified.append(r)
 
 st.markdown("---")
-header_lbl = "📋 All Companies" if show_all else f"🔢 Top-10 – {rank_by}"
+header_lbl = "All Companies" if show_all else f"🔢 Top-10 – {rank_by}"
 st.subheader(header_lbl)
 df = pd.DataFrame(rows)
 df.index = df.index + 1  # Start index from 1
