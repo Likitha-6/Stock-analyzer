@@ -7,8 +7,8 @@ from common.data import load_name_lookup
 from common.finance import human_market_cap
 
 st.set_page_config(
-    page_title="📂 Sector Analysis",
-    page_icon="📂",
+    page_title="Sector Analysis",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -162,7 +162,7 @@ st.dataframe(df, use_container_width=True)
 if qualified:
     qual_df = pd.DataFrame(qualified).reset_index(drop=True)
     st.markdown("---")
-    st.subheader(f"🌟 Companies with ≥{interp_cutoff} Green Checks")
+    st.subheader(f"Companies top performing")
     qual_df.index = qual_df.index + 1
     st.dataframe(qual_df, use_container_width=True)
 
