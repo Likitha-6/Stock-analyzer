@@ -156,11 +156,11 @@ def display_metrics(symbol: str, master_df: pd.DataFrame, name_df: pd.DataFrame)
 
     rev, pm, fcf = _rev_pm_fcf_frames(symbol)
     if fcf is not None and not fcf.empty:
-        st.subheader("💰 Free Cash Flow (₹ Cr)"); st.bar_chart(fcf)
+        st.subheader("Free Cash Flow (₹ Cr)"); st.bar_chart(fcf)
     if rev is not None and not rev.empty:
-        st.subheader("📈 Revenue (₹ Cr)"); st.bar_chart(rev)
+        st.subheader("Revenue (₹ Cr)"); st.bar_chart(rev)
     if pm is not None and not pm.empty:
-        st.subheader("🧮 Profit Margin (%)"); st.line_chart(pm)
+        st.subheader("Profit Margin (%)"); st.line_chart(pm)
 
     # Clear the flag so subsequent manual interactions show the peer dropdown again
     st.session_state.from_sector_nav = False
