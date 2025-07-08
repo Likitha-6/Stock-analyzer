@@ -127,6 +127,9 @@ if support:
 if resistance:
     fig.add_hline(y=resistance, line_color="red", line_dash="dot", opacity=0.7,
                   annotation_text=f"Resistance: {resistance:.2f}", annotation_position="top right")
+fig.update_xaxes(
+    rangebreaks=[dict(bounds=["sat", "sun"])]  # hide Saturdays & Sundays
+)
 
 fig.update_layout(
     title=f"{selected_index} – Nearest Support & Resistance",
