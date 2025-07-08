@@ -33,17 +33,7 @@ price = df["Close"].iloc[-1]
 df["Date"] = pd.to_datetime(df["Date"])
 df.set_index("Date", inplace=True)
 
-# Compute previous values
-day_ago = df["Close"].iloc[-2] if len(df) >= 2 else np.nan
-month_ago = df["Close"].asfreq("D").last("30D").iloc[0] if len(df) >= 30 else np.nan
-year_ago = df["Close"].asfreq("D").last("365D").iloc[0] if len(df) >= 250 else np.nan
 
-# Compute percentage changes
-day_change = (price - day_ago) / day_ago * 100 if not pd.isna(day_ago) else np.nan
-month_change = (price - month_ago) / month_ago * 100 if not pd.isna(month_ago) else np.nan
-year_change = (price - year_ago) / year_ago * 100 if not pd.isna(year_ago) else np.nan
-
-df.reset_index(inplace=True)
 
 
 
@@ -52,20 +42,47 @@ df.reset_index(inplace=True)
 df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
 df["EMA_15"] = df["Close"].ewm(span=15, adjust=False).mean()
 df["RSI"] = compute_rsi(df)
+df["Prev_1d"]   = df["Close"].shift(1)
+df["Prev_30d"]  = df["Close"].shift(30)
+df["Prev_250d"] = df["Close"].shift(250)
+
+price     = df["Close"].iloc[-1]
+day_ago   = df["Prev_1d"].iloc[-1]
+month_ago = df["Prev_30d"].iloc[-1]
+year_ago  = df["Prev_250d"].iloc[-1]
+
+def pct_change(cur, prev):
+    return (cur - prev) / prev * 100 if pd.notna(prev) else None
+
+day_change   = pct_change(price, day_ago)
+month_change = pct_change(price, month_ago)
+year_change  = pct_change(price, year_ago)
+
+def fmt_pct(val):
+    return f"{val:+.2f} %" if val is not None else "—"
+
+# ────────────────────────────
+# 📊 Snapshot header
+# ────────────────────────────
+# ensure RSI exists
+if "RSI" not in df.columns:
+    df["RSI"] = compute_rsi(df)
 
 latest_rsi = float(df["RSI"].iloc[-1])
 prev_rsi   = float(df["RSI"].iloc[-2]) if len(df) > 1 else latest_rsi
 rsi_arrow  = "↑" if latest_rsi >= prev_rsi else "↓"
 
 
+
+
 c_price, c_day, c_month, c_rsi, c_sr = st.columns([2, 2, 2, 2, 3])
 
-c_price.metric("💰 Price", f"₹{price:,.2f}")
+c_price.metric("💰 Price",  f"₹{price:,.2f}")
+c_day.metric(  "24 h %",      fmt_pct(day_change),   delta_color="inverse")
+c_month.metric("30 d %",      fmt_pct(month_change), delta_color="inverse")
+c_rsi.metric(  "RSI (14)",    f"{latest_rsi:.1f} {rsi_arrow}")
 
-c_day.metric("24 h %", f"{day_change:+.2f} %", delta_color="inverse")
-c_month.metric("30 d %", f"{month_change:+.2f} %", delta_color="inverse")
 
-c_rsi.metric("RSI (14)", f"{latest_rsi:.1f} {rsi_arrow}")
 
 
 
