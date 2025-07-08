@@ -58,9 +58,8 @@ if search_query:
 tab1, tab2, tab3 = st.tabs([" Chart", " Insights", " View"])
 
 with tab1:
-    # Load period state
     # ─────────────────────────────
-    # Interval Dropdown
+    # Interval dropdown
     # ─────────────────────────────
     interval_mapping = {
         "5 minutes": "5m",
@@ -68,11 +67,15 @@ with tab1:
         "1 hour": "60m",
         "1 day": "1d"
     }
-    label = st.selectbox("Select Interval", list(interval_mapping.keys()), index=0)
+    label    = st.selectbox("Select Interval", list(interval_mapping.keys()), index=0)
     interval = interval_mapping[label]
 
+    # ─────────────────────────────
+    # Session-state helpers
+    # ─────────────────────────────
     if "candle_days" not in st.session_state:
         st.session_state.candle_days = 1
+
     # Indicator selection
     all_indicators = st.multiselect(
         "Select Indicators",
@@ -80,46 +83,30 @@ with tab1:
         default=[]
     )
 
-    sma_lengths = []
-    ema_lengths = []
-    #show_pivots = False
+    sma_lengths, ema_lengths = [], []
+    # (You kept SMA off by default, so no SMA input block here.)
 
-    if "SMA" in all_indicators:
-        sma_input = st.text_input("SMA Lengths (comma-separated)", value="20")
-        sma_lengths = sorted(set(int(x.strip()) for x in sma_input.split(",") if x.strip().isdigit()))
+    # Choose period so the chart loads enough candles
+    period = (
+        "60d" if interval == "1d" else
+        "5d"  if interval == "60m" else
+        "2d"
+    )
 
-    if "EMA" in all_indicators:
-        ema_input = st.text_input("EMA Lengths (comma-separated)", value="20")
-        ema_lengths = sorted(set(int(x.strip()) for x in ema_input.split(",") if x.strip().isdigit()))
-
-
-
-    # Calculate the maximum indicator length needed
-    max_len = max(sma_lengths + ema_lengths + [0])
-    
-    # Adjust period to load enough candles
-    if interval == "1d":
-        period = "60d"
-    elif interval == "60m":
-        period = "5d"
-    else:
-        period = "2d"
-
-
+    # Buttons to pull older intraday candles (only if intraday)
     if interval != "1d" and chosen_sym:
-        col1, col2 = st.columns([1, 1])
-
-        with col1:
+        c1, c2 = st.columns([1, 1])
+        with c1:
             if st.button("🔁 Load older candles"):
                 st.session_state.candle_days += 1
-
-        with col2:
+        with c2:
             if st.button("♻️ Reset to 1 Day"):
                 st.session_state.candle_days = 1
-
         st.caption(f"Showing: **{st.session_state.candle_days} day(s)** of data")
 
-    
+    # ─────────────────────────────
+    # Chart section
+    # ─────────────────────────────
     if chosen_sym:
         try:
             df = yf.Ticker(chosen_sym + ".NS").history(interval=interval, period=period)
@@ -129,11 +116,15 @@ with tab1:
                 st.error("No data found.")
                 st.session_state.df_stock = None
             else:
-                df = df.reset_index()
                 st.session_state.df_stock = df
                 x_col = "Datetime" if "Datetime" in df.columns else "Date"
-                df["x_label"] = df[x_col].dt.strftime("%d/%m %H:%M") if "m" in interval or "h" in interval else df[x_col].dt.strftime("%d/%m")
+                df["x_label"] = (
+                    df[x_col].dt.strftime("%d/%m %H:%M")
+                    if any(k in interval for k in ("m", "h"))
+                    else df[x_col].dt.strftime("%d/%m")
+                )
 
+                # ────────────────── build candlestick figure ──────────────────
                 fig = go.Figure()
                 fig.add_trace(go.Candlestick(
                     x=df["x_label"],
@@ -145,30 +136,38 @@ with tab1:
                     decreasing_line_color=decreasing_color,
                     name="Price"
                 ))
-                total_candles = len(df)
-                max_ticks = 15
-                N = max(1, total_candles // max_ticks)
-                tickvals = df["x_label"].iloc[::N].tolist()
-                ticktext = df["x_label"].iloc[::N].tolist()
 
-                if sma_lengths:
-                    df = apply_sma(df, sma_lengths)
-                    for sma_len in sma_lengths:
-                        sma_col = f"SMA_{sma_len}"
-                        if sma_col in df.columns:
-                            valid_sma = df[sma_col].notna()
-                            if valid_sma.sum() > 10:
-                                fig.add_trace(go.Scatter(
-                                    x=df["x_label"][valid_sma],
-                                    y=df[sma_col][valid_sma],
-                                    mode="lines",
-                                    line=dict(width=1.5),
-                                    name=f"SMA ({sma_len})"
-                                ))
+                # ←────────────── support / resistance logic ──────────────→
+                if interval == "5m":               # 1-day levels
+                    last_day = df[x_col].max().date()
+                    sr_df = df[df[x_col].dt.date == last_day]
+                elif interval == "15m":            # 1-week levels
+                    end_date   = df[x_col].max().date()
+                    start_date = end_date - pd.Timedelta(days=7)
+                    sr_df = df[df[x_col].dt.date >= start_date]
+                else:                              # fallback: whole df
+                    sr_df = df
 
+                support    = sr_df["Low"].min()
+                resistance = sr_df["High"].max()
 
-
-
+                fig.add_hline(
+                    y=support,
+                    line_dash="dot",
+                    line_width=1,
+                    line_color="#2ecc71",
+                    annotation=dict(text="Support", yanchor="bottom",
+                                    font=dict(color="#2ecc71"))
+                )
+                fig.add_hline(
+                    y=resistance,
+                    line_dash="dot",
+                    line_width=1,
+                    line_color="#e74c3c",
+                    annotation=dict(text="Resistance", yanchor="top",
+                                    font=dict(color="#e74c3c"))
+                )
+                # ────────────────── indicator overlays (EMA) ──────────────────
                 if ema_lengths:
                     df = apply_ema(df, ema_lengths)
                     for ema_len in ema_lengths:
@@ -180,18 +179,29 @@ with tab1:
                             name=f"EMA ({ema_len})"
                         ))
 
-                
-                from indicators import detect_crossovers  # your own function
-
+                # (Your crossover-signal logic unchanged)
+                from indicators import detect_crossovers
                 signals = detect_crossovers(df, short_col="EMA_20", long_col="EMA_50")
                 for idx in signals["buy"]:
-                    fig.add_trace(go.Scatter(x=[df["x_label"][idx]], y=[df["Close"][idx]],
-                                             mode='markers', marker=dict(color='green', size=10),
-                                             name='Buy Signal'))
+                    fig.add_trace(go.Scatter(
+                        x=[df["x_label"][idx]], y=[df["Close"][idx]],
+                        mode="markers",
+                        marker=dict(color='green', size=10),
+                        name='Buy Signal'
+                    ))
                 for idx in signals["sell"]:
-                    fig.add_trace(go.Scatter(x=[df["x_label"][idx]], y=[df["Close"][idx]],
-                                             mode='markers', marker=dict(color='red', size=10),
-                                             name='Sell Signal'))
+                    fig.add_trace(go.Scatter(
+                        x=[df["x_label"][idx]], y=[df["Close"][idx]],
+                        mode="markers",
+                        marker=dict(color='red', size=10),
+                        name='Sell Signal'
+                    ))
+
+                # ────────────────── layout tweaks ──────────────────
+                total_candles = len(df)
+                max_ticks     = 15
+                N             = max(1, total_candles // max_ticks)
+                tickvals      = df["x_label"].iloc[::N].tolist()
 
                 fig.update_layout(
                     title=f"{chosen_sym}.NS – {label} Chart ({period})",
@@ -204,7 +214,7 @@ with tab1:
                         tickfont=dict(color=font_color),
                         tickmode="array",
                         tickvals=tickvals,
-                        ticktext=ticktext
+                        ticktext=tickvals
                     ),
                     yaxis=dict(
                         showgrid=False,
@@ -222,19 +232,26 @@ with tab1:
                     width=900
                 )
 
+                # ───────────────────────────────
+                # Render chart in Streamlit
+                # ───────────────────────────────
                 st.plotly_chart(
                     fig,
                     use_container_width=False,
                     config={
                         "scrollZoom": True,
                         "displayModeBar": True,
-                        "modeBarButtonsToRemove": ["zoom2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d"],
+                        "modeBarButtonsToRemove": [
+                            "zoom2d", "select2d", "lasso2d",
+                            "zoomIn2d", "zoomOut2d"
+                        ],
                         "displaylogo": False
                     }
                 )
 
         except Exception as e:
             st.error(f"Error: {e}")
+
 
 with tab2:
     if chosen_sym:
