@@ -27,7 +27,7 @@ index_symbol = index_options[selected_index]
 # ─────────────────────────────────────
 # Load Data and Compute Indicators
 # ─────────────────────────────────────
-df = yf.Ticker(index_symbol).history(period="400d", interval="1d").reset_index()
+df = yf.Ticker(index_symbol).history(period="30d", interval="1d").reset_index()
 price = df["Close"].iloc[-1]
 # Ensure we have enough data
 df["Date"] = pd.to_datetime(df["Date"])
