@@ -47,9 +47,19 @@ st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("### 📈 Top 5 Gainers & Losers (Past Session)")
 g_c, l_c = st.columns(2)
-g_c.dataframe(top_gainers.rename(columns={"Return": "% Return"}).assign(**{"% Return": lambda df: df["% Return"].map("{:+.2%}".format)}), use_container_width=True)
-l_c.dataframe(top_losers.rename(columns={"Return": "% Return"}).assign(**{"% Return": lambda df: df["% Return"].map("{:+.2%}".format)}), use_container_width=True)
+# Hide dataframe index
+g_c.dataframe(
+    top_gainers.rename(columns={"Return": "% Return"})
+                .assign(**{"% Return": lambda df: df["% Return"].map("{:+.2%}".format)}),
+    use_container_width=True,
+    hide_index=True
+)
+l_c.dataframe(
+    top_losers.rename(columns={"Return": "% Return"})
+               .assign(**{"% Return": lambda df: df["% Return"].map("{:+.2%}".format)}),
+    use_container_width=True,
+    hide_index=True
+)
 
 st.markdown("---")
 st.markdown("Built with **Streamlit**, **yfinance**, **TF-IDF**, and **FinBERT** | Powered by real-time data updates")
-
