@@ -254,17 +254,17 @@ with tab2:
             col1, col2, col3 = st.columns(3)
 
             with col1:
-                st.metric("💰 Current Price", f"₹{latest_price:,.2f}")
+                st.metric("Current Price", f"₹{latest_price:,.2f}")
     
             with col2:
                 st.metric(
-                    "📈 50-day SMA",
+                    "50-day SMA",
                     f"₹{latest_sma50:,.2f}" if pd.notna(latest_sma50) else "Not Available"
                 )
     
             with col3:
                 st.metric(
-                    "📉 200-day SMA",
+                    " 200-day SMA",
                     f"₹{latest_sma200:,.2f}" if pd.notna(latest_sma200) else "Not Available"
                 )
             
