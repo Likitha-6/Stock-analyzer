@@ -201,63 +201,88 @@ else:
 # 📰 News Sentiment Analysis (FinBERT)
 # ─────────────────────────────────────
 import feedparser
+import datetime
+import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 
+# ─────────────────────────────
 # Cache FinBERT model
+# ─────────────────────────────
 @st.cache_resource
 def load_finbert():
     tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
-    model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
+    model     = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
     return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
 
 sentiment_pipeline = load_finbert()
 
-# Function to fetch Google News headlines
-import datetime
-
+# ─────────────────────────────
+# Function to fetch news from multiple RSS feeds
+# ─────────────────────────────
 def fetch_index_news(index_name, max_headlines=10):
     query = index_name.replace(" ", "+")
-    feed_url = f"https://news.google.com/rss/search?q={query}+site:cnbctv18.com"
-    feed = feedparser.parse(feed_url)
+    feeds = {
+        "CNBC TV18": f"https://news.google.com/rss/search?q={query}+site:cnbctv18.com",
+        "Economic Times": "https://economictimes.indiatimes.com/rssfeedsdefault.cms"
+    }
 
     today = datetime.datetime.utcnow().date()
     headlines = []
+    sources_seen = set()
 
-    for entry in feed.entries:
-        # Ensure entry has published date
-        if hasattr(entry, "published_parsed"):
-            published_date = datetime.datetime(*entry.published_parsed[:6]).date()
-            if published_date == today:
-                headlines.append(entry.title)
-                st.info(f"{entry.title} ({entry.published})")
+    for source, url in feeds.items():
+        feed = feedparser.parse(url)
 
-                if len(headlines) >= max_headlines:
-                    break
+        for entry in feed.entries:
+            # published_parsed only exists if the feed provides it
+            if hasattr(entry, "published_parsed"):
+                pub_date = datetime.datetime(*entry.published_parsed[:6]).date()
+                title    = entry.title
+                # filter for today and for the index name appearing in title
+                if pub_date == today and index_name.upper() in title.upper():
+                    key = (source, title)
+                    if key not in sources_seen and len(headlines) < max_headlines:
+                        sources_seen.add(key)
+                        headlines.append((source, title, entry.link, entry.published))
+        # stop early if we have enough
+        if len(headlines) >= max_headlines:
+            break
 
     return headlines
 
-
+# ─────────────────────────────
 # News Sentiment Section
+# ─────────────────────────────
 st.markdown("---")
 st.subheader("News Analysis")
 
-headlines = fetch_index_news(selected_index)
+raw_headlines = fetch_index_news(selected_index, max_headlines=8)
 
-if not headlines:
+if not raw_headlines:
     st.warning("No recent news found.")
 else:
-    results = sentiment_pipeline(headlines)
+    # display and collect just the titles for sentiment
+    titles = []
+    for source, title, link, published in raw_headlines:
+        st.info(f"**[{source}]** {title}  \n_{published}_  \n{link}")
+        titles.append(title)
 
+    # run FinBERT on the collected titles
+    results = sentiment_pipeline(titles)
+
+    # tally
     sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
     for r in results:
         sentiment_counts[r["label"].lower()] += 1
 
+    # summary
     if sentiment_counts["positive"] > sentiment_counts["negative"]:
         st.success("✅ Overall sentiment is **Positive** based on recent headlines.")
     elif sentiment_counts["negative"] > sentiment_counts["positive"]:
         st.error("❌ Overall sentiment is **Negative** based on recent headlines.")
     else:
-        st.info(" Overall sentiment is **Neutral**.")
+        st.info("ℹ️ Overall sentiment is **Neutral** based on recent headlines.")
+
 
 
 
