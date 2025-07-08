@@ -177,7 +177,6 @@ else:
 # ─────────────────────────────────────
 # Final Recommendation
 # ─────────────────────────────────────
-st.markdown("---")
 #st.subheader(" Final Recommendation")
 
 buy_signal = latest_ema9 > latest_ema15 and latest_rsi < 30 and latest_ema15 < ema15_5days_ago
