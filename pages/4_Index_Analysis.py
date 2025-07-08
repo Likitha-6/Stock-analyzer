@@ -67,12 +67,7 @@ c_month.metric("30 d %", f"{month_change:+.2f} %", delta_color="inverse")
 
 c_rsi.metric("RSI (14)", f"{latest_rsi:.1f} {rsi_arrow}")
 
-sr_text = (
-    f"S: {support:.0f}" if support else "S: —"
-) + " / " + (
-    f"R: {resistance:.0f}" if resistance else "R: —"
-)
-c_sr.metric("S / R", sr_text)
+
 
 # ─────────────────────────────────────
 # Nearest Support & Resistance
