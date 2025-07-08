@@ -251,9 +251,23 @@ with tab2:
             latest_price = df_insights["Close"].iloc[-1]
             latest_sma50 = df_insights["SMA_50"].iloc[-1]
             latest_sma200 = df_insights["SMA_200"].iloc[-1]
-            st.metric("💰 Current Price", f"₹{latest_price:,.2f}")
-            st.metric("📈 50-day SMA", f"₹{latest_sma50:,.2f}" if pd.notna(latest_sma50) else "Not Available")
-            st.metric("📉 200-day SMA", f"₹{latest_sma200:,.2f}" if pd.notna(latest_sma200) else "Not Available")
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.metric("💰 Current Price", f"₹{latest_price:,.2f}")
+    
+            with col2:
+                st.metric(
+                    "📈 50-day SMA",
+                    f"₹{latest_sma50:,.2f}" if pd.notna(latest_sma50) else "Not Available"
+                )
+    
+            with col3:
+                st.metric(
+                    "📉 200-day SMA",
+                    f"₹{latest_sma200:,.2f}" if pd.notna(latest_sma200) else "Not Available"
+                )
+            
             if df_insights["EMA_20"].iloc[-1] > df_insights["EMA_20"].iloc[-5]:
                 st.success("📈 20-day EMA is sloping upward — short-term trend is strengthening.")
             else:
