@@ -53,8 +53,10 @@ df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
 df["EMA_15"] = df["Close"].ewm(span=15, adjust=False).mean()
 df["RSI"] = compute_rsi(df)
 
-prev_rsi = df["RSI"].iloc[-2] if len(df) >= 2 else latest_rsi
-rsi_arrow = "↑" if latest_rsi >= prev_rsi else "↓"
+latest_rsi = float(df["RSI"].iloc[-1])
+prev_rsi   = float(df["RSI"].iloc[-2]) if len(df) > 1 else latest_rsi
+rsi_arrow  = "↑" if latest_rsi >= prev_rsi else "↓"
+
 
 c_price, c_day, c_month, c_rsi, c_sr = st.columns([2, 2, 2, 2, 3])
 
