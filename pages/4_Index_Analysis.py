@@ -276,14 +276,5 @@ else:
 
     # sentiment
     results = sentiment_pipeline(titles)
-    sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
-    for r in results:
-        sentiment_counts[r["label"].lower()] += 1
-
-    if sentiment_counts["positive"] > sentiment_counts["negative"]:
-        st.success("✅ Overall sentiment is **Positive** based on recent headlines.")
-    elif sentiment_counts["negative"] > sentiment_counts["positive"]:
-        st.error("❌ Overall sentiment is **Negative** based on recent headlines.")
-    else:
-        st.info("ℹ️ Overall sentiment is **Neutral** based on recent headlines.")
+   
 
