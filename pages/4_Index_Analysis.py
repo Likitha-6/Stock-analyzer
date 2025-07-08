@@ -53,6 +53,23 @@ col2.metric(" 1-Day Change", f"{day_change:+.2f}%", delta_color="inverse")
 col3.metric("1-Month Change", f"{month_change:+.2f}%", delta_color="inverse")
 col4.metric("1-Year Change", f"{year_change:+.2f}%", delta_color="inverse")
 
+# ✂️ after you already have metrics dict (price, changes, rsi, support, resistance)
+snap1, snap2, snap3, snap4, snap5 = st.columns([2,2,2,2,3])
+
+snap1.metric("Price", f"₹{metrics['price']:,.2f}")
+snap2.metric("Day %",  f"{metrics['day_change']:+.2f} %")
+snap3.metric("Month %",f"{metrics['month_change']:+.2f} %")
+snap4.metric(
+    "RSI (14)",
+    f"{metrics['rsi']:.1f}",
+    delta="↑" if metrics['rsi']>metrics['ema9'] else "↓"
+)
+snap5.metric(
+    "Nearest S/R",
+    f"S:{metrics['support']:.0f} / R:{metrics['resistance']:.0f}"
+)
+
+
 
 # Compute indicators
 df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
