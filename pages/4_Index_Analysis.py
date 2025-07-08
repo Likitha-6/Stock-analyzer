@@ -217,36 +217,39 @@ def load_finbert():
 sentiment_pipeline = load_finbert()
 
 # ─────────────────────────────
-# Function to fetch news from multiple RSS feeds
+# Function to fetch news from two RSS feeds
 # ─────────────────────────────
-def fetch_index_news(index_name, max_headlines=10):
-    query = index_name.replace(" ", "+")
+def fetch_index_news(max_headlines=5):
+    today = datetime.datetime.utcnow().date()
     feeds = {
-        "CNBC TV18": f"https://news.google.com/rss/search?q={query}+site:cnbctv18.com",
+        "CNBC TV18": "https://www.cnbc.com/id/19838190/device/rss/rss.html",
         "Economic Times": "https://economictimes.indiatimes.com/rssfeedsdefault.cms"
     }
 
-    today = datetime.datetime.utcnow().date()
     headlines = []
-    sources_seen = set()
+    per_source = max_headlines
 
     for source, url in feeds.items():
         feed = feedparser.parse(url)
+        count = 0
 
         for entry in feed.entries:
-            # published_parsed only exists if the feed provides it
-            if hasattr(entry, "published_parsed"):
-                pub_date = datetime.datetime(*entry.published_parsed[:6]).date()
-                title    = entry.title
-                # filter for today and for the index name appearing in title
-                if pub_date == today and index_name.upper() in title.upper():
-                    key = (source, title)
-                    if key not in sources_seen and len(headlines) < max_headlines:
-                        sources_seen.add(key)
-                        headlines.append((source, title, entry.link, entry.published))
-        # stop early if we have enough
-        if len(headlines) >= max_headlines:
-            break
+            # some feeds use updated_parsed
+            parsed = getattr(entry, "published_parsed", None) or getattr(entry, "updated_parsed", None)
+            if not parsed:
+                continue
+
+            pub_date = datetime.datetime(*parsed[:6]).date()
+            if pub_date == today:
+                headlines.append({
+                    "source": source,
+                    "title": entry.title,
+                    "link": entry.link,
+                    "published": entry.published if hasattr(entry, "published") else ""
+                })
+                count += 1
+                if count >= per_source:
+                    break
 
     return headlines
 
@@ -256,33 +259,31 @@ def fetch_index_news(index_name, max_headlines=10):
 st.markdown("---")
 st.subheader("News Analysis")
 
-raw_headlines = fetch_index_news(selected_index, max_headlines=8)
+raw_headlines = fetch_index_news(max_headlines=5)
 
 if not raw_headlines:
     st.warning("No recent news found.")
 else:
-    # display and collect just the titles for sentiment
+    # display and collect titles for sentiment
     titles = []
-    for source, title, link, published in raw_headlines:
-        st.info(f"**[{source}]** {title}  \n_{published}_  \n{link}")
-        titles.append(title)
+    for item in raw_headlines:
+        st.info(
+            f"**[{item['source']}]** {item['title']}  \n"
+            f"_{item['published']}_  \n"
+            f"{item['link']}"
+        )
+        titles.append(item["title"])
 
-    # run FinBERT on the collected titles
+    # sentiment
     results = sentiment_pipeline(titles)
-
-    # tally
     sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
     for r in results:
         sentiment_counts[r["label"].lower()] += 1
 
-    # summary
     if sentiment_counts["positive"] > sentiment_counts["negative"]:
         st.success("✅ Overall sentiment is **Positive** based on recent headlines.")
     elif sentiment_counts["negative"] > sentiment_counts["positive"]:
         st.error("❌ Overall sentiment is **Negative** based on recent headlines.")
     else:
         st.info("ℹ️ Overall sentiment is **Neutral** based on recent headlines.")
-
-
-
 
