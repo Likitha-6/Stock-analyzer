@@ -46,29 +46,24 @@ year_change = (price - year_ago) / year_ago * 100 if not pd.isna(year_ago) else 
 df.reset_index(inplace=True)
 
 
-col1, col2, col3, col4 = st.columns(4)
+prev_rsi = df["RSI"].iloc[-2] if len(df) >= 2 else latest_rsi
+rsi_arrow = "↑" if latest_rsi >= prev_rsi else "↓"
 
-col1.metric(" Latest Price", f"{price:.2f} ₹")
-col2.metric(" 1-Day Change", f"{day_change:+.2f}%", delta_color="inverse")
-col3.metric("1-Month Change", f"{month_change:+.2f}%", delta_color="inverse")
-col4.metric("1-Year Change", f"{year_change:+.2f}%", delta_color="inverse")
+c_price, c_day, c_month, c_rsi, c_sr = st.columns([2, 2, 2, 2, 3])
 
-# ✂️ after you already have metrics dict (price, changes, rsi, support, resistance)
-snap1, snap2, snap3, snap4, snap5 = st.columns([2,2,2,2,3])
+c_price.metric("💰 Price", f"₹{price:,.2f}")
 
-snap1.metric("Price", f"₹{metrics['price']:,.2f}")
-snap2.metric("Day %",  f"{metrics['day_change']:+.2f} %")
-snap3.metric("Month %",f"{metrics['month_change']:+.2f} %")
-snap4.metric(
-    "RSI (14)",
-    f"{metrics['rsi']:.1f}",
-    delta="↑" if metrics['rsi']>metrics['ema9'] else "↓"
+c_day.metric("24 h %", f"{day_change:+.2f} %", delta_color="inverse")
+c_month.metric("30 d %", f"{month_change:+.2f} %", delta_color="inverse")
+
+c_rsi.metric("RSI (14)", f"{latest_rsi:.1f} {rsi_arrow}")
+
+sr_text = (
+    f"S: {support:.0f}" if support else "S: —"
+) + " / " + (
+    f"R: {resistance:.0f}" if resistance else "R: —"
 )
-snap5.metric(
-    "Nearest S/R",
-    f"S:{metrics['support']:.0f} / R:{metrics['resistance']:.0f}"
-)
-
+c_sr.metric("S / R", sr_text)
 
 
 # Compute indicators
