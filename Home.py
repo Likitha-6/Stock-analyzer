@@ -2,10 +2,10 @@
 # ──────────────────────────────────────────────────────────────
 import streamlit as st
 import pandas as pd
-import yfinance as yf
 import plotly.express as px
-from common.sql import load_master          # ← now pulls from SQLite
-from common.data import load_name_lookup    # (if you still need the CSV helper)
+from nsetools import Nse
+from common.sql import load_master          # pulls from SQLite
+from common.data import load_name_lookup    # if you still need the CSV helper
 
 # Page-level config
 st.set_page_config(
@@ -34,49 +34,38 @@ Welcome! Use the sidebar to navigate:
 st.markdown("---")
 
 # ──────────────────────────────────────────────────────────────
-# Quick dataset stats
+# Quick dataset stats & Top Movers via nsetools
 # ──────────────────────────────────────────────────────────────
 try:
+    # Load your master symbol list
     master_df = load_master()        # Symbol, Industry, Big Sectors, …
     name_df   = load_name_lookup()   # Symbol, Company Name
 
     # Snapshot metrics
     col1, col2, col3 = st.columns(3)
-    col1.metric("Total Symbols", f"{len(master_df):,}")
-    col2.metric("Unique Sectors", master_df["Big Sectors"].nunique())
-    col3.metric("Unique Industries", master_df["Industry"].nunique())
+    col1.metric("Total Symbols",    f"{len(master_df):,}")
+    col2.metric("Unique Sectors",   master_df["Big Sectors"].nunique())
+    col3.metric("Unique Industries",master_df["Industry"].nunique())
 
-    # ─────────────────────────────────────────────────────────
-    # Compute Top Gainers & Losers (Past Session)
-    # ─────────────────────────────────────────────────────────
-    symbols = [sym + ".NS" for sym in master_df["Symbol"].tolist()]
-    # Download last 2 days of closing prices
-    price_data = yf.download(
-        symbols,
-        period="2d",
-        interval="1d",
-        progress=False
-    )["Close"]
-    # Compute daily returns (%) from yesterday to today
-    returns = price_data.pct_change().iloc[-1] * 100
-    returns = returns.dropna()
-    # Clean up index to remove ".NS"
-    returns.index = returns.index.str.replace(".NS", "", regex=False)
+    # Initialize NSE client
+    nse = Nse()
 
-    # Build DataFrames for top 5
-    top_gainers = returns.nlargest(5).reset_index()
-    top_gainers.columns = ["Symbol", "Return %"]
-    top_losers  = returns.nsmallest(5).reset_index()
-    top_losers.columns  = ["Symbol", "Return %"]
+    # Fetch top gainers & losers
+    raw_gainers = nse.get_top_gainers()[:5]
+    raw_losers  = nse.get_top_losers()[:5]
 
-    # Format percent strings
-    top_gainers["Return %"] = top_gainers["Return %"].map("{:+.2f}%".format)
-    top_losers["Return %"]  = top_losers["Return %"].map("{:+.2f}%".format)
+    # Build DataFrames
+    df_gainers = pd.DataFrame(raw_gainers)[["symbol", "ltp", "pChange"]]
+    df_losers  = pd.DataFrame(raw_losers)[["symbol", "ltp", "pChange"]]
 
+    df_gainers.columns = ["Symbol", "Last Price", "% Change"]
+    df_losers.columns  = ["Symbol", "Last Price", "% Change"]
+
+    # Display Top Movers
     st.markdown("### 📈 Top 5 Gainers & Losers (Past Session)")
-    g_c, l_c = st.columns(2)
-    g_c.dataframe(top_gainers, use_container_width=True, hide_index=True)
-    l_c.dataframe(top_losers,  use_container_width=True, hide_index=True)
+    gcol, lcol = st.columns(2)
+    gcol.dataframe(df_gainers, use_container_width=True, hide_index=True)
+    lcol.dataframe(df_losers,  use_container_width=True, hide_index=True)
 
     # ─────────────────────────────────────────────────────────
     # Sector Distribution Pie Chart
@@ -98,7 +87,7 @@ try:
     st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
-    st.error(f"Unable to load dataset or compute top movers: {e}")
+    st.error(f"Unable to load dataset or fetch top movers: {e}")
 
 # ──────────────────────────────────────────────────────────────
 # Footer / links
@@ -106,6 +95,6 @@ except Exception as e:
 st.markdown("---")
 st.markdown(
     """
-Built with **Streamlit**, **yfinance**, **TF-IDF**, and **FinBERT** | Powered by real-time data updates
+Built with **Streamlit**, **nsetools**, **yfinance**, **TF-IDF**, and **FinBERT** | Powered by real-time data updates
 """
 )
