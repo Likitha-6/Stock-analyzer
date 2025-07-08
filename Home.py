@@ -5,8 +5,8 @@ import pandas as pd
 import plotly.express as px
 import requests
 from bs4 import BeautifulSoup
-from common.sql import load_master          
-from common.data import load_name_lookup    
+from common.sql import load_master
+from common.data import load_name_lookup
 
 # Page config
 st.set_page_config(
@@ -28,24 +28,23 @@ Welcome! Use the sidebar to navigate:
 """)
 st.markdown("---")
 
-# Helper: scrape top movers from Moneycontrol
-def fetch_movers(url, max_rows=5):
-    resp = requests.get(url, headers={"User-Agent":"Mozilla/5.0"})
+def fetch_yahoo_table(url, rows=5):
+    """Scrape first `rows` from the Yahoo Finance gainers/losers table."""
+    headers = {"User-Agent": "Mozilla/5.0"}
+    resp = requests.get(url, headers=headers, timeout=5)
     soup = BeautifulSoup(resp.text, "html.parser")
-    table = soup.find("table", {"class": "tbldata14"})
-    rows = table.tbody.find_all("tr")[:max_rows]
+    table = soup.find("table", {"class": "W(100%)"})
     data = []
-    for tr in rows:
-        cols = [td.get_text(strip=True) for td in tr.find_all("td")]
-        # cols: [#, Symbol, LTP, Change, %Change, Volume]
-        symbol    = cols[1]
-        price      = cols[2]
-        pct_change = cols[4]
-        data.append((symbol, price, pct_change))
+    if table and table.tbody:
+        for tr in table.tbody.find_all("tr")[:rows]:
+            cols = [td.get_text(strip=True) for td in tr.find_all("td")]
+            # Yahoo columns: Symbol, Name, Price (Intraday), Change, %Change, Volume, ...
+            symbol, _, price, _, pct, *_ = cols
+            data.append((symbol, price, pct))
     return pd.DataFrame(data, columns=["Symbol", "Last Price", "% Change"])
 
 try:
-    # Load master data
+    # Load data
     master_df = load_master()
     name_df   = load_name_lookup()
 
@@ -55,12 +54,9 @@ try:
     c2.metric("Unique Sectors",    master_df["Big Sectors"].nunique())
     c3.metric("Unique Industries", master_df["Industry"].nunique())
 
-    # Fetch top 5 gainers & losers
-    gainers_url = "https://www.moneycontrol.com/stocks/marketstats/nsegainer/index.html"
-    losers_url  = "https://www.moneycontrol.com/stocks/marketstats/nseloser/index.html"
-
-    df_gainers = fetch_movers(gainers_url, max_rows=5)
-    df_losers  = fetch_movers(losers_url,  max_rows=5)
+    # Fetch top gainers & losers from Yahoo
+    df_gainers = fetch_yahoo_table("https://finance.yahoo.com/gainers")
+    df_losers  = fetch_yahoo_table("https://finance.yahoo.com/losers")
 
     # Display
     st.markdown("### 📈 Top 5 Gainers & Losers (Past Session)")
@@ -74,7 +70,7 @@ try:
         master_df["Big Sectors"]
         .value_counts()
         .reset_index()
-        .rename(columns={"index":"Sector","Big Sectors":"Count"})
+        .rename(columns={"index": "Sector", "Big Sectors": "Count"})
     )
     fig = px.pie(
         sector_counts, names="Sector", values="Count",
@@ -83,7 +79,7 @@ try:
     st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
-    st.error(f"Error loading data or scraping movers: {e}")
+    st.error(f"Error loading data or scraping top movers: {e}")
 
 # Footer
 st.markdown("---")
