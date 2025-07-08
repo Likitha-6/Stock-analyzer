@@ -76,13 +76,13 @@ with tab1:
     # Indicator selection
     all_indicators = st.multiselect(
         "Select Indicators",
-        ["EMA", "Pivot Levels"],
+        ["EMA"],
         default=[]
     )
 
     sma_lengths = []
     ema_lengths = []
-    show_pivots = False
+    #show_pivots = False
 
     if "SMA" in all_indicators:
         sma_input = st.text_input("SMA Lengths (comma-separated)", value="20")
@@ -92,8 +92,6 @@ with tab1:
         ema_input = st.text_input("EMA Lengths (comma-separated)", value="20")
         ema_lengths = sorted(set(int(x.strip()) for x in ema_input.split(",") if x.strip().isdigit()))
 
-    if "Pivot Levels" in all_indicators:
-        show_pivots = True
 
 
     # Calculate the maximum indicator length needed
@@ -182,12 +180,7 @@ with tab1:
                             name=f"EMA ({ema_len})"
                         ))
 
-                if show_pivots:
-                    pivot_lines, pivot_caption = get_pivot_lines(df, chosen_sym + ".NS", interval)
-                    for line in pivot_lines:
-                        fig.add_shape(**line["shape"])
-                        fig.add_annotation(**line["annotation"])
-                    st.caption(pivot_caption)
+                
                 from indicators import detect_crossovers  # your own function
 
                 signals = detect_crossovers(df, short_col="EMA_20", long_col="EMA_50")
