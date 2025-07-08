@@ -46,6 +46,13 @@ year_change = (price - year_ago) / year_ago * 100 if not pd.isna(year_ago) else 
 df.reset_index(inplace=True)
 
 
+
+
+# Compute indicators
+df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
+df["EMA_15"] = df["Close"].ewm(span=15, adjust=False).mean()
+df["RSI"] = compute_rsi(df)
+
 prev_rsi = df["RSI"].iloc[-2] if len(df) >= 2 else latest_rsi
 rsi_arrow = "↑" if latest_rsi >= prev_rsi else "↓"
 
@@ -64,12 +71,6 @@ sr_text = (
     f"R: {resistance:.0f}" if resistance else "R: —"
 )
 c_sr.metric("S / R", sr_text)
-
-
-# Compute indicators
-df["EMA_9"] = df["Close"].ewm(span=9, adjust=False).mean()
-df["EMA_15"] = df["Close"].ewm(span=15, adjust=False).mean()
-df["RSI"] = compute_rsi(df)
 
 # ─────────────────────────────────────
 # Nearest Support & Resistance
