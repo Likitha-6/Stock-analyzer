@@ -269,9 +269,9 @@ with tab2:
                 )
             
             if df_insights["EMA_20"].iloc[-1] > df_insights["EMA_20"].iloc[-5]:
-                st.success("📈 20-day EMA is sloping upward — short-term trend is strengthening.")
+                st.success("20-day EMA is sloping upward — short-term trend is strengthening.")
             else:
-                st.warning("📉 20-day EMA is sloping downward — short-term trend may be weakening.")
+                st.warning("20-day EMA is sloping downward — short-term trend may be weakening.")
 
             if not df_insights["Close"].empty and len(df_insights["Close"]) >= 14:
                 recent_close = df_insights["Close"].tail(14)
@@ -283,11 +283,11 @@ with tab2:
                 #st.write(f"14-day Price Std Dev: ₹{volatility:.2f} ({vol_pct:.2f}%)")
             
                 if vol_pct > 5:
-                    st.warning("⚠️ High volatility — expect bigger price swings.")
+                    st.warning(" High volatility — expect bigger price swings.")
                 elif vol_pct < 2:
-                    st.info("🔒 Low volatility — stable price action.")
+                    st.info(" Low volatility — stable price action.")
                 else:
-                    st.success("🔁 Moderate volatility — balanced risk/reward.")
+                    st.success(" Moderate volatility — balanced risk/reward.")
 
 
             if abs(latest_price - high_52w) < 0.03 * high_52w:
@@ -300,11 +300,11 @@ with tab2:
             #st.metric("📊 RSI (14-day)", f"{latest_rsi:.2f}")
             
             if latest_rsi > 70:
-                st.warning("📈 The stock is overbought — momentum may slow, and there could be a short-term dip or consolidation.")
+                st.warning(" The stock is overbought — momentum may slow, and there could be a short-term dip or consolidation.")
             elif latest_rsi < 30:
-                st.success("📉 The stock is oversold — selling may be exhausted, and a potential rebound could follow.")
+                st.success("The stock is oversold — selling may be exhausted, and a potential rebound could follow.")
             else:
-                st.info("⚖️ RSI is in neutral zone – no strong momentum signal.")
+                st.info(" RSI is in neutral zone – no strong momentum signal.")
                         
 
             signal = detect_cross_signals(df_insights)
@@ -316,7 +316,7 @@ with tab2:
 
 
 with tab3:
-    st.subheader(f"📊 Market View for {chosen_sym or 'selected stock'}")
+    st.subheader(f"Market View for {chosen_sym or 'selected stock'}")
 
     if chosen_sym:
         try:
