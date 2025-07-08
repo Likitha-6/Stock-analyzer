@@ -57,7 +57,7 @@ def pct_change(cur, prev):
 day_change   = pct_change(price, day_ago)
 month_change = pct_change(price, month_ago)
 year_change  = pct_change(price, year_ago)
-
+df.reset_index(inplace=True)
 def fmt_pct(val):
     return f"{val:+.2f} %" if val is not None else "—"
 
